@@ -41,16 +41,7 @@
                 <ion-note v-if="errors.password" color="danger" class="error-note">{{ errors.password }}</ion-note>
               </div>
 
-              <div class="form-group recaptcha-container">
-                <VueRecaptcha
-                  :sitekey="RECAPTCHA_SITE_KEY"
-                  @verify="onCaptchaVerified"
-                  @expired="onCaptchaExpired"
-                  @error="onCaptchaError"
-                  :load-recaptcha-script="true"
-                />
-                <ion-note v-if="errors.recaptcha" color="danger" class="error-note">{{ errors.recaptcha }}</ion-note>
-              </div>
+              <input type="hidden" name="recaptcha_token" id="recaptcha_token">
 
               <ion-button
                 expand="block"
@@ -86,6 +77,17 @@
 </template>
 
 <script setup lang="ts">
+// Declare grecaptcha global type
+declare global {
+  interface Window {
+    grecaptcha: {
+      ready: (callback: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+      reset: () => void;
+    };
+  }
+}
+
 import { ref, computed } from 'vue';
 import {
   IonPage,
@@ -97,7 +99,6 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { VueRecaptcha } from 'vue-recaptcha';
 import { shieldCheckmarkOutline } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
@@ -111,16 +112,13 @@ const form = ref({
   password: '',
 });
 
-const recaptchaToken = ref<string | null>(null);
-
 const errors = ref<Record<string, string>>({});
 
 const isFormValid = computed(() => {
   return (
     validators.required(form.value.email) &&
     validators.email(form.value.email) &&
-    validators.required(form.value.password) &&
-    !!recaptchaToken.value
+    validators.required(form.value.password)
   );
 });
 
@@ -128,21 +126,6 @@ function clearError(field: string) {
   if (errors.value[field]) {
     delete errors.value[field];
   }
-}
-
-function onCaptchaVerified(token: string) {
-  recaptchaToken.value = token;
-  clearError('recaptcha');
-}
-
-function onCaptchaExpired() {
-  recaptchaToken.value = null;
-  errors.value.recaptcha = 'reCAPTCHA expired. Please verify again.';
-}
-
-function onCaptchaError() {
-  recaptchaToken.value = null;
-  errors.value.recaptcha = 'reCAPTCHA error. Please try again.';
 }
 
 function validateForm(): boolean {
@@ -158,10 +141,6 @@ function validateForm(): boolean {
     errors.value.password = 'Password is required';
   }
 
-  if (!recaptchaToken.value) {
-    errors.value.recaptcha = 'Please complete the reCAPTCHA verification';
-  }
-
   return Object.keys(errors.value).length === 0;
 }
 
@@ -171,7 +150,10 @@ async function handleLogin() {
   }
 
   try {
-    await login(form.value.email, form.value.password, false, recaptchaToken.value || undefined);
+    // Get reCAPTCHA v3 token
+    const recaptchaToken = await getRecaptchaToken();
+    
+    await login(form.value.email, form.value.password, false, recaptchaToken);
     const toast = await toastController.create({
       message: 'Login successful!',
       duration: 2000,
@@ -190,6 +172,21 @@ async function handleLogin() {
     });
     await toast.present();
   }
+}
+
+async function getRecaptchaToken(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (!window.grecaptcha) {
+      reject(new Error('reCAPTCHA not loaded'));
+      return;
+    }
+
+    window.grecaptcha.ready(function() {
+      window.grecaptcha.execute(RECAPTCHA_SITE_KEY, {action: 'login'}).then(function(token: string) {
+        resolve(token);
+      }).catch(reject);
+    });
+  });
 }
 </script>
 
@@ -395,11 +392,11 @@ async function handleLogin() {
   font-size: 16px;
 }
 
-.recaptcha-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 20px;
+/* Hide Google reCAPTCHA badge */
+:deep(.grecaptcha-badge) {
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
+
 </style>
 

@@ -29,14 +29,15 @@ class AdminAuthController extends Controller
             'recaptcha_token' => 'required',
         ]);
 
-        // Verify reCAPTCHA
+        // Verify reCAPTCHA v3
         $recaptchaResponse = $request->input('recaptcha_token');
         $recaptchaSecret = env('RECAPTCHA_SECRET_KEY');
         
-        $recaptcha = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptchaSecret}&response={$recaptchaResponse}");
+        $recaptcha = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptchaSecret}&response={$recaptchaResponse}&remoteip={$request->ip()}");
         $recaptcha = json_decode($recaptcha, true);
         
-        if (!$recaptcha['success']) {
+        // Check if reCAPTCHA was successful and score is above threshold (0.5)
+        if (!$recaptcha['success'] || ($recaptcha['score'] ?? 0) < 0.5) {
             throw ValidationException::withMessages([
                 'email' => ['reCAPTCHA verification failed. Please try again.'],
             ]);

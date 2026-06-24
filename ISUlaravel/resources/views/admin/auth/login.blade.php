@@ -6,7 +6,7 @@
     <title>Login - Event Scheduling Reservation System - ISU Santiago</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js?render={{ env('RECAPTCHA_SITE_KEY') }}"></script>
     <style>
         body {
             background: #001829;
@@ -232,10 +232,7 @@
                         required
                     >
                 </div>
-                <div class="form-group recaptcha-wrapper" style="display: flex; justify-content: center; margin-bottom: 20px;">
-                    <div class="g-recaptcha" data-sitekey="{{ env('RECAPTCHA_SITE_KEY') }}"></div>
-                    <input type="hidden" name="recaptcha_token" id="recaptcha_token">
-                </div>
+                <input type="hidden" name="recaptcha_token" id="recaptcha_token">
                 <button type="submit" class="btn btn-login">
                     Login
                 </button>
@@ -255,12 +252,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.querySelector('form').addEventListener('submit', function(e) {
-            const token = grecaptcha.getResponse();
-            document.getElementById('recaptcha_token').value = token;
-            if (!token) {
-                e.preventDefault();
-                alert('Please complete the reCAPTCHA verification.');
-            }
+            e.preventDefault();
+            
+            grecaptcha.ready(function() {
+                grecaptcha.execute('{{ env('RECAPTCHA_SITE_KEY') }}', {action: 'login'}).then(function(token) {
+                    document.getElementById('recaptcha_token').value = token;
+                    document.querySelector('form').submit();
+                });
+            });
         });
     </script>
 </body>
