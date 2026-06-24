@@ -39,6 +39,7 @@
                         <i class="bi bi-eye-fill" id="passwordIcon"></i>
                     </button>
                 </div>
+                <div class="invalid-feedback" id="passwordError" style="display: none;"></div>
                 @error('password')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
@@ -114,7 +115,8 @@
 
     // Real-time password validation
     const passwordField = document.getElementById('password');
-    if (passwordField) {
+    const passwordErrorDiv = document.getElementById('passwordError');
+    if (passwordField && passwordErrorDiv) {
         passwordField.addEventListener('input', function() {
             const password = this.value;
             let errorMessage = '';
@@ -132,14 +134,13 @@
             }
             
             // Update error display
-            const errorDiv = this.closest('.mb-3').querySelector('.invalid-feedback');
-            if (errorDiv) {
-                errorDiv.textContent = errorMessage;
-                if (errorMessage) {
-                    this.classList.add('is-invalid');
-                } else {
-                    this.classList.remove('is-invalid');
-                }
+            if (errorMessage) {
+                passwordErrorDiv.textContent = errorMessage;
+                passwordErrorDiv.style.display = 'block';
+                this.classList.add('is-invalid');
+            } else {
+                passwordErrorDiv.style.display = 'none';
+                this.classList.remove('is-invalid');
             }
         });
     }
