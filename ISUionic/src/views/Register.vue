@@ -48,28 +48,42 @@
                 <ion-note v-if="errors.email" color="danger" class="error-note">{{ errors.email }}</ion-note>
               </div>
 
-              <div class="form-group">
+              <div class="form-group password-group">
                 <ion-input
                   v-model="form.password"
-                  type="password"
+                  :type="showPassword ? 'text' : 'password'"
                   placeholder="Password"
                   class="custom-input"
-                  :class="{ 'ion-invalid': errors.password }"
-                  @ion-input="clearError('password')"
+                  :class="{ 'ion-invalid': errors.password || (passwordTouched && !validators.passwordStrong(form.password)) }"
+                  @ion-input="clearError('password'); passwordTouched = true; validatePassword();"
                 ></ion-input>
-                <ion-note v-if="errors.password" color="danger" class="error-note">{{ errors.password }}</ion-note>
-                <ion-note color="medium" class="helper-note">Minimum 8 characters</ion-note>
+                <ion-button
+                  fill="clear"
+                  class="password-toggle"
+                  @click="showPassword = !showPassword"
+                >
+                  <ion-icon :icon="showPassword ? eyeOff : eye"></ion-icon>
+                </ion-button>
+                <ion-note v-if="passwordError" color="danger" class="error-note">{{ passwordError }}</ion-note>
+                <ion-note v-else-if="errors.password" color="danger" class="error-note">{{ errors.password }}</ion-note>
               </div>
 
-              <div class="form-group">
+              <div class="form-group password-group">
                 <ion-input
                   v-model="form.password_confirmation"
-                  type="password"
+                  :type="showConfirmPassword ? 'text' : 'password'"
                   placeholder="Confirm Password"
                   class="custom-input"
                   :class="{ 'ion-invalid': errors.password_confirmation }"
                   @ion-input="clearError('password_confirmation')"
                 ></ion-input>
+                <ion-button
+                  fill="clear"
+                  class="password-toggle"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                >
+                  <ion-icon :icon="showConfirmPassword ? eyeOff : eye"></ion-icon>
+                </ion-button>
                 <ion-note v-if="errors.password_confirmation" color="danger" class="error-note">
                   {{ errors.password_confirmation }}
                 </ion-note>
@@ -137,7 +151,7 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eye, eyeOff } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
 
@@ -153,6 +167,10 @@ const form = ref({
 });
 
 const errors = ref<Record<string, string>>({});
+const passwordTouched = ref(false);
+const passwordError = ref('');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 const isFormValid = computed(() => {
   return (
@@ -160,7 +178,7 @@ const isFormValid = computed(() => {
     validators.required(form.value.email) &&
     validators.email(form.value.email) &&
     validators.required(form.value.password) &&
-    validators.password(form.value.password) &&
+    validators.passwordStrong(form.value.password) &&
     validators.required(form.value.password_confirmation) &&
     validators.passwordMatch(form.value.password, form.value.password_confirmation)
   );
@@ -169,6 +187,28 @@ const isFormValid = computed(() => {
 function clearError(field: string) {
   if (errors.value[field]) {
     delete errors.value[field];
+  }
+  if (field === 'password') {
+    passwordError.value = '';
+  }
+}
+
+function validatePassword(): void {
+  if (!passwordTouched.value || !form.value.password) {
+    passwordError.value = '';
+    return;
+  }
+
+  if (!validators.password(form.value.password)) {
+    passwordError.value = 'Password must be at least 8 characters';
+  } else if (!validators.hasLetter(form.value.password)) {
+    passwordError.value = 'Password must contain at least one letter (a-z, A-Z)';
+  } else if (!validators.hasNumber(form.value.password)) {
+    passwordError.value = 'Password must contain at least one number (0-9)';
+  } else if (!validators.hasSymbol(form.value.password)) {
+    passwordError.value = 'Password must contain at least one symbol (@$!%*?&.,)';
+  } else {
+    passwordError.value = '';
   }
 }
 
@@ -187,8 +227,16 @@ function validateForm(): boolean {
 
   if (!validators.required(form.value.password)) {
     errors.value.password = 'Password is required';
-  } else if (!validators.password(form.value.password)) {
-    errors.value.password = 'Password must be at least 8 characters';
+  } else {
+    if (!validators.password(form.value.password)) {
+      errors.value.password = 'Password must be at least 8 characters';
+    } else if (!validators.hasLetter(form.value.password)) {
+      errors.value.password = 'Password must contain at least one letter (a-z, A-Z)';
+    } else if (!validators.hasNumber(form.value.password)) {
+      errors.value.password = 'Password must contain at least one number (0-9)';
+    } else if (!validators.hasSymbol(form.value.password)) {
+      errors.value.password = 'Password must contain at least one symbol (@$!%*?&.,)';
+    }
   }
 
   if (!validators.required(form.value.password_confirmation)) {
@@ -335,6 +383,33 @@ async function handleRegister() {
 
 .form-group {
   margin-bottom: 20px;
+}
+
+.password-group {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  --background: transparent;
+  --background-hover: transparent;
+  --color: #2d8659;
+  --color-hover: #1e5d3f;
+  font-size: 20px;
+  z-index: 10;
+  margin: 0;
+  padding: 5px;
+  min-width: 32px;
+  height: 32px;
+  --border-color: transparent;
+  --box-shadow: none;
+}
+
+.password-toggle:hover {
+  --color: #1e5d3f;
 }
 
 .custom-input {

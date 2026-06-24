@@ -253,7 +253,7 @@
                             style="padding-right: 50px;"
                         >
                         <button type="button" class="password-toggle" id="passwordToggle">
-                            <i class="bi bi-eye" id="passwordIcon"></i>
+                            <i class="bi bi-eye-fill" id="passwordIcon"></i>
                         </button>
                     </div>
                 </div>
@@ -281,17 +281,19 @@
         const passwordInput = document.getElementById('password');
         const passwordIcon = document.getElementById('passwordIcon');
 
-        passwordToggle.addEventListener('click', function() {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                passwordIcon.classList.remove('bi-eye');
-                passwordIcon.classList.add('bi-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                passwordIcon.classList.remove('bi-eye-slash');
-                passwordIcon.classList.add('bi-eye');
-            }
-        });
+        if (passwordToggle && passwordInput && passwordIcon) {
+            passwordToggle.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    passwordIcon.classList.remove('bi-eye-fill');
+                    passwordIcon.classList.add('bi-eye-slash-fill');
+                } else {
+                    passwordInput.type = 'password';
+                    passwordIcon.classList.remove('bi-eye-slash-fill');
+                    passwordIcon.classList.add('bi-eye-fill');
+                }
+            });
+        }
 
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();

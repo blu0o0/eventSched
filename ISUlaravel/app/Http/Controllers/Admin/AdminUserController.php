@@ -63,8 +63,10 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => ['required', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
             'role' => 'required|in:administrator,osas,main_proponent,general_user',
+        ], [
+            'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -93,8 +95,10 @@ class AdminUserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'password' => 'nullable|string|min:6|confirmed',
+            'password' => ['nullable', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
             'role' => 'required|in:administrator,osas,main_proponent,general_user',
+        ], [
+            'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
         ]);
 
         if (isset($validated['password'])) {

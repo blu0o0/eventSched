@@ -33,14 +33,24 @@
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Password (leave blank to keep current)</label>
-                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password">
+                <div class="password-wrapper">
+                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" style="padding-right: 50px;">
+                    <button type="button" class="password-toggle" id="passwordToggle">
+                        <i class="bi bi-eye-fill" id="passwordIcon"></i>
+                    </button>
+                </div>
                 @error('password')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
             <div class="mb-3">
                 <label for="password_confirmation" class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                <div class="password-wrapper">
+                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" style="padding-right: 50px;">
+                    <button type="button" class="password-toggle" id="confirmPasswordToggle">
+                        <i class="bi bi-eye-fill" id="confirmPasswordIcon"></i>
+                    </button>
+                </div>
             </div>
             <div class="mb-3">
                 <label for="role" class="form-label">Role *</label>
@@ -62,4 +72,77 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Password visibility toggles
+    const passwordToggle = document.getElementById('passwordToggle');
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    const confirmPasswordToggle = document.getElementById('confirmPasswordToggle');
+    const confirmPasswordInput = document.getElementById('password_confirmation');
+    const confirmPasswordIcon = document.getElementById('confirmPasswordIcon');
+
+    if (passwordToggle && passwordInput && passwordIcon) {
+        passwordToggle.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('bi-eye-fill');
+                passwordIcon.classList.add('bi-eye-slash-fill');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('bi-eye-slash-fill');
+                passwordIcon.classList.add('bi-eye-fill');
+            }
+        });
+    }
+
+    if (confirmPasswordToggle && confirmPasswordInput && confirmPasswordIcon) {
+        confirmPasswordToggle.addEventListener('click', function() {
+            if (confirmPasswordInput.type === 'password') {
+                confirmPasswordInput.type = 'text';
+                confirmPasswordIcon.classList.remove('bi-eye-fill');
+                confirmPasswordIcon.classList.add('bi-eye-slash-fill');
+            } else {
+                confirmPasswordInput.type = 'password';
+                confirmPasswordIcon.classList.remove('bi-eye-slash-fill');
+                confirmPasswordIcon.classList.add('bi-eye-fill');
+            }
+        });
+    }
+
+    // Real-time password validation
+    const passwordField = document.getElementById('password');
+    if (passwordField) {
+        passwordField.addEventListener('input', function() {
+            const password = this.value;
+            let errorMessage = '';
+            
+            if (password.length > 0) {
+                if (password.length < 8) {
+                    errorMessage = 'Password must be at least 8 characters';
+                } else if (!/[A-Za-z]/.test(password)) {
+                    errorMessage = 'Password must contain at least one letter (a-z, A-Z)';
+                } else if (!/\d/.test(password)) {
+                    errorMessage = 'Password must contain at least one number (0-9)';
+                } else if (!/[@$!%*?&.,]/.test(password)) {
+                    errorMessage = 'Password must contain at least one symbol (@$!%*?&.,)';
+                }
+            }
+            
+            // Update error display
+            const errorDiv = this.closest('.mb-3').querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.textContent = errorMessage;
+                if (errorMessage) {
+                    this.classList.add('is-invalid');
+                } else {
+                    this.classList.remove('is-invalid');
+                }
+            }
+        });
+    }
+</script>
+@endpush
 

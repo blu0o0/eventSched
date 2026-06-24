@@ -22,24 +22,10 @@ export const validators = {
     return password.length >= 8;
   },
 
-  hasLetter: (password: string): boolean => {
-    return /[A-Za-z]/.test(password);
-  },
-
-  hasNumber: (password: string): boolean => {
-    return /\d/.test(password);
-  },
-
-  hasSymbol: (password: string): boolean => {
-    return /[@$!%*?&.,]/.test(password);
-  },
-
   passwordStrong: (password: string): boolean => {
     // At least 8 characters, must contain letter, number, and symbol
-    return validators.hasLetter(password) && 
-           validators.hasNumber(password) && 
-           validators.hasSymbol(password) && 
-           validators.password(password);
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/;
+    return passwordRegex.test(password);
   },
 
   passwordMatch: (password: string, confirmPassword: string): boolean => {
@@ -76,8 +62,8 @@ export interface ValidationRule {
 
 export function validateField(value: any, rules: ValidationRule[]): string | null {
   for (const rule of rules) {
-    const args = rule.args ? [value, ...rule.args] : [value];
-    if (!rule.validator.apply(null, args)) {
+    const args = rule.args ? [value, ...rule.args] : [value] as [any, ...any[]];
+    if (!rule.validator(...args)) {
       return rule.message;
     }
   }

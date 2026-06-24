@@ -742,6 +742,48 @@ body {
   color: #92400e;
 }
 
+/* Password Toggle */
+.password-wrapper {
+  position: relative;
+}
+
+/* Hide browser's password manager icon */
+.password-wrapper input::-webkit-credentials-auto-fill-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 8px;
+  font-size: 18px;
+  z-index: 9999;
+  transition: all var(--transition-fast);
+  border-radius: 4px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.password-toggle:hover {
+  color: var(--primary-dark);
+}
+
 /* Forms */
 .form-control {
   border: 2px solid var(--gray-200);
