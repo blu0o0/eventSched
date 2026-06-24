@@ -14,13 +14,7 @@ class AdminAuthController extends Controller
      */
     public function showLoginForm()
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            if ($user->isOsas()) {
-                return redirect()->route('admin.reservations.index');
-            }
-            return redirect()->route('admin.dashboard');
-        }
+        // Always show login form (user can logout from dashboard if already authenticated)
         return view('admin.auth.login');
     }
 
@@ -29,10 +23,26 @@ class AdminAuthController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'recaptcha_token' => 'required',
         ]);
+
+        // Verify reCAPTCHA
+        $recaptchaResponse = $request->input('recaptcha_token');
+        $recaptchaSecret = env('RECAPTCHA_SECRET_KEY');
+        
+        $recaptcha = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$recaptchaSecret}&response={$recaptchaResponse}");
+        $recaptcha = json_decode($recaptcha, true);
+        
+        if (!$recaptcha['success']) {
+            throw ValidationException::withMessages([
+                'email' => ['reCAPTCHA verification failed. Please try again.'],
+            ]);
+        }
+
+        $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
