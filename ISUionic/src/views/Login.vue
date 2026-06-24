@@ -88,7 +88,7 @@ declare global {
   }
 }
 
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
   IonPage,
   IonContent,
@@ -188,6 +188,25 @@ async function getRecaptchaToken(): Promise<string> {
     });
   });
 }
+
+// Show reCAPTCHA badge when on login page
+onMounted(() => {
+  const badge = document.querySelector('.grecaptcha-badge') as HTMLElement | null;
+  if (badge) {
+    badge.style.visibility = 'visible';
+    badge.style.opacity = '1';
+    badge.style.pointerEvents = 'auto';
+  }
+});
+
+onUnmounted(() => {
+  const badge = document.querySelector('.grecaptcha-badge') as HTMLElement | null;
+  if (badge) {
+    badge.style.visibility = '';
+    badge.style.opacity = '';
+    badge.style.pointerEvents = '';
+  }
+});
 </script>
 
 <style scoped>
@@ -390,12 +409,6 @@ async function getRecaptchaToken(): Promise<string> {
 .security-badge ion-icon {
   color: #ffc107;
   font-size: 16px;
-}
-
-/* Hide Google reCAPTCHA badge */
-:deep(.grecaptcha-badge) {
-  visibility: hidden !important;
-  opacity: 0 !important;
 }
 
 </style>
