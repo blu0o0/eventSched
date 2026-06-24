@@ -8,7 +8,7 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-primary-rgb: 45, 134, 89;
   --ion-color-primary-contrast: #ffffff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #28764e;
+  --ion-color-primary-shade: #1e5d3f;
   --ion-color-primary-tint: #42926a;
 
   /** Secondary Color - Dark Green **/
@@ -51,13 +51,13 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-danger-shade: #c22f3d;
   --ion-color-danger-tint: #e04958;
 
-  /** Dark Color **/
-  --ion-color-dark: #1a1a1a;
-  --ion-color-dark-rgb: 26, 26, 26;
+  /** Dark Color - Dark Navy (matching Laravel sidebar) **/
+  --ion-color-dark: #001829;
+  --ion-color-dark-rgb: 0, 24, 41;
   --ion-color-dark-contrast: #ffffff;
   --ion-color-dark-contrast-rgb: 255, 255, 255;
-  --ion-color-dark-shade: #171717;
-  --ion-color-dark-tint: #313131;
+  --ion-color-dark-shade: #001423;
+  --ion-color-dark-tint: #1a2f3e;
 
   /** Medium Color **/
   --ion-color-medium: #6c757d;
@@ -75,38 +75,56 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-light-shade: #dadbdc;
   --ion-color-light-tint: #f9fafb;
 
-  /** Background Colors **/
-  --ion-background-color: #ffffff;
-  --ion-background-color-rgb: 255, 255, 255;
+  /** Background Colors - Light Gradient (matching Laravel dashboard) **/
+  --ion-background-color: #f9fafb;
+  --ion-background-color-rgb: 249, 250, 251;
   --ion-text-color: #1a1a1a;
   --ion-text-color-rgb: 26, 26, 26;
 
-  /** Card & Surface **/
+  /** Card & Surface - With border (matching Laravel) **/
   --ion-card-background: #ffffff;
   --ion-card-border-radius: 16px;
-  --ion-card-box-shadow: 0 4px 16px rgba(45, 134, 89, 0.1);
+  --ion-card-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --ion-card-border: 1px solid #e5e7eb;
 
-  /** Toolbar **/
-  --ion-toolbar-background: #2d8659;
+  /** Toolbar - Green gradient (matching Laravel navbar) **/
+  --ion-toolbar-background: transparent;
   --ion-toolbar-color: #ffffff;
-  --ion-toolbar-border-color: #28764e;
+  --ion-toolbar-border-color: transparent;
+
+  /** Font **/
+  --ion-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /** Shadow Variables (matching Laravel) **/
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-primary: 0 4px 16px rgba(45, 134, 89, 0.25);
+
+  /** Border Radius (matching Laravel) **/
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
 }
 
 /*
- * Dark Mode Override - Force light background even when browser is in dark mode
+ * Dark Mode Override - Force light backgrounds even when browser is in dark mode
  */
 @media (prefers-color-scheme: dark) {
   :root {
-    --ion-background-color: #ffffff;
-    --ion-background-color-rgb: 255, 255, 255;
+    --ion-background-color: #f9fafb;
+    --ion-background-color-rgb: 249, 250, 251;
     --ion-text-color: #1a1a1a;
     --ion-text-color-rgb: 26, 26, 26;
     --ion-card-background: #ffffff;
     --ion-item-background: #ffffff;
-    --ion-toolbar-background: #2d8659;
+    --ion-toolbar-background: transparent;
     --ion-tab-bar-background: #ffffff;
     --ion-border-color: #e0e0e0;
   }
 }
-
-

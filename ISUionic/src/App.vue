@@ -62,3 +62,16 @@ onMounted(() => {
   });
 });
 </script>
+
+<style>
+/* Global green gradient toolbar matching Laravel */
+ion-toolbar {
+  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  --color: #ffffff;
+}
+
+/* Light gradient page background matching Laravel dashboard */
+ion-content {
+  --background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+}
+</style>

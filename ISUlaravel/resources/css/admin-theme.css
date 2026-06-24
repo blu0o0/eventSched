@@ -1,14 +1,14 @@
 /* ISU Reservation System - Modern Admin Panel Theme */
 
 :root {
-  /* Primary Colors - Inspired by #1f955a and #2cc0a0 */
-  --primary: #1f955a;
-  --primary-dark: #187a4a;
-  --primary-light: #2cc0a0;
-  --primary-lighter: #5ed4b5;
+  /* Primary Colors - ISU Green (Synced with Ionic) */
+  --primary: #2d8659;
+  --primary-dark: #1e5d3f;
+  --primary-light: #42926a;
+  --primary-lighter: #5eb762;
   --primary-lightest: #e6f7f1;
-  --primary-gradient: linear-gradient(135deg, #1f955a 0%, #2cc0a0 100%);
-  --primary-gradient-hover: linear-gradient(135deg, #187a4a 0%, #25a88a 100%);
+  --primary-gradient: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #1e5d3f 0%, #28764e 100%);
   
   /* Accent Colors */
   --success: #10b981;

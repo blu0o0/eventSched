@@ -242,6 +242,10 @@ async function handleRegister() {
   position: relative;
 }
 
+.register-content::part(background) {
+  background: #001829;
+}
+
 .register-content::before {
   content: '';
   position: absolute;

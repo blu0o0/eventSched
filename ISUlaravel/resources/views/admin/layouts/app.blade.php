@@ -269,14 +269,14 @@
             left: 0;
             right: 0;
             height: 64px;
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
+            background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+            border-bottom: none;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 24px;
             z-index: 998;
-            box-shadow: var(--shadow-xs);
+            box-shadow: 0 4px 16px rgba(45, 134, 89, 0.3);
         }
 
         .navbar-left {
@@ -288,7 +288,7 @@
         .navbar-title {
             font-size: 18px;
             font-weight: 700;
-            color: var(--gray-900);
+            color: #ffffff;
             letter-spacing: -0.3px;
             white-space: nowrap;
             overflow: hidden;
@@ -299,9 +299,9 @@
             width: 40px;
             height: 40px;
             border: none;
-            background: transparent;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-sm);
-            color: var(--gray-600);
+            color: #ffffff;
             font-size: 22px;
             display: flex;
             align-items: center;
@@ -311,12 +311,13 @@
         }
 
         .btn-toggle-sidebar:hover {
-            background: var(--primary-lightest);
-            color: var(--primary);
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transform: scale(1.05);
         }
 
         .btn-toggle-sidebar:focus {
-            outline: 2px solid var(--primary);
+            outline: 2px solid rgba(255, 255, 255, 0.5);
             outline-offset: 2px;
         }
 
@@ -474,10 +475,10 @@
         </div>
         <div class="navbar-right">
             <div class="d-flex align-items-center gap-2">
-                <span class="text-muted" style="font-size: 14px; font-weight: 500;">
+                <span style="font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.9);">
                     {{ Auth::user()->name }}
                 </span>
-                <div class="user-avatar" style="width: 36px; height: 36px; font-size: 14px; box-shadow: none;">
+                <div class="user-avatar" style="width: 36px; height: 36px; font-size: 14px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
                     {{ substr(Auth::user()->name, 0, 1) }}
                 </div>
             </div>

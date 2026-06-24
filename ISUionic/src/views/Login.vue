@@ -215,6 +215,10 @@ onUnmounted(() => {
   position: relative;
 }
 
+.login-content::part(background) {
+  background: #001829;
+}
+
 .login-content::before {
   content: '';
   position: absolute;
