@@ -24,30 +24,6 @@
             transition: transform var(--transition-base);
             display: flex;
             flex-direction: column;
-            transform: translateX(-100%);
-        }
-
-        .sidebar.open {
-            transform: translateX(0);
-        }
-
-        /* Sidebar Backdrop */
-        .sidebar-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity var(--transition-base), visibility var(--transition-base);
-        }
-
-        .sidebar-backdrop.show {
-            opacity: 1;
-            visibility: visible;
         }
 
         .sidebar-header {
@@ -262,70 +238,11 @@
             transform: translateY(0);
         }
 
-        /* Top Navbar */
-        .top-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            z-index: 998;
-            box-shadow: var(--shadow-xs);
-        }
-
-        .navbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .navbar-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--gray-900);
-            letter-spacing: -0.3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .btn-toggle-sidebar {
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: transparent;
-            border-radius: var(--radius-sm);
-            color: var(--gray-600);
-            font-size: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-
-        .btn-toggle-sidebar:hover {
-            background: var(--primary-lightest);
-            color: var(--primary);
-        }
-
-        .btn-toggle-sidebar:focus {
-            outline: 2px solid var(--primary);
-            outline-offset: 2px;
-        }
-
         /* Main Content */
         .main-content {
-            margin-left: 0;
+            margin-left: 280px;
             min-height: 100vh;
             background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-            padding-top: 64px;
         }
 
         .content-wrapper {
@@ -356,28 +273,10 @@
             color: var(--gray-500);
             font-weight: 500;
         }
-
-        @media (max-width: 768px) {
-            .content-wrapper {
-                padding: 20px;
-            }
-            
-            .page-header {
-                padding: 20px;
-                margin-bottom: 20px;
-            }
-            
-            .page-title {
-                font-size: 24px;
-            }
-        }
     </style>
     @stack('styles')
 </head>
 <body>
-    <!-- Sidebar Backdrop -->
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -464,26 +363,6 @@
         </div>
     </div>
 
-    <!-- Top Navbar -->
-    <div class="top-navbar">
-        <div class="navbar-left">
-            <button class="btn-toggle-sidebar" id="sidebarToggle" aria-label="Toggle sidebar">
-                <i class="bi bi-list" id="toggleIcon"></i>
-            </button>
-            <span class="navbar-title">@yield('title', 'Admin Panel')</span>
-        </div>
-        <div class="navbar-right">
-            <div class="d-flex align-items-center gap-2">
-                <span class="text-muted" style="font-size: 14px; font-weight: 500;">
-                    {{ Auth::user()->name }}
-                </span>
-                <div class="user-avatar" style="width: 36px; height: 36px; font-size: 14px; box-shadow: none;">
-                    {{ substr(Auth::user()->name, 0, 1) }}
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <div class="main-content">
         <div class="content-wrapper">
@@ -508,47 +387,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            const toggleBtn = document.getElementById('sidebarToggle');
-            const toggleIcon = document.getElementById('toggleIcon');
-
-            function openSidebar() {
-                sidebar.classList.add('open');
-                backdrop.classList.add('show');
-                toggleIcon.className = 'bi bi-x';
-            }
-
-            function closeSidebar() {
-                sidebar.classList.remove('open');
-                backdrop.classList.remove('show');
-                toggleIcon.className = 'bi bi-list';
-            }
-
-            function toggleSidebar() {
-                if (sidebar.classList.contains('open')) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
-                }
-            }
-
-            // Toggle button click
-            toggleBtn.addEventListener('click', toggleSidebar);
-
-            // Backdrop click closes sidebar
-            backdrop.addEventListener('click', closeSidebar);
-
-            // Close sidebar with Escape key
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
-                    closeSidebar();
-                }
-            });
-        });
-    </script>
     @stack('scripts')
 </body>
 </html>
