@@ -170,13 +170,7 @@
 }
 
 .compact-stat-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: default;
-}
-
-.compact-stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 </style>
 
@@ -194,16 +188,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     {{ $stats['rejected_reservations'] }}
                 ],
                 backgroundColor: [
-                    'rgba(255, 202, 40, 0.9)',
-                    'rgba(102, 187, 106, 0.9)',
-                    'rgba(229, 115, 115, 0.9)'
+                    'rgba(255, 213, 79, 0.85)',
+                    'rgba(129, 199, 132, 0.85)',
+                    'rgba(239, 154, 154, 0.85)'
                 ],
-                borderColor: [
-                    '#f9a825',
-                    '#43a047',
-                    '#e53935'
-                ],
-                borderWidth: 3,
                 hoverOffset: 8
             }]
         },

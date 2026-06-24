@@ -2,8 +2,10 @@ import apiClient from './client';
 import { Reservation, CreateReservationData, RescheduleReservationData, ApiResponse } from '../types';
 
 export const reservationsApi = {
-  async getAll(status?: 'pending' | 'approved' | 'rejected' | 'postponed'): Promise<{ data: Reservation[]; meta?: any }> {
-    const params = status ? { status } : {};
+  async getAll(status?: 'pending' | 'approved' | 'rejected' | 'postponed', mine?: boolean): Promise<{ data: Reservation[]; meta?: any }> {
+    const params: any = {};
+    if (status) params.status = status;
+    if (mine) params.mine = 'true';
     const response = await apiClient.get<{ data: Reservation[]; meta?: any }>('/reservations', { params });
     return response.data;
   },

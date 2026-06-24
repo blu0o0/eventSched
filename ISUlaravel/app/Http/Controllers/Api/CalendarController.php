@@ -19,11 +19,6 @@ class CalendarController extends Controller
 
         $query = Reservation::with(['venue', 'user']);
 
-        // Non-admins can only see their own reservations
-        if (!$user->isAdministrator()) {
-            $query->where('user_id', $user->id);
-        }
-
         // Filter by date range if provided
         if ($request->has('start')) {
             $query->where('date', '>=', $request->start);

@@ -5,7 +5,7 @@
         <ion-buttons slot="start">
           <ion-menu-button></ion-menu-button>
         </ion-buttons>
-        <ion-title>Reservations</ion-title>
+        <ion-title>{{ showingMineOnly ? 'My Requests' : 'Reservations' }}</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="$router.push('/reservations/create')">
             <ion-icon :icon="addOutline" slot="icon-only" />
@@ -93,16 +93,24 @@ import { reservationsApi } from '../api/reservations';
 import { useApi } from '../composables/useApi';
 import { Reservation } from '../types';
 
+import { useRoute } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+
 const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 const { loading, execute } = useApi<{ data: Reservation[]; meta?: any }>();
 const reservations = ref<Reservation[]>([]);
 const selectedTab = ref<'all' | 'pending' | 'approved' | 'postponed' | 'rejected'>('all');
+const showingMineOnly = ref(false);
 
 async function loadReservations() {
   const status = selectedTab.value === 'all' ? undefined : selectedTab.value;
-  const data = await execute(() => reservationsApi.getAll(status));
+  const mine = route.query.mine === 'true';
+  const data = await execute(() => reservationsApi.getAll(status, mine));
   if (data) {
     reservations.value = data.data;
+    showingMineOnly.value = mine;
   }
 }
 

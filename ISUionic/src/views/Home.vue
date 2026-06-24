@@ -64,37 +64,43 @@
             </ion-card>
           </div>
 
-          <!-- Right: Quick Actions -->
+          <!-- Right: Quick Actions (Laravel-style compact cards) -->
           <div class="dashboard-right">
-            <ion-card class="action-card action-card-primary" @click="$router.push('/reservations/create')">
-              <ion-card-content>
-                <div class="action-content">
-                  <div class="action-icon-wrapper action-icon-primary">
-                    <ion-icon :icon="addCircleOutline" />
-                  </div>
-                  <div class="action-text">
-                    <h3>Create Reservation</h3>
-                    <p>Book a new venue reservation</p>
-                  </div>
-                  <ion-icon :icon="chevronForwardOutline" class="action-arrow" />
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 1px solid #a5d6a7; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/reservations/create')">
+              <div class="d-flex align-items-center gap-3">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);">
+                  <ion-icon :icon="addCircleOutline" />
                 </div>
-              </ion-card-content>
-            </ion-card>
+                <div>
+                  <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #2e7d32;">Create Reservation</p>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #558b2f; font-weight: 500;">Book a new venue</p>
+                </div>
+              </div>
+            </div>
 
-            <ion-card class="action-card action-card-danger" @click="$router.push('/emergency/create')">
-              <ion-card-content>
-                <div class="action-content">
-                  <div class="action-icon-wrapper action-icon-danger">
-                    <ion-icon :icon="warningOutline" />
-                  </div>
-                  <div class="action-text">
-                    <h3>Report Emergency</h3>
-                    <p>Report an urgent issue</p>
-                  </div>
-                  <ion-icon :icon="chevronForwardOutline" class="action-arrow" />
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border: 1px solid #f48fb1; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/emergency/create')">
+              <div class="d-flex align-items-center gap-3">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ef5350 0%, #c62828 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(239, 83, 80, 0.3);">
+                  <ion-icon :icon="warningOutline" />
                 </div>
-              </ion-card-content>
-            </ion-card>
+                <div>
+                  <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #c62828;">Report Emergency</p>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #b71c1c; font-weight: 500;">Report an urgent issue</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #90caf9; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/reservations?mine=true')">
+              <div class="d-flex align-items-center gap-3">
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #42a5f5 0%, #1565c0 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);">
+                  <ion-icon :icon="listCircleOutline" />
+                </div>
+                <div>
+                  <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #1565c0;">View My Requests</p>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #0d47a1; font-weight: 500;">Your bookings</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -132,7 +138,7 @@
             </div>
           </div>
 
-          <!-- Recent Reservations View -->
+          <!-- Recent Reservations View (shows all) -->
           <div v-else class="recent-reservations">
             <LoadingSpinner v-if="loading && !recentReservations.length" />
             <div v-else-if="recentReservations.length > 0">
@@ -184,7 +190,7 @@ import {
   calendarOutline,
   addCircleOutline,
   warningOutline,
-  chevronForwardOutline,
+  listCircleOutline,
   listOutline,
 } from 'ionicons/icons';
 import ReservationCard from '../components/ReservationCard.vue';
@@ -205,7 +211,12 @@ const calendarEvents = ref<CalendarEvent[]>([]);
 const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
 const activeTab = ref<'calendar' | 'reservations'>('calendar');
 
-const user = computed(() => authStore.user || { name: 'User' });
+const user = computed(() => authStore.user || { name: 'User', id: 0 });
+
+// Filter reservations to only show the current user's
+const myReservations = computed(() => 
+  allReservations.value.filter((r) => r.user_id === (user.value as any).id)
+);
 
 const stats = computed(() => {
   const total = allReservations.value.length;
@@ -218,7 +229,7 @@ const stats = computed(() => {
 const calendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
-  headerToolbar: false,
+  headerToolbar: false as any,
   events: [],
   eventClick: (info: any) => {
     const event = info.event;
@@ -229,16 +240,9 @@ const calendarOptions = {
       router.push(`/reservations/${event.id}`);
     }
   },
-  height: 'auto',
+  height: 'auto' as any,
   eventDisplay: 'block',
 };
-
-function changeView(view: string) {
-  if (calendarRef.value) {
-    const calendarApiInstance = calendarRef.value.getApi();
-    calendarApiInstance.changeView(view);
-  }
-}
 
 function initChart() {
   nextTick(() => {
@@ -255,19 +259,17 @@ function initChart() {
     }
 
     const total = stats.value.total;
-    const chart = new Chart(ctx, {
+    const chart = new (window as any).Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['Pending', 'Approved', 'Rejected'],
         datasets: [{
           data: [stats.value.pending, stats.value.approved, stats.value.rejected],
           backgroundColor: [
-            'rgba(255, 202, 40, 0.9)',
-            'rgba(102, 187, 106, 0.9)',
-            'rgba(229, 115, 115, 0.9)'
+            'rgba(255, 213, 79, 0.85)',
+            'rgba(129, 199, 132, 0.85)',
+            'rgba(239, 154, 154, 0.85)'
           ],
-          borderColor: ['#f9a825', '#43a047', '#e53935'],
-          borderWidth: 3,
           hoverOffset: 8
         }]
       },
@@ -340,7 +342,7 @@ async function loadCalendarEvents() {
     if (calendarRef.value) {
       const calendarApiInstance = calendarRef.value.getApi();
       calendarApiInstance.removeAllEvents();
-      calendarApiInstance.addEventSource(data);
+      calendarApiInstance.addEventSource(data as any);
     }
   }
 }
@@ -393,7 +395,7 @@ onMounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 12px;
 }
 
 /* Chart Card */
@@ -470,84 +472,31 @@ onMounted(() => {
   border-top: 1px solid #e5e7eb;
 }
 
-/* Action Cards */
-.action-card {
-  margin: 0;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-  overflow: hidden;
-  border: 1px solid #e5e7eb;
+/* Compact Action Cards - Laravel Style with hover effect */
+.compact-action-card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.action-card:active {
+.compact-action-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.compact-action-card:active {
   transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.action-card-primary {
-  border-left: 4px solid var(--ion-color-primary);
-}
-
-.action-card-danger {
-  border-left: 4px solid var(--ion-color-danger);
-}
-
-.action-content {
+.d-flex {
   display: flex;
+}
+
+.align-items-center {
   align-items: center;
-  gap: 14px;
 }
 
-.action-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.action-icon-primary {
-  background: linear-gradient(135deg, var(--ion-color-primary) 0%, rgba(30, 93, 63, 1) 100%);
-  color: white;
-}
-
-.action-icon-danger {
-  background: linear-gradient(135deg, var(--ion-color-danger) 0%, rgba(220, 53, 69, 1) 100%);
-  color: white;
-}
-
-.action-icon-wrapper ion-icon {
-  font-size: 1.5rem;
-}
-
-.action-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.action-text h3 {
-  margin: 0 0 2px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #111827;
-  line-height: 1.3;
-}
-
-.action-text p {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #6b7280;
-  line-height: 1.4;
-}
-
-.action-arrow {
-  font-size: 1.2rem;
-  color: #9ca3af;
-  flex-shrink: 0;
+.gap-3 {
+  gap: 12px;
 }
 
 /* Toggle Section */
