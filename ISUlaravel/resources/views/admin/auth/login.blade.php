@@ -100,13 +100,32 @@
             transition: all 0.3s ease;
         }
         .form-control:focus {
-            background-color: #ffffff;
             border: 2px solid #2d8659;
             box-shadow: 0 0 0 0.2rem rgba(45, 134, 89, 0.15);
             outline: none;
         }
         .form-control::placeholder {
             color: #81c784;
+        }
+        .password-wrapper {
+            position: relative;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #2d8659;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 18px;
+            z-index: 10;
+            transition: color 0.3s ease;
+        }
+        .password-toggle:hover {
+            color: #1e5d3f;
         }
         .btn-login {
             background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
@@ -223,14 +242,20 @@
                     >
                 </div>
                 <div class="form-group">
-                    <input 
-                        type="password" 
-                        class="form-control" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Password"
-                        required
-                    >
+                    <div class="password-wrapper">
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Password"
+                            required
+                            style="padding-right: 50px;"
+                        >
+                        <button type="button" class="password-toggle" id="passwordToggle">
+                            <i class="bi bi-eye" id="passwordIcon"></i>
+                        </button>
+                    </div>
                 </div>
                 <input type="hidden" name="recaptcha_token" id="recaptcha_token">
                 <button type="submit" class="btn btn-login">
@@ -251,6 +276,23 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Password visibility toggle
+        const passwordToggle = document.getElementById('passwordToggle');
+        const passwordInput = document.getElementById('password');
+        const passwordIcon = document.getElementById('passwordIcon');
+
+        passwordToggle.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('bi-eye');
+                passwordIcon.classList.add('bi-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('bi-eye-slash');
+                passwordIcon.classList.add('bi-eye');
+            }
+        });
+
         document.querySelector('form').addEventListener('submit', function(e) {
             e.preventDefault();
             

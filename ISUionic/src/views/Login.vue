@@ -29,15 +29,22 @@
                 <ion-note v-if="errors.email" color="danger" class="error-note">{{ errors.email }}</ion-note>
               </div>
 
-              <div class="form-group">
+              <div class="form-group password-group">
                 <ion-input
                   v-model="form.password"
-                  type="password"
+                  :type="showPassword ? 'text' : 'password'"
                   placeholder="Password"
                   class="custom-input"
                   :class="{ 'ion-invalid': errors.password }"
                   @ion-input="clearError('password')"
                 ></ion-input>
+                <ion-button
+                  fill="clear"
+                  class="password-toggle"
+                  @click="showPassword = !showPassword"
+                >
+                  <ion-icon :icon="showPassword ? eyeOffOutline : eyeOutline"></ion-icon>
+                </ion-button>
                 <ion-note v-if="errors.password" color="danger" class="error-note">{{ errors.password }}</ion-note>
               </div>
 
@@ -99,7 +106,7 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
 import { RECAPTCHA_SITE_KEY } from '../config/env';
@@ -111,6 +118,8 @@ const form = ref({
   email: '',
   password: '',
 });
+
+const showPassword = ref(false);
 
 const errors = ref<Record<string, string>>({});
 
@@ -239,6 +248,8 @@ onUnmounted(() => {
   justify-content: center;
   min-height: 100%;
   padding: 2rem 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .login-card {
@@ -310,6 +321,33 @@ onUnmounted(() => {
   margin-bottom: 20px;
 }
 
+.password-group {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  --background: transparent;
+  --background-hover: transparent;
+  --color: #2d8659;
+  --color-hover: #1e5d3f;
+  font-size: 20px;
+  z-index: 10;
+  margin: 0;
+  padding: 5px;
+  min-width: 32px;
+  height: 32px;
+  --border-color: transparent;
+  --box-shadow: none;
+}
+
+.password-toggle:hover {
+  --color: #1e5d3f;
+}
+
 .custom-input {
   --background: #e8f5e9;
   --color: #1e5d3f;
@@ -324,13 +362,16 @@ onUnmounted(() => {
   transition: all 0.3s ease;
 }
 
+.password-group .custom-input {
+  --padding-end: 50px;
+}
+
 .custom-input.ion-invalid {
   --background: #ffebee;
   --border-color: #dc3545;
 }
 
 .custom-input:focus-within {
-  --background: #ffffff;
   border-color: #2d8659;
   box-shadow: 0 0 0 0.2rem rgba(45, 134, 89, 0.15);
 }
@@ -353,9 +394,27 @@ onUnmounted(() => {
   height: 48px;
   box-shadow: 0 4px 12px rgba(45, 134, 89, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-login::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-login:hover::before {
+  left: 100%;
 }
 
 .btn-login:hover {
+  --background: linear-gradient(135deg, #1e5d3f 0%, #2d8659 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(45, 134, 89, 0.4);
 }
@@ -416,4 +475,3 @@ onUnmounted(() => {
 }
 
 </style>
-
