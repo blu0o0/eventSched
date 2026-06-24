@@ -115,14 +115,21 @@
             right: 15px;
             top: 50%;
             transform: translateY(-50%);
-            background: none;
+            background: white;
             border: none;
             color: #2d8659;
             cursor: pointer;
-            padding: 5px;
+            padding: 8px;
             font-size: 18px;
             z-index: 10;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            min-width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .password-toggle:hover {
             color: #1e5d3f;
