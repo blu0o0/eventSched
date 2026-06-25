@@ -2,9 +2,15 @@
   <ion-page>
     <ion-content :fullscreen="true" class="login-content">
       <div class="login-container">
+        <div class="home-button-container">
+          <ion-button fill="clear" @click="$router.push('/home')" class="home-button">
+            <ion-icon :icon="homeOutline" slot="start"></ion-icon>
+            Home
+          </ion-button>
+        </div>
         <div class="login-card">
           <div class="login-header">
-            <div class="logo-container">
+          <div class="logo-container">
               <div class="logo-circle">
                 <img src="https://th.bing.com/th/id/OIP.YFWeW9_VhHAAEQFvvsJxhgAAAA?o=7&rm=3&rs=1&pid=ImgDetMain" alt="ISU Logo" class="logo-image">
               </div>
@@ -12,10 +18,10 @@
                 <h3>Event Scheduling Reservation System - ISU Santiago</h3>
                 <p>Event Scheduling & Management</p>
               </div>
-            </div>
           </div>
+        </div>
 
-          <div class="login-body">
+        <div class="login-body">
             <form @submit.prevent="handleLogin">
               <div class="form-group">
                 <ion-input
@@ -61,12 +67,12 @@
               </ion-button>
             </form>
 
-            <div class="links">
+            <div class="links-row">
               <ion-button fill="clear" @click="$router.push('/forgot-password')" class="forgot-link">
                 Forgot Password?
               </ion-button>
               <ion-button fill="clear" @click="$router.push('/register')" class="register-link">
-                Don't have an account? Register
+                Sign In
               </ion-button>
             </div>
           </div>
@@ -109,7 +115,7 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline, homeOutline } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
 import { RECAPTCHA_SITE_KEY } from '../config/env';
@@ -247,12 +253,9 @@ onUnmounted(() => {
 
 .login-container {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100%;
-  padding: 2rem 1rem;
-  position: relative;
-  z-index: 1;
 }
 
 .login-card {
@@ -433,22 +436,55 @@ onUnmounted(() => {
   transform: none;
 }
 
-.links {
+
+
+.home-button-container {
+  padding-right: 75vh;
+  max-width: 20px;
+  width: 100%;
+  margin: 0 auto 10px;
+}
+
+.home-button {
+  --color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: solid 2px rgb(55, 81, 47);
+  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  margin: 0;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(45, 134, 89, 0.3);
+}
+
+.home-button:hover {
+  --background: #405b42;
+}
+
+.home-button ion-icon {
+  margin-right: 6px;
+}
+
+.links-row {
   margin-top: 1.5rem;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .forgot-link {
   --color: #2d8659;
   font-size: 13px;
   font-weight: 400;
-  margin-bottom: 4px;
+  flex: 1;
 }
 
 .register-link {
   --color: #2d8659;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  flex: 1;
 }
 
 .login-footer {

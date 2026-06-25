@@ -9,7 +9,7 @@ export function useRequireAuth() {
   const isShowingPrompt = ref(false);
 
   /**
-   * Shows a login prompt to unauthenticated users
+   * Automatically redirects to login page if not authenticated
    * Returns true if user is authenticated, false otherwise
    */
   async function requireAuth(message: string = 'You need to be logged in to perform this action.'): Promise<boolean> {
@@ -18,53 +18,13 @@ export function useRequireAuth() {
       return true;
     }
 
-    // Prevent multiple prompts
-    if (isShowingPrompt.value) {
-      return false;
-    }
-
-    isShowingPrompt.value = true;
-
-    try {
-      const alert = await alertController.create({
-        header: 'Login Required',
-        message: `${message} Would you like to login or sign up?`,
-        buttons: [
-          {
-            text: 'Cancel',
-            role: 'cancel',
-            handler: () => {
-              return false;
-            }
-          },
-          {
-            text: 'Login',
-            handler: () => {
-              router.push({
-                path: '/login',
-                query: { redirect: router.currentRoute.value.fullPath }
-              });
-              return false;
-            }
-          },
-          {
-            text: 'Sign Up',
-            handler: () => {
-              router.push({
-                path: '/register',
-                query: { redirect: router.currentRoute.value.fullPath }
-              });
-              return false;
-            }
-          }
-        ]
-      });
-
-      await alert.present();
-      return false;
-    } finally {
-      isShowingPrompt.value = false;
-    }
+    // Redirect to login page with redirect parameter
+    router.push({
+      path: '/login',
+      query: { redirect: router.currentRoute.value.fullPath }
+    });
+    
+    return false;
   }
 
   /**

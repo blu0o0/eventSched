@@ -26,10 +26,21 @@ class ReservationController extends Controller
         $user = $request->user();
 
         $query = Reservation::with(['venue', 'user']);
-
-        // Filter by mine=true for personal reservations
-        if ($request->has('mine') && $request->mine === 'true') {
+        
+        // If user is authenticated, filter by mine parameter
+        if ($user && $request->has('mine') && $request->mine === 'true') {
             $query->where('user_id', $user->id);
+        } elseif (!$user && $request->has('mine') && $request->mine === 'true') {
+            // If not authenticated and mine=true, return empty result
+            return response()->json([
+                'data' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'last_page' => 1,
+                    'per_page' => 15,
+                    'total' => 0,
+                ],
+            ]);
         }
 
         // Filter by status if provided
@@ -90,8 +101,7 @@ class ReservationController extends Controller
      */
     public function show(Reservation $reservation): JsonResponse
     {
-        $this->authorize('view', $reservation);
-
+        // Allow public viewing of reservations
         // Check if venue is unavailable and automatically postpone if needed
         $reservation->load('venue');
         if ($reservation->isApproved() && $reservation->venue && $reservation->venue->isUnavailable()) {

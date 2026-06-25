@@ -74,4 +74,82 @@ ion-toolbar {
 ion-content {
   --background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
 }
+
+/* Custom Alert Dialog Styling for Login Required */
+:deep(.auth-required-alert) {
+  --background: white;
+  --border-radius: 16px;
+  --box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  margin: 0 20px;
+}
+
+:deep(.auth-required-alert .alert-header) {
+  background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  color: white;
+  padding: 20px;
+  border-radius: 16px 16px 0 0;
+}
+
+:deep(.auth-required-alert .alert-title) {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+}
+
+:deep(.auth-required-alert .alert-message) {
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 20px;
+  text-align: center;
+}
+
+:deep(.auth-required-alert .alert-button-group) {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:deep(.auth-required-alert .alert-button) {
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  min-height: 44px;
+  margin: 0;
+  text-transform: none;
+}
+
+:deep(.alert-cancel-btn) {
+  --color: #6b7280;
+  --background: #f3f4f6;
+}
+
+:deep(.alert-cancel-btn:hover) {
+  --background: #e5e7eb;
+}
+
+:deep(.alert-login-btn) {
+  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  --color: white;
+  box-shadow: 0 4px 12px rgba(45, 134, 89, 0.3);
+}
+
+:deep(.alert-login-btn:hover) {
+  --background: linear-gradient(135deg, #1e5d3f 0%, #2d8659 100%);
+  box-shadow: 0 6px 20px rgba(45, 134, 89, 0.4);
+}
+
+:deep(.alert-signup-btn) {
+  --background: linear-gradient(135deg, #42a5f5 0%, #1565c0 100%);
+  --color: white;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+:deep(.alert-signup-btn:hover) {
+  --background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
 </style>
