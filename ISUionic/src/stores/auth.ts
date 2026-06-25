@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     password: string;
     password_confirmation: string;
     role?: 'main_proponent' | 'general_user';
+    email_verified: boolean;
   }) {
     isLoading.value = true;
     try {
@@ -75,20 +76,16 @@ export const useAuthStore = defineStore('auth', () => {
       const storedUser = await storage.getUser();
 
       if (storedToken && storedUser) {
-        // Immediately restore auth state from storage
         token.value = storedToken;
         user.value = storedUser;
         isInitialized.value = true;
         
-        // Verify token is still valid in the background (non-blocking)
         authApi.getCurrentUser()
           .then((currentUser) => {
             user.value = currentUser;
             storage.setUser(currentUser);
           })
           .catch((error) => {
-            // Token invalid, clear auth but don't redirect here
-            // The API interceptor will handle 401 errors
             console.error('Token validation failed:', error);
           });
         
@@ -98,7 +95,6 @@ export const useAuthStore = defineStore('auth', () => {
       return false;
     } catch (error) {
       console.error('Auth check error:', error);
-      // Clear any corrupted data
       token.value = null;
       user.value = null;
       isInitialized.value = true;
@@ -138,4 +134,3 @@ export const useAuthStore = defineStore('auth', () => {
     clearAuth,
   };
 });
-

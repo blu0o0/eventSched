@@ -17,8 +17,10 @@ class AuthController extends Controller
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
             'role' => 'nullable|in:main_proponent,general_user',
+            'email_verified' => 'required|boolean|accepted',
         ], [
             'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
+            'email_verified.accepted' => 'Email must be verified before registering.',
         ]);
 
         $user = User::create([
@@ -26,6 +28,7 @@ class AuthController extends Controller
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
             'role' => $data['role'] ?? 'general_user',
+            'email_verified' => true, // Already verified via OTP
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -52,9 +55,7 @@ class AuthController extends Controller
             ]);
         }
 
-
-
-        $token = $user->createToken('api-token')->plainTextToken;
+        $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'user' => $user,

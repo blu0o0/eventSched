@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth';
 // Lazy load views
 const Login = () => import('../views/Login.vue');
 const Register = () => import('../views/Register.vue');
+const ForgotPassword = () => import('../views/ForgotPassword.vue');
 const Home = () => import('../views/Home.vue');
 const Venues = () => import('../views/Venues.vue');
 const VenueDetail = () => import('../views/VenueDetail.vue');
@@ -31,6 +32,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/register',
     name: 'Register',
     component: Register,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
     meta: { requiresAuth: false }
   },
   {

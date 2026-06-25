@@ -7,10 +7,18 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\VenueController;
 use App\Http\Controllers\Api\EmergencyController;
 use App\Http\Controllers\Api\CalendarController;
+use App\Http\Controllers\Api\OtpController;
 
 // Public routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+
+// OTP routes
+Route::post('/auth/send-verification-otp', [OtpController::class, 'sendVerificationOtp']);
+Route::post('/auth/verify-email-otp', [OtpController::class, 'verifyEmailOtp']);
+Route::post('/forgot-password/send-otp', [OtpController::class, 'sendResetOtp']);
+Route::post('/forgot-password/verify-otp', [OtpController::class, 'verifyResetOtpOnly']);
+Route::post('/forgot-password/reset-password', [OtpController::class, 'verifyResetOtpAndReset']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {

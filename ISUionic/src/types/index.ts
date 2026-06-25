@@ -93,6 +93,22 @@ export interface RegisterData {
   role?: 'main_proponent' | 'general_user';
 }
 
+export interface OtpSendResponse {
+  message: string;
+}
+
+export interface OtpVerifyResponse {
+  message: string;
+  email_verified?: boolean;
+}
+
+export interface ForgotPasswordData {
+  email: string;
+  otp: string;
+  password: string;
+  password_confirmation: string;
+}
+
 export interface CreateReservationData {
   title: string;
   description?: string;

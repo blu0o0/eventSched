@@ -25,6 +25,7 @@ export function useAuth() {
     password: string;
     password_confirmation: string;
     role?: 'main_proponent' | 'general_user';
+    email_verified: boolean;
   }) => {
     try {
       await authStore.register(data);
@@ -48,4 +49,3 @@ export function useAuth() {
     logout,
   };
 }
-

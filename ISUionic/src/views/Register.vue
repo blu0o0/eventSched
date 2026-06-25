@@ -22,7 +22,6 @@
           </div>
 
           <div class="register-body">
-
             <form @submit.prevent="handleRegister">
               <div class="form-group">
                 <ion-input
@@ -36,16 +35,56 @@
                 <ion-note v-if="errors.name" color="danger" class="error-note">{{ errors.name }}</ion-note>
               </div>
 
-              <div class="form-group">
-                <ion-input
-                  v-model="form.email"
-                  type="email"
-                  placeholder="Email"
-                  class="custom-input"
-                  :class="{ 'ion-invalid': errors.email }"
-                  @ion-input="clearError('email')"
-                ></ion-input>
+              <div class="form-group email-group">
+                <div class="email-row">
+                  <ion-input
+                    v-model="form.email"
+                    type="email"
+                    placeholder="Email"
+                    class="custom-input email-input"
+                    :class="{ 'ion-invalid': errors.email }"
+                    @ion-input="clearError('email')"
+                  ></ion-input>
+                  <ion-button
+                    class="btn-send-code"
+                    :disabled="otpSending || !form.email || cooldown > 0"
+                    @click="handleSendOtp"
+                  >
+                    <ion-spinner v-if="otpSending" name="crescent"></ion-spinner>
+                    <span v-else>{{ cooldown > 0 ? `${cooldown}s` : (otpSent ? 'Resend' : 'Send Code') }}</span>
+                  </ion-button>
+                </div>
                 <ion-note v-if="errors.email" color="danger" class="error-note">{{ errors.email }}</ion-note>
+                <ion-note v-if="otpSent && !emailVerified" color="success" class="helper-note">
+                  Verification code sent! Please check your email.
+                </ion-note>
+              </div>
+
+              <div v-if="otpSent" class="form-group otp-group">
+                <div class="otp-row">
+                  <ion-input
+                    v-model="form.otp"
+                    type="text"
+                    inputmode="numeric"
+                    :maxlength="6"
+                    placeholder="Enter 6-digit code"
+                    class="custom-input otp-input"
+                    :class="{ 'ion-invalid': errors.otp }"
+                    @ion-input="clearError('otp')"
+                  ></ion-input>
+                  <ion-button
+                    class="btn-verify-code"
+                    :disabled="otpVerifying || form.otp.length !== 6 || emailVerified"
+                    @click="handleVerifyOtp"
+                  >
+                    <ion-spinner v-if="otpVerifying" name="crescent"></ion-spinner>
+                    <span v-else>{{ emailVerified ? 'Verified' : 'Verify' }}</span>
+                  </ion-button>
+                </div>
+                <ion-note v-if="errors.otp" color="danger" class="error-note">{{ errors.otp }}</ion-note>
+                <ion-note v-if="emailVerified" color="success" class="helper-note">
+                  <ion-icon :icon="checkmarkCircle"></ion-icon> Email verified successfully!
+                </ion-note>
               </div>
 
               <div class="form-group password-group">
@@ -104,7 +143,7 @@
               <ion-button
                 expand="block"
                 type="submit"
-                :disabled="loading || !isFormValid"
+                :disabled="loading || !isFormValid || !emailVerified"
                 class="btn-register"
               >
                 <ion-spinner v-if="loading" name="crescent"></ion-spinner>
@@ -135,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import {
   IonPage,
   IonHeader,
@@ -151,9 +190,10 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline, eye, eyeOff } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eye, eyeOff, checkmarkCircle } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
+import { authApi } from '../api/auth';
 
 const { register, isLoading } = useAuth();
 const loading = isLoading;
@@ -161,6 +201,7 @@ const loading = isLoading;
 const form = ref({
   name: '',
   email: '',
+  otp: '',
   password: '',
   password_confirmation: '',
   role: 'general_user' as 'main_proponent' | 'general_user',
@@ -171,6 +212,12 @@ const passwordTouched = ref(false);
 const passwordError = ref('');
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+const otpSending = ref(false);
+const otpSent = ref(false);
+const emailVerified = ref(false);
+const otpVerifying = ref(false);
+const cooldown = ref(0);
+let cooldownTimer: number | null = null;
 
 const isFormValid = computed(() => {
   return (
@@ -180,7 +227,8 @@ const isFormValid = computed(() => {
     validators.required(form.value.password) &&
     validators.passwordStrong(form.value.password) &&
     validators.required(form.value.password_confirmation) &&
-    validators.passwordMatch(form.value.password, form.value.password_confirmation)
+    validators.passwordMatch(form.value.password, form.value.password_confirmation) &&
+    emailVerified.value
   );
 });
 
@@ -212,7 +260,93 @@ function validatePassword(): void {
   }
 }
 
-function validateForm(): boolean {
+function startCooldown() {
+  cooldown.value = 60;
+  cooldownTimer = window.setInterval(() => {
+    cooldown.value--;
+    if (cooldown.value <= 0 && cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+  }, 1000);
+}
+
+async function handleVerifyOtp() {
+  errors.value = {};
+  
+  if (!form.value.otp || form.value.otp.length !== 6) {
+    errors.value.otp = 'Please enter the 6-digit code';
+    return;
+  }
+
+  otpVerifying.value = true;
+  try {
+    const response = await authApi.verifyEmailOtp(form.value.email, form.value.otp);
+    if (response.email_verified) {
+      emailVerified.value = true;
+      errors.value.otp = '';
+      const toast = await toastController.create({
+        message: 'Email verified successfully!',
+        duration: 2000,
+        color: 'success',
+      });
+      await toast.present();
+    } else {
+      errors.value.otp = 'Verification failed. Please try again.';
+    }
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || 'Invalid verification code.';
+    errors.value.otp = errorMessage;
+    const toast = await toastController.create({
+      message: errorMessage,
+      duration: 3000,
+      color: 'danger',
+    });
+    await toast.present();
+  } finally {
+    otpVerifying.value = false;
+  }
+}
+
+async function handleSendOtp() {
+  errors.value = {};
+
+  if (!form.value.email) {
+    errors.value.email = 'Please enter your email first';
+    return;
+  }
+
+  otpSending.value = true;
+  try {
+    await authApi.sendVerificationOtp(form.value.email);
+    otpSent.value = true;
+    emailVerified.value = false;
+    form.value.otp = '';
+    startCooldown();
+    const toast = await toastController.create({
+      message: 'Verification code sent to your email!',
+      duration: 3000,
+      color: 'success',
+    });
+    await toast.present();
+  } catch (err: any) {
+    const message = err.response?.data?.message || 'Failed to send verification code.';
+    if (err.response?.data?.errors?.email) {
+      errors.value.email = err.response.data.errors.email[0];
+    } else {
+      const toast = await toastController.create({
+        message,
+        duration: 3000,
+        color: 'danger',
+      });
+      await toast.present();
+    }
+  } finally {
+    otpSending.value = false;
+  }
+}
+
+async function handleRegister() {
   errors.value = {};
 
   if (!validators.required(form.value.name)) {
@@ -227,33 +361,31 @@ function validateForm(): boolean {
 
   if (!validators.required(form.value.password)) {
     errors.value.password = 'Password is required';
-  } else {
-    if (!validators.password(form.value.password)) {
-      errors.value.password = 'Password must be at least 8 characters';
-    } else if (!validators.hasLetter(form.value.password)) {
-      errors.value.password = 'Password must contain at least one letter (a-z, A-Z)';
-    } else if (!validators.hasNumber(form.value.password)) {
-      errors.value.password = 'Password must contain at least one number (0-9)';
-    } else if (!validators.hasSymbol(form.value.password)) {
-      errors.value.password = 'Password must contain at least one symbol (@$!%*?&.,)';
-    }
+  }
+
+  // OTP verification is REQUIRED - check this first before anything else
+  if (!emailVerified.value) {
+    errors.value.email = 'Please verify your email first by entering the OTP code.';
+    return;
+  }
+
+  if (!validators.password(form.value.password)) {
+    errors.value.password = 'Password must be at least 8 characters';
+  } else if (!validators.hasLetter(form.value.password)) {
+    errors.value.password = 'Password must contain at least one letter';
+  } else if (!validators.hasNumber(form.value.password)) {
+    errors.value.password = 'Password must contain at least one number';
+  } else if (!validators.hasSymbol(form.value.password)) {
+    errors.value.password = 'Password must contain at least one symbol';
   }
 
   if (!validators.required(form.value.password_confirmation)) {
     errors.value.password_confirmation = 'Please confirm your password';
-  } else if (
-    !validators.passwordMatch(form.value.password, form.value.password_confirmation)
-  ) {
+  } else if (form.value.password !== form.value.password_confirmation) {
     errors.value.password_confirmation = 'Passwords do not match';
   }
 
-  return Object.keys(errors.value).length === 0;
-}
-
-async function handleRegister() {
-  if (!validateForm()) {
-    return;
-  }
+  if (Object.keys(errors.value).length > 0) return;
 
   try {
     await register({
@@ -262,6 +394,7 @@ async function handleRegister() {
       password: form.value.password,
       password_confirmation: form.value.password_confirmation,
       role: form.value.role,
+      email_verified: true,
     });
     const toast = await toastController.create({
       message: 'Registration successful!',
@@ -271,8 +404,7 @@ async function handleRegister() {
     });
     await toast.present();
   } catch (error: any) {
-    const errorMessage =
-      error.response?.data?.message || error.message || 'Registration failed. Please try again.';
+    const errorMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
     const toast = await toastController.create({
       message: errorMessage,
       duration: 3000,
@@ -282,6 +414,12 @@ async function handleRegister() {
     await toast.present();
   }
 }
+
+onUnmounted(() => {
+  if (cooldownTimer) {
+    clearInterval(cooldownTimer);
+  }
+});
 </script>
 
 <style scoped>
@@ -385,6 +523,68 @@ async function handleRegister() {
   margin-bottom: 20px;
 }
 
+.email-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.email-input {
+  flex: 1;
+}
+
+.btn-send-code {
+  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  --color: white;
+  --border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 44px;
+  min-width: 100px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.btn-send-code:disabled {
+  --background: #6c757d;
+  opacity: 0.6;
+}
+
+.otp-group {
+  margin-bottom: 20px;
+}
+
+.otp-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.otp-input {
+  flex: 1;
+}
+
+.btn-verify-code {
+  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
+  --color: white;
+  --border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  height: 44px;
+  min-width: 100px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.btn-verify-code:disabled {
+  --background: #6c757d;
+  opacity: 0.6;
+}
+
 .password-group {
   position: relative;
 }
@@ -435,6 +635,12 @@ async function handleRegister() {
   --background: #ffffff;
   border-color: #2d8659;
   box-shadow: 0 0 0 0.2rem rgba(45, 134, 89, 0.15);
+}
+
+.otp-input {
+  text-align: center;
+  font-size: 24px;
+  letter-spacing: 6px;
 }
 
 .custom-select {
@@ -532,4 +738,3 @@ async function handleRegister() {
   font-size: 16px;
 }
 </style>
-

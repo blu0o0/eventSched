@@ -62,6 +62,9 @@
             </form>
 
             <div class="links">
+              <ion-button fill="clear" @click="$router.push('/forgot-password')" class="forgot-link">
+                Forgot Password?
+              </ion-button>
               <ion-button fill="clear" @click="$router.push('/register')" class="register-link">
                 Don't have an account? Register
               </ion-button>
@@ -433,6 +436,13 @@ onUnmounted(() => {
 .links {
   margin-top: 1.5rem;
   text-align: center;
+}
+
+.forgot-link {
+  --color: #2d8659;
+  font-size: 13px;
+  font-weight: 400;
+  margin-bottom: 4px;
 }
 
 .register-link {
