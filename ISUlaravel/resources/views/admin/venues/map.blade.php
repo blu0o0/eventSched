@@ -3,70 +3,79 @@
 @section('title', 'Venue Map')
 
 @section('content')
-<div class="venue-map-container" style="padding: 0; height: calc(100vh - 60px);">
-    <div class="row" style="height: 100%; margin: 0;">
-        <!-- Sidebar -->
-        <div class="col-md-3 col-lg-3" style="padding: 0.5; background: #f8f9fa; border-right: 1px solid #dee2e6; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);">
-            <div style="background: #367c48; color: white; padding: 16px;">
-                <h5 style="margin: 0; font-size: 18px; font-weight: 600; color: #ffffff;">Venues</h5>
-                <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9; color: #86efac;">{{ count($venues) }} venue(s) found</p>
-            </div>
-            
-            <div style="padding: 20px; overflow-y: auto; height: calc(100% - 80px);">
-                @foreach($venues as $venue)
-                    @php
-                        $availability = $venueAvailability[$venue->id] ?? null;
-                        $statusClass = 'no-coords';
-                        $statusText = 'No Data';
-                        
-                        if ($availability) {
-                            if ($availability['is_available']) {
-                                $statusClass = 'available';
-                                $statusText = 'Available';
-                            } elseif ($availability['is_currently_occupied']) {
-                                $statusClass = 'occupied';
-                                $statusText = 'In Use';
-                            } else {
-                                $statusClass = 'reserved';
-                                $statusText = 'Reserved';
-                            }
-                        }
-                    @endphp
-                    
-                    <div class="venue-item {{ $selectedVenueId == $venue->id ? 'venue-selected' : '' }}" 
-                         onclick="selectVenue({{ $venue->id }})"
-                         style="background: white; padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                        <div class="venue-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">
-                            <div class="status-indicator {{ $statusClass }}" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></div>
-                        </div>
-                        <div class="venue-info" style="flex: 1; min-width: 0;">
-                            <h6 class="venue-name" style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">{{ $venue->name }}</h6>
-                            <p class="venue-location" style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0;">
-                                <i class="bi bi-geo-alt"></i> {{ $venue->location }}
-                            </p>
-                            <div class="venue-details" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                                <span class="venue-capacity" style="font-size: 12px; color: #4b5563;">
-                                    <i class="bi bi-people"></i> {{ $venue->capacity }} people
-                                </span>
-                                <span class="venue-status {{ $statusClass }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    {{ $statusText }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-                
-                @if(count($venues) == 0)
-                    <div class="no-venues" style="text-align: center; padding: 32px 16px; color: #6b7280;">
-                        <p>No venues available</p>
-                    </div>
-                @endif
-            </div>
+<div style="display: flex; height: calc(100vh - 20px); width: 100%;">
+    <!-- Sidebar -->
+    <div style="width: 350px; min-width: 350px; height: 100%; overflow-y: auto; background: #f8f9fa; border-right: 1px solid #dee2e6; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);">
+        <div style="background: #23754c; color: white; padding: 16px;">
+            <h5 style="margin: 0; font-size: 18px; font-weight: 600; color: #ffffff;">Venues</h5>
+            <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9; color: #86efac;">{{ count($venues) }} venue(s) found</p>
         </div>
+        
+        <div style="padding: 20px;">
+            @foreach($venues as $venue)
+                @php
+                    $availability = $venueAvailability[$venue->id] ?? null;
+                    $statusClass = 'no-coords';
+                    $statusText = 'No Data';
+                    
+                    if ($availability) {
+                        if ($availability['is_available']) {
+                            $statusClass = 'available';
+                            $statusText = 'Available';
+                        } elseif ($availability['is_currently_occupied']) {
+                            $statusClass = 'occupied';
+                            $statusText = 'In Use';
+                        } else {
+                            $statusClass = 'reserved';
+                            $statusText = 'Reserved';
+                        }
+                    }
+                @endphp
+                
+                <div class="venue-item {{ $selectedVenueId == $venue->id ? 'venue-selected' : '' }}" 
+                     onclick="selectVenue({{ $venue->id }})"
+                     style="background: white; padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                    <div class="venue-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">
+                        <div class="status-indicator {{ $statusClass }}" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></div>
+                    </div>
+                    <div class="venue-info" style="flex: 1; min-width: 0;">
+                        <h6 class="venue-name" style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">{{ $venue->name }}</h6>
+                        <p class="venue-location" style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0;">
+                            <i class="bi bi-geo-alt"></i> {{ $venue->location }}
+                        </p>
+                        <div class="venue-details" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <span class="venue-capacity" style="font-size: 12px; color: #4b5563;">
+                                <i class="bi bi-people"></i> {{ $venue->capacity }} people
+                            </span>
+                            <span class="venue-status {{ $statusClass }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                {{ $statusText }}
+                            </span>
+                        </div>
+                    </div>
+                    <i class="bi bi-chevron-right chevron-icon" style="color: #6b7280; font-size: 20px;"></i>
+                </div>
+            @endforeach
+            
+            @if(count($venues) == 0)
+                <div class="no-venues" style="text-align: center; padding: 32px 16px; color: #6b7280;">
+                    <p>No venues available</p>
+                </div>
+            @endif
+        </div>
+    </div>
 
-        <!-- Map -->
-        <div class="col-md-9 col-lg-9" style="padding: 0; position: relative;">
-            <div id="venueMap" style="height: 100%; width: 100%; background: #f5f5f5;"></div>
+    <!-- Main Content -->
+    <div style="flex: 1; display: flex; flex-direction: column; padding: 1rem; gap: 1rem; overflow-y: auto; height: 100%; position: relative;">
+        <!-- Loading State -->
+        @if(false)
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
+            <div>Loading venue map...</div>
+        </div>
+        @endif
+
+        <!-- Map Container -->
+        <div style="flex: 1; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); border: 1px solid #dee2e6; position: relative;">
+            <div id="venueMap" style="height: 100%; min-height: 500px; width: 100%; background: #f5f5f5; border-radius: 12px;"></div>
         </div>
     </div>
 </div>
@@ -75,11 +84,15 @@
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry"></script>
 
 <script>
+var map = null;
+var markers = [];
+var venues = [];
+
 document.addEventListener('DOMContentLoaded', function() {
     var selectedVenueId = {{ $selectedVenueId ?? 'null' }};
     
     // Initialize Google Map
-    var map = new google.maps.Map(document.getElementById('venueMap'), {
+    map = new google.maps.Map(document.getElementById('venueMap'), {
         center: { lat: 16.72249174514112, lng: 121.53739618722382 },
         zoom: 16,
         mapTypeId: 'satellite',
@@ -106,19 +119,19 @@ document.addEventListener('DOMContentLoaded', function() {
     campusBoundary.setMap(map);
 
     // Venue data from Laravel
-    var venues = @json($venues);
     var venueAvailability = @json($venueAvailability);
     var selectedDate = @json($selectedDate);
     var isAdministrator = {{ Auth::user()->isAdministrator() ? 'true' : 'false' }};
     var isOsas = {{ Auth::user()->isOsas() ? 'true' : 'false' }};
 
-    var markers = [];
     var bounds = new google.maps.LatLngBounds();
     
     campusBoundary.getPath().forEach(function(latLng) {
         bounds.extend(latLng);
     });
 
+    venues = @json($venues);
+    
     venues.forEach(function(venue) {
         var availability = venueAvailability[venue.id];
         var isAvailable = availability.is_available;
@@ -153,41 +166,41 @@ document.addEventListener('DOMContentLoaded', function() {
             statusBadge += ' <span class="badge bg-info">' + availability.reservation_count + ' Reservation(s)</span>';
         }
 
-        var popupContent = '<div style="min-width: 250px; max-width: 350px; padding: 5px;">' +
-            '<h6 style="margin: 0 0 10px 0; font-weight: bold; color: #333;">' + venue.name + '</h6>';
+        var popupContent = '<div class="map-popup">' +
+            '<h6 class="popup-title">' + venue.name + '</h6>';
         
         if (venue.photo_url) {
-            popupContent += '<div style="margin-bottom: 10px;">' +
-                '<img src="' + venue.photo_url + '" alt="' + venue.name + '" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6;">' +
+            popupContent += '<div class="popup-photo">' +
+                '<img src="' + venue.photo_url + '" alt="' + venue.name + '" class="popup-image" />' +
                 '</div>';
         }
         
-        popupContent += '<p style="margin: 5px 0;"><strong>Status:</strong> ' + statusBadge + '</p>' +
-            '<p style="margin: 5px 0;"><strong>Location:</strong> ' + venue.location + '</p>' +
-            '<p style="margin: 5px 0;"><strong>Max Occupancy:</strong> ' + venue.capacity + ' people</p>' +
-            '<p style="margin: 5px 0; color: #666; font-size: 0.9em;"><strong>Date:</strong> ' + selectedDate + '</p>';
+        popupContent += '<p class="popup-status"><strong>Status:</strong> ' + statusBadge + '</p>' +
+            '<p class="popup-info"><strong>Location:</strong> ' + venue.location + '</p>' +
+            '<p class="popup-info"><strong>Max Occupancy:</strong> ' + venue.capacity + ' people</p>' +
+            '<p class="popup-date"><strong>Date:</strong> ' + selectedDate + '</p>';
 
         if (venue.description) {
-            popupContent += '<p style="margin: 5px 0; color: #666; font-size: 0.9em;">' + 
+            popupContent += '<p class="popup-description">' + 
                 (venue.description.length > 100 ? venue.description.substring(0, 100) + '...' : venue.description) + 
                 '</p>';
         }
 
         if (!isAvailable && reservations.length > 0) {
-            popupContent += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #dee2e6;">' +
-                '<strong style="font-size: 0.95em;">Reservations for this date:</strong>' +
-                '<ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 0.9em;">';
+            popupContent += '<div class="popup-reservations">' +
+                '<strong>Reservations for this date:</strong>' +
+                '<ul class="reservation-list">';
             reservations.forEach(function(reservation) {
                 if (isAdministrator || isOsas) {
-                popupContent += '<li style="margin: 5px 0;">' +
+                popupContent += '<li class="reservation-item">' +
                     '<a href="/admin/reservations/' + reservation.id + '" target="_blank" style="text-decoration: none;">' +
                     '<strong>' + reservation.title + '</strong></a><br>' +
-                    '<small style="color: #666;">' + reservation.start_time + ' - ' + reservation.end_time + '</small>' +
+                    '<small>' + reservation.start_time + ' - ' + reservation.end_time + '</small>' +
                     '</li>';
                 } else {
-                    popupContent += '<li style="margin: 5px 0;">' +
+                    popupContent += '<li class="reservation-item">' +
                         '<strong>' + reservation.title + '</strong><br>' +
-                        '<small style="color: #666;">' + reservation.start_time + ' - ' + reservation.end_time + '</small>' +
+                        '<small>' + reservation.start_time + ' - ' + reservation.end_time + '</small>' +
                         '</li>';
                 }
             });
@@ -195,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (isAdministrator) {
-        popupContent += '<div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #dee2e6;">' +
+        popupContent += '<div class="popup-reservations">' +
             '<a href="/admin/venues/' + venue.id + '" class="btn btn-sm btn-primary" target="_blank" style="text-decoration: none; display: inline-block; padding: 5px 10px;">View Details</a>' +
             '</div></div>';
         } else {
@@ -279,7 +292,7 @@ function selectVenue(venueId) {
 
 .venue-selected {
     background: #e3f2fd !important;
-    border-left: 4px solid #0dfd45;
+    border-left: 4px solid #0d6efd;
 }
 
 .status-indicator.available {
@@ -313,18 +326,134 @@ function selectVenue(venueId) {
     color: #856404;
 }
 
+.chevron-icon {
+    color: #6b7280;
+    font-size: 20px;
+}
+
+/* Map Popup Styles */
+.map-popup {
+    padding: 8px;
+    min-width: 250px;
+    max-width: 350px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.popup-title {
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.popup-photo {
+    margin-bottom: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.popup-image {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.popup-status,
+.popup-info,
+.popup-date {
+    margin: 6px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.popup-status strong,
+.popup-info strong,
+.popup-date strong {
+    font-weight: 600;
+    color: #374151;
+}
+
+.popup-description {
+    margin: 8px 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.popup-reservations {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+
+.reservation-list {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    list-style-type: disc;
+}
+
+.reservation-item {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.reservation-item strong {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.reservation-item small {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge.bg-success {
+    background-color: #10b981;
+    color: white;
+}
+
+.badge.bg-danger {
+    background-color: #ef4444;
+    color: white;
+}
+
 @media (max-width: 768px) {
-    .venue-map-container {
-        padding: 10px;
+    div[style*="display: flex"] {
+        flex-direction: column;
     }
     
-    .row {
+    div[style*="width: 350px"] {
+        width: 100% !important;
+        min-width: 100% !important;
         height: auto;
-    }
-    
-    div[style*="border-right"] {
+        max-height: 40vh;
         border-right: none !important;
         border-bottom: 1px solid #dee2e6;
+    }
+    
+    div[style*="min-height: 500px"] {
+        min-height: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    div[style*="width: 350px"] {
+        max-height: 35vh;
+    }
+    
+    div[style*="min-height: 500px"] {
+        min-height: 350px;
     }
 }
 </style>
