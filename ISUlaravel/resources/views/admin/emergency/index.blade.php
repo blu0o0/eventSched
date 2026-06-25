@@ -72,6 +72,14 @@
                                             <i class="bi bi-check-circle"></i> Resolve
                                         </button>
                                     </form>
+                                @else
+                                    <form action="{{ route('admin.emergency.destroy', $emergency) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this closed emergency?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 @endif
                             </td>
                         </tr>
