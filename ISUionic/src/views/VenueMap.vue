@@ -2,6 +2,11 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button menu="main-menu" color="dark">
+            <ion-icon :icon="menuOutline"></ion-icon>
+          </ion-menu-button>
+        </ion-buttons>
         <ion-title>
           <ion-icon :icon="mapOutline" class="header-icon"></ion-icon>
           Venue Map
@@ -50,32 +55,6 @@
           <div v-else class="map-wrapper">
             <div id="venueMap" class="map-container"></div>
           </div>
-
-          <!-- Legend Card -->
-          <ion-card class="legend-card">
-            <ion-card-header>
-              <ion-card-title>
-                <ion-icon :icon="informationCircleOutline" class="legend-icon"></ion-icon>
-                Legend
-              </ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <div class="legend-items">
-                <div class="legend-item">
-                  <div class="legend-badge available"></div>
-                  <span>Available</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-badge occupied"></div>
-                  <span>Occupied</span>
-                </div>
-                <div class="legend-item">
-                  <div class="legend-badge no-coords"></div>
-                  <span>No Coordinates</span>
-                </div>
-              </div>
-            </ion-card-content>
-          </ion-card>
         </div>
       </div>
     </ion-content>
@@ -103,7 +82,7 @@ import {
 import { useApi } from '../composables/useApi';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import VenueSidebar from '../components/VenueSidebar.vue';
-import { mapOutline, calendarOutline, informationCircleOutline } from 'ionicons/icons';
+import { mapOutline, calendarOutline, informationCircleOutline, menuOutline } from 'ionicons/icons';
 import { Venue, Reservation } from '../types';
 import { API_BASE_URL, GOOGLE_MAPS_API_KEY } from '../config/env';
 
@@ -176,7 +155,11 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
     map.value = new window.google.maps.Map(document.getElementById('venueMap'), {
       center: { lat: 16.72249174514112, lng: 121.53739618722382 },
       zoom: 16,
-      mapTypeId: 'satellite'
+      mapTypeId: 'satellite',
+      zoomControl: true,
+      zoomControlOptions: {
+        position: window.google.maps.ControlPosition.RIGHT_CENTER
+      }
     });
 
     // Draw campus boundary polygon
@@ -404,11 +387,18 @@ function onVenueSelect(venue: Venue): void {
   gap: 1rem;
   overflow-y: auto;
   height: 100%;
+  position: relative;
 }
 
 .filter-card {
   margin: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  min-width: 280px;
+  max-width: 320px;
 }
 
 .date-filter {
@@ -431,12 +421,16 @@ function onVenueSelect(venue: Venue): void {
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   border: 1px solid var(--ion-color-light);
+  flex: 1;
+  position: relative;
 }
 
 .map-container {
-  height: 500px;
+  height: 100%;
+  min-height: 500px;
   width: 100%;
   background: #f5f5f5;
+  border-radius: 12px;
 }
 
 .legend-card {

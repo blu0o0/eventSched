@@ -139,6 +139,7 @@ ion-list-header h2 {
   margin: 4px 0 0 0;
   font-size: 12px;
   opacity: 0.9;
+  color: #86efac;
 }
 
 .venue-item {
