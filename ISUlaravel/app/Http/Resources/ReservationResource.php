@@ -36,6 +36,8 @@ class ReservationResource extends JsonResource
             'rejection_reason' => $this->rejection_reason,
             'postponement_reason' => $this->postponement_reason,
             'is_postponed' => $this->isPostponed(),
+            'edited_at' => $this->edited_at?->format('Y-m-d H:i:s'),
+            'is_edited' => $this->edited_at !== null,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];

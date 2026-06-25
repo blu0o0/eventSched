@@ -3,7 +3,12 @@
     <ion-card-header>
       <div class="card-header">
         <ion-card-title>{{ reservation.title }}</ion-card-title>
-        <StatusBadge :status="reservation.status" />
+        <div class="badge-group">
+          <span v-if="reservation.is_edited" class="edited-badge">
+            <ion-icon :icon="pencilOutline" /> Updated
+          </span>
+          <StatusBadge :status="reservation.status" />
+        </div>
       </div>
       <ion-card-subtitle>
         <ion-icon :icon="locationOutline" />
@@ -34,7 +39,7 @@
 
 <script setup lang="ts">
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonIcon } from '@ionic/vue';
-import { calendarOutline, timeOutline, peopleOutline, locationOutline } from 'ionicons/icons';
+import { calendarOutline, timeOutline, peopleOutline, locationOutline, pencilOutline } from 'ionicons/icons';
 import { Reservation } from '../types';
 import StatusBadge from './StatusBadge.vue';
 
@@ -64,6 +69,32 @@ function truncateText(text: string, maxLength: number): string {
 </script>
 
 <style scoped>
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edited-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edited-badge ion-icon {
+  font-size: 12px;
+  color: #ea580c;
+}
+
 ion-card {
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(45, 134, 89, 0.1);

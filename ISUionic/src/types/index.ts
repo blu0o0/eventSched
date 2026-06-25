@@ -44,6 +44,8 @@ export interface Reservation {
   rejection_reason: string | null;
   postponement_reason?: string | null;
   is_postponed?: boolean;
+  edited_at: string | null;
+  is_edited: boolean;
   created_at: string;
   updated_at: string;
 }

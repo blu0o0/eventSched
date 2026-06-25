@@ -29,6 +29,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     // Reservations
     Route::get('/reservations', [AdminReservationController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/{reservation}', [AdminReservationController::class, 'show'])->name('reservations.show');
+    Route::get('/reservations/{reservation}/edit', [AdminReservationController::class, 'edit'])->name('reservations.edit');
+    Route::put('/reservations/{reservation}', [AdminReservationController::class, 'update'])->name('reservations.update');
     Route::post('/reservations/{reservation}/approve', [AdminReservationController::class, 'approve'])->name('reservations.approve');
     Route::post('/reservations/{reservation}/reject', [AdminReservationController::class, 'reject'])->name('reservations.reject');
     Route::delete('/reservations/{reservation}', [AdminReservationController::class, 'destroy'])->name('reservations.destroy');

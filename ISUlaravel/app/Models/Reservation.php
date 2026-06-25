@@ -24,6 +24,7 @@ class Reservation extends Model
         'approved_at',
         'rejection_reason',
         'postponement_reason',
+        'edited_at',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class Reservation extends Model
         return [
             'date' => 'date',
             'approved_at' => 'datetime',
+            'edited_at' => 'datetime',
         ];
     }
 

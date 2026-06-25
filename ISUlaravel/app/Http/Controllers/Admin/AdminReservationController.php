@@ -169,8 +169,47 @@ class AdminReservationController extends Controller
     }
 
     /**
-     * Check and postpone a reservation if venue is unavailable
-     */
+      * Show the form for editing the specified reservation.
+      */
+    public function edit(Reservation $reservation)
+    {
+        $this->ensureAdmin();
+        $reservation->load(['venue', 'user']);
+        $venues = \App\Models\Venue::where('location', 'Santiago Campus')->get();
+
+        return view('admin.reservations.edit', compact('reservation', 'venues'));
+    }
+
+    /**
+      * Update the specified reservation in storage.
+      */
+    public function update(Request $request, Reservation $reservation)
+    {
+        $this->ensureAdmin();
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'venue_id' => ['required', 'exists:venues,id'],
+            'date' => ['required', 'date'],
+            'start_time' => ['required'],
+            'end_time' => ['required'],
+            'capacity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $reservation->update($validated);
+        
+        // Set edited_at timestamp to indicate this reservation was edited after approval
+        $reservation->edited_at = now();
+        $reservation->save();
+
+        return redirect()->route('admin.reservations.index')
+            ->with('success', 'Reservation updated successfully.');
+    }
+
+    /**
+      * Check and postpone a reservation if venue is unavailable
+      */
     protected function checkAndPostponeReservation(Reservation $reservation): void
     {
         $venue = $reservation->venue;

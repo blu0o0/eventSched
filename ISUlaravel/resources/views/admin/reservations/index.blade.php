@@ -78,6 +78,27 @@
                                         <i class="bi bi-x"></i> Reject
                                     </button>
                                 @endif
+                                @if($reservation->status === 'approved')
+                                    <a href="{{ route('admin.reservations.edit', $reservation) }}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form action="{{ route('admin.reservations.destroy', $reservation) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this approved reservation?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                @endif
+                                @if($reservation->status === 'rejected')
+                                    <form action="{{ route('admin.reservations.destroy', $reservation) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this rejected reservation?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                @endif
                             </td>
                         </tr>
 
