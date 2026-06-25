@@ -3,12 +3,11 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-menu-button menu="main-menu" color="dark">
+          <ion-menu-button menu="main-menu" color="light">
             <ion-icon :icon="menuOutline"></ion-icon>
           </ion-menu-button>
         </ion-buttons>
         <ion-title>
-          <ion-icon :icon="mapOutline" class="header-icon"></ion-icon>
           Venue Map
         </ion-title>
       </ion-toolbar>
@@ -28,26 +27,6 @@
 
         <!-- Main Content -->
         <div class="main-content">
-          <!-- Date Filter Card -->
-          <ion-card class="filter-card">
-            <ion-card-content>
-              <div class="date-filter">
-                <ion-icon :icon="calendarOutline" class="filter-icon"></ion-icon>
-                <ion-label position="stacked">Select Date</ion-label>
-                <ion-datetime-button datetime="date-picker" class="date-picker"></ion-datetime-button>
-                <ion-modal :keep-contents-mounted="true">
-                  <ion-datetime
-                    id="date-picker"
-                    presentation="date"
-                    :min="minDate"
-                    :value="selectedDate"
-                    @ionChange="onDateChange"
-                  ></ion-datetime>
-                </ion-modal>
-              </div>
-            </ion-card-content>
-          </ion-card>
-
           <!-- Loading State -->
           <LoadingSpinner v-if="loading" message="Loading venue map..." />
 
@@ -392,28 +371,36 @@ function onVenueSelect(venue: Venue): void {
 
 .filter-card {
   margin: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 1000;
-  min-width: 280px;
-  max-width: 320px;
+  min-width: 240px;
+  max-width: 280px;
+}
+
+.filter-card ion-card-content {
+  padding: 8px 12px;
 }
 
 .date-filter {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .filter-icon {
-  font-size: 24px;
+  font-size: 18px;
   color: var(--ion-color-primary);
 }
 
 .date-picker {
   flex: 1;
+}
+
+ion-label {
+  font-size: 12px;
 }
 
 .map-wrapper {
