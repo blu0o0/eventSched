@@ -3,76 +3,90 @@
 @section('title', 'Venue Map')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <h1><i class="bi bi-map"></i> Venue Map</h1>
-        <form method="GET" class="d-inline">
-            <div class="input-group mb-3" style="max-width: 300px;">
-                <label class="input-group-text" for="date">Select Date:</label>
-                <input type="date" name="date" id="date" value="{{ $selectedDate }}" class="form-control" onchange="this.form.submit()">
+<div class="venue-map-container" style="padding: 0; height: calc(100vh - 60px);">
+    <div class="row" style="height: 100%; margin: 0;">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-3" style="padding: 0.5; background: #f8f9fa; border-right: 1px solid #dee2e6; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);">
+            <div style="background: #367c48; color: white; padding: 16px;">
+                <h5 style="margin: 0; font-size: 18px; font-weight: 600; color: #ffffff;">Venues</h5>
+                <p style="margin: 4px 0 0 0; font-size: 12px; opacity: 0.9; color: #86efac;">{{ count($venues) }} venue(s) found</p>
             </div>
-        </form>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                <div id="venueMap" style="height: 600px; width: 100%;"></div>
+            
+            <div style="padding: 20px; overflow-y: auto; height: calc(100% - 80px);">
+                @foreach($venues as $venue)
+                    @php
+                        $availability = $venueAvailability[$venue->id] ?? null;
+                        $statusClass = 'no-coords';
+                        $statusText = 'No Data';
+                        
+                        if ($availability) {
+                            if ($availability['is_available']) {
+                                $statusClass = 'available';
+                                $statusText = 'Available';
+                            } elseif ($availability['is_currently_occupied']) {
+                                $statusClass = 'occupied';
+                                $statusText = 'In Use';
+                            } else {
+                                $statusClass = 'reserved';
+                                $statusText = 'Reserved';
+                            }
+                        }
+                    @endphp
+                    
+                    <div class="venue-item {{ $selectedVenueId == $venue->id ? 'venue-selected' : '' }}" 
+                         onclick="selectVenue({{ $venue->id }})"
+                         style="background: white; padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div class="venue-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">
+                            <div class="status-indicator {{ $statusClass }}" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></div>
+                        </div>
+                        <div class="venue-info" style="flex: 1; min-width: 0;">
+                            <h6 class="venue-name" style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">{{ $venue->name }}</h6>
+                            <p class="venue-location" style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0;">
+                                <i class="bi bi-geo-alt"></i> {{ $venue->location }}
+                            </p>
+                            <div class="venue-details" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <span class="venue-capacity" style="font-size: 12px; color: #4b5563;">
+                                    <i class="bi bi-people"></i> {{ $venue->capacity }} people
+                                </span>
+                                <span class="venue-status {{ $statusClass }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    {{ $statusText }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+                
+                @if(count($venues) == 0)
+                    <div class="no-venues" style="text-align: center; padding: 32px 16px; color: #6b7280;">
+                        <p>No venues available</p>
+                    </div>
+                @endif
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Legend</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex gap-3">
-                    <div>
-                        <span class="badge bg-success" style="width: 20px; height: 20px; display: inline-block;"></span>
-                        <span class="ms-2">Available</span>
-                    </div>
-                    <div>
-                        <span class="badge bg-danger" style="width: 20px; height: 20px; display: inline-block;"></span>
-                        <span class="ms-2">Occupied</span>
-                    </div>
-                    <div>
-                        <span class="badge bg-secondary" style="width: 20px; height: 20px; display: inline-block;"></span>
-                        <span class="ms-2">No Coordinates</span>
-                    </div>
-                </div>
-            </div>
+        <!-- Map -->
+        <div class="col-md-9 col-lg-9" style="padding: 0; position: relative;">
+            <div id="venueMap" style="height: 100%; width: 100%; background: #f5f5f5;"></div>
         </div>
     </div>
 </div>
 
 <!-- Google Maps API -->
-<!-- 
-    IMPORTANT: Add your Google Maps API Key to your .env file:
-    GOOGLE_MAPS_API_KEY=your_api_key_here
-    
-    Then add it to config/services.php:
-    'google_maps' => [
-        'api_key' => env('GOOGLE_MAPS_API_KEY'),
-    ],
-    
-    Get your API key from: https://console.cloud.google.com/google/maps-apis
-    Make sure to enable "Maps JavaScript API" in your Google Cloud Console
--->
 <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=geometry"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Google Map (default center - Santiago Campus)
+    var selectedVenueId = {{ $selectedVenueId ?? 'null' }};
+    
+    // Initialize Google Map
     var map = new google.maps.Map(document.getElementById('venueMap'), {
         center: { lat: 16.72249174514112, lng: 121.53739618722382 },
         zoom: 16,
-        mapTypeId: 'satellite'
+        mapTypeId: 'satellite',
+        zoomControl: true,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_CENTER
+        }
     });
 
     // Draw campus boundary polygon
@@ -98,22 +112,18 @@ document.addEventListener('DOMContentLoaded', function() {
     var isAdministrator = {{ Auth::user()->isAdministrator() ? 'true' : 'false' }};
     var isOsas = {{ Auth::user()->isOsas() ? 'true' : 'false' }};
 
-    // Array to store all markers for bounds calculation
     var markers = [];
-    
-    // Create bounds that include campus boundary
     var bounds = new google.maps.LatLngBounds();
+    
     campusBoundary.getPath().forEach(function(latLng) {
         bounds.extend(latLng);
     });
 
-    // Process each venue
     venues.forEach(function(venue) {
         var availability = venueAvailability[venue.id];
         var isAvailable = availability.is_available;
         var reservations = availability.reservations;
 
-        // Parse coordinates
         var coordinates = null;
         if (venue.map_coordinates) {
             var coords = venue.map_coordinates.split(',');
@@ -125,16 +135,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Skip venues without coordinates
         if (!coordinates || isNaN(coordinates.lat) || isNaN(coordinates.lng)) {
             console.warn('Venue ' + venue.name + ' has invalid coordinates: ' + venue.map_coordinates);
             return;
         }
 
-        // Determine marker color based on availability
         var iconColor = isAvailable ? '#28a745' : '#dc3545';
 
-        // Build popup content (InfoWindow content)
         var statusText = isAvailable ? 'Available' : 'Occupied';
         var statusBadge = '<span class="badge bg-' + (isAvailable ? 'success' : 'danger') + '">' + statusText + '</span>';
         
@@ -149,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var popupContent = '<div style="min-width: 250px; max-width: 350px; padding: 5px;">' +
             '<h6 style="margin: 0 0 10px 0; font-weight: bold; color: #333;">' + venue.name + '</h6>';
         
-        // Add venue photo if available
         if (venue.photo_url) {
             popupContent += '<div style="margin-bottom: 10px;">' +
                 '<img src="' + venue.photo_url + '" alt="' + venue.name + '" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #dee2e6;">' +
@@ -196,7 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
             popupContent += '</div>';
         }
 
-        // Create custom marker icon
         var markerIcon = {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 15,
@@ -207,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
             anchor: new google.maps.Point(0, 0)
         };
 
-        // Create marker
         var marker = new google.maps.Marker({
             position: coordinates,
             map: map,
@@ -215,42 +219,113 @@ document.addEventListener('DOMContentLoaded', function() {
             title: venue.name
         });
 
-        // Create InfoWindow
         var infoWindow = new google.maps.InfoWindow({
             content: popupContent
         });
 
-        // Add click listener to marker
         marker.addListener('click', function() {
             infoWindow.open(map, marker);
-    });
+        });
 
         markers.push(marker);
         bounds.extend(coordinates);
     });
 
-    // Fit map to show all markers and campus boundary
-    // Bounds already include campus boundary, now includes markers too
     map.fitBounds(bounds);
     
-    // Limit maximum zoom to show campus area (not too zoomed in)
     google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
         if (map.getZoom() > 17) {
             map.setZoom(17);
         }
-        // Ensure minimum zoom to show campus context
         if (map.getZoom() < 15) {
             map.setZoom(15);
-    }
+        }
     });
 });
+
+function selectVenue(venueId) {
+    var venue = venues.find(v => v.id === venueId);
+    if (venue && venue.map_coordinates) {
+        var coords = venue.map_coordinates.split(',');
+        if (coords.length === 2) {
+            var lat = parseFloat(coords[0].trim());
+            var lng = parseFloat(coords[1].trim());
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                var position = { lat: lat, lng: lng };
+                map.panTo(position);
+                map.setZoom(17);
+                
+                var marker = markers.find(m => {
+                    var markerPos = m.getPosition();
+                    return markerPos.lat() === lat && markerPos.lng() === lng;
+                });
+                
+                if (marker) {
+                    google.maps.event.trigger(marker, 'click');
+                }
+            }
+        }
+    }
+}
 </script>
 
 <style>
-#venueMap {
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
+.venue-item:hover {
+    background: #f8f9fa !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.venue-selected {
+    background: #e3f2fd !important;
+    border-left: 4px solid #0dfd45;
+}
+
+.status-indicator.available {
+    background-color: #28a745;
+}
+
+.status-indicator.occupied {
+    background-color: #dc3545;
+}
+
+.status-indicator.reserved {
+    background-color: #ffc107;
+}
+
+.status-indicator.no-coords {
+    background-color: #6c757d;
+}
+
+.venue-status.available {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.venue-status.occupied {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.venue-status.reserved {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+@media (max-width: 768px) {
+    .venue-map-container {
+        padding: 10px;
+    }
+    
+    .row {
+        height: auto;
+    }
+    
+    div[style*="border-right"] {
+        border-right: none !important;
+        border-bottom: 1px solid #dee2e6;
+    }
 }
 </style>
 @endsection
-

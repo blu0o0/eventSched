@@ -237,6 +237,8 @@ class AdminVenueController extends Controller
             ];
         }
 
-        return view('admin.venues.map', compact('venues', 'selectedDate', 'venueAvailability'));
+        $selectedVenueId = $request->get('venue_id', null);
+        
+        return view('admin.venues.map', compact('venues', 'selectedDate', 'venueAvailability', 'selectedVenueId'));
     }
 }
