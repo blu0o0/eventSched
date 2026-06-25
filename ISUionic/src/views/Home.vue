@@ -7,12 +7,15 @@
         </ion-buttons>
         <ion-title>Dashboard</ion-title>
         <ion-buttons slot="end">
-          <div class="user-badge">
-            <span class="user-name-text">{{ user.name || 'User' }}</span>
+          <div class="user-badge" v-if="authStore.isAuthenticated">
+            <span class="user-name-text">{{ user.name }}</span>
             <ion-button @click="$router.push('/profile')">
               <ion-icon :icon="personCircleOutline" />
             </ion-button>
           </div>
+          <ion-button v-else @click="$router.push('/login')">
+            <ion-icon :icon="logInOutline" />
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
@@ -66,7 +69,7 @@
 
           <!-- Right: Quick Actions (Laravel-style compact cards) -->
           <div class="dashboard-right">
-            <div class="compact-action-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 1px solid #a5d6a7; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/reservations/create')">
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 1px solid #a5d6a7; border-radius: 16px; padding: 16px; cursor: pointer;" @click="handleCreateReservation">
               <div class="d-flex align-items-center gap-3">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(67, 160, 71, 0.3);">
                   <ion-icon :icon="addCircleOutline" />
@@ -78,7 +81,7 @@
               </div>
             </div>
 
-            <div class="compact-action-card" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border: 1px solid #f48fb1; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/emergency/create')">
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border: 1px solid #f48fb1; border-radius: 16px; padding: 16px; cursor: pointer;" @click="handleReportEmergency">
               <div class="d-flex align-items-center gap-3">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #ef5350 0%, #c62828 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(239, 83, 80, 0.3);">
                   <ion-icon :icon="warningOutline" />
@@ -90,7 +93,7 @@
               </div>
             </div>
 
-            <div class="compact-action-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #90caf9; border-radius: 16px; padding: 16px; cursor: pointer;" @click="$router.push('/reservations?mine=true')">
+            <div class="compact-action-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 1px solid #90caf9; border-radius: 16px; padding: 16px; cursor: pointer;" @click="handleViewMyRequests">
               <div class="d-flex align-items-center gap-3">
                 <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #42a5f5 0%, #1565c0 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);">
                   <ion-icon :icon="listCircleOutline" />
@@ -192,6 +195,7 @@ import {
   warningOutline,
   listCircleOutline,
   listOutline,
+  logInOutline,
 } from 'ionicons/icons';
 import ReservationCard from '../components/ReservationCard.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -199,10 +203,12 @@ import { reservationsApi } from '../api/reservations';
 import { calendarApi } from '../api/calendar';
 import { useApi } from '../composables/useApi';
 import { useAuthStore } from '../stores/auth';
+import { useRequireAuth } from '../composables/useRequireAuth';
 import { Reservation, CalendarEvent } from '../types';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const { requireAuth } = useRequireAuth();
 const { loading, execute } = useApi<{ data: Reservation[]; meta?: any }>();
 const { loading: calendarLoading, execute: executeCalendar } = useApi<CalendarEvent[]>();
 const recentReservations = ref<Reservation[]>([]);
@@ -365,6 +371,27 @@ async function handleRefresh(event: CustomEvent) {
 
 function goToReservation(id: number) {
   router.push(`/reservations/${id}`);
+}
+
+async function handleCreateReservation() {
+  const hasAccess = await requireAuth('You must be logged in to create a reservation.');
+  if (hasAccess) {
+    router.push('/reservations/create');
+  }
+}
+
+async function handleReportEmergency() {
+  const hasAccess = await requireAuth('You must be logged in to report an emergency.');
+  if (hasAccess) {
+    router.push('/emergency/create');
+  }
+}
+
+async function handleViewMyRequests() {
+  const hasAccess = await requireAuth('You must be logged in to view your requests.');
+  if (hasAccess) {
+    router.push('/reservations?mine=true');
+  }
 }
 
 onMounted(() => {

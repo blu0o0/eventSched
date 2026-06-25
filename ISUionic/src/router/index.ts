@@ -44,25 +44,25 @@ const routes: Array<RouteRecordRaw> = [
     path: '/home',
     name: 'Home',
     component: Home,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/venues',
     name: 'Venues',
     component: Venues,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/venues/:id',
     name: 'VenueDetail',
     component: VenueDetail,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/reservations',
     name: 'Reservations',
     component: Reservations,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/reservations/create',
@@ -74,7 +74,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/reservations/:id',
     name: 'ReservationDetail',
     component: ReservationDetail,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/reservations/:id/edit',
@@ -86,7 +86,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/calendar',
     name: 'Calendar',
     component: Calendar,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/emergency',
@@ -129,13 +129,9 @@ router.beforeEach(async (to, from, next) => {
     await authStore.checkAuth();
   }
   
-  // If accessing root, redirect based on auth status
+  // If accessing root, always redirect to home (dashboard)
   if (to.path === '/') {
-    if (authStore.isAuthenticated) {
-      next('/home');
-    } else {
-      next('/login');
-    }
+    next('/home');
     return;
   }
   

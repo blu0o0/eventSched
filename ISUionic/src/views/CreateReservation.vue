@@ -201,11 +201,13 @@ import { venuesApi } from '../api/venues';
 import { reservationsApi } from '../api/reservations';
 import { useApi } from '../composables/useApi';
 import { validators } from '../utils/validators';
+import { useRequireAuth } from '../composables/useRequireAuth';
 import { Venue, CreateReservationData } from '../types';
 import { API_BASE_URL } from '../config/env';
 
 const route = useRoute();
 const router = useRouter();
+const { requireAuth } = useRequireAuth();
 const isEdit = computed(() => !!route.params.id);
 
 const { loading: venuesLoading, execute: executeVenues } = useApi<Venue[]>();
@@ -372,7 +374,7 @@ async function loadVenues() {
 }
 
 async function loadReservation() {
-  if (!isEdit.value) return;
+  if (!isEdit.value || !route.params.id || isNaN(Number(route.params.id))) return;
   
   const id = parseInt(route.params.id as string);
   const data = await executeReservation(() => reservationsApi.getById(id));
@@ -492,6 +494,13 @@ async function handleSubmit() {
 }
 
 onMounted(async () => {
+  // Check authentication before allowing access to create reservation
+  const hasAccess = await requireAuth('You must be logged in to create a reservation.');
+  if (!hasAccess) {
+    // User was redirected to login, stop loading
+    return;
+  }
+  
   await loadVenues();
   if (isEdit.value) {
     await loadReservation();

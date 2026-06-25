@@ -56,7 +56,7 @@
         </ion-item>
       </nav>
 
-      <div class="sidebar-footer">
+      <div class="sidebar-footer" v-if="authStore.isAuthenticated">
         <div class="user-info">
           <div class="user-avatar">{{ (authStore.user?.name || 'U')[0] }}</div>
           <div class="user-details">
@@ -67,6 +67,12 @@
         <ion-item button class="logout-item" @click="handleLogout">
           <ion-icon :icon="logOutOutline" slot="start" />
           <ion-label>Logout</ion-label>
+        </ion-item>
+      </div>
+      <div class="sidebar-footer" v-else>
+        <ion-item button class="login-item" @click="handleLogin">
+          <ion-icon :icon="logInOutline" slot="start" />
+          <ion-label>Login / Sign Up</ion-label>
         </ion-item>
       </div>
     </div>
@@ -89,6 +95,7 @@ import {
   warningOutline,
   personCircleOutline,
   logOutOutline,
+  logInOutline,
 } from 'ionicons/icons';
 
 const router = useRouter();
@@ -102,6 +109,11 @@ function navigateTo(path: string) {
 async function handleLogout() {
   menuController.close('main-menu');
   await authStore.logout();
+  router.push('/home');
+}
+
+async function handleLogin() {
+  menuController.close('main-menu');
   router.push('/login');
 }
 </script>
@@ -281,5 +293,25 @@ async function handleLogout() {
 
 .logout-item ion-icon {
   color: #fca5a5;
+}
+
+.login-item {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --min-height: 44px;
+  --background: rgba(45, 134, 89, 0.12);
+  --color: #86efac;
+  --border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.login-item:hover {
+  --background: rgba(45, 134, 89, 0.2);
+  --color: #bbf7d0;
+}
+
+.login-item ion-icon {
+  color: #86efac;
 }
 </style>
