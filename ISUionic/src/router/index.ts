@@ -92,7 +92,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/emergency',
     name: 'EmergencyReports',
     component: EmergencyReports,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/emergency/create',
@@ -104,7 +104,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/emergency/:id',
     name: 'EmergencyDetail',
     component: EmergencyReports,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: false }
   },
   {
     path: '/profile',

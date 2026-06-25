@@ -6,16 +6,16 @@
           <ion-menu-button></ion-menu-button>
         </ion-buttons>
         <ion-title>Emergency</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="$router.push('/emergency/create')">
-            <ion-icon :icon="addOutline" slot="icon-only" />
-          </ion-button>
-        </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button v-if="isAuthenticated" @click="$router.push('/emergency/create')">
+        <ion-icon :icon="addOutline" slot="icon-only" />
+      </ion-button>
+    </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
     <ion-content :fullscreen="true">
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab v-if="isAuthenticated" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="$router.push('/emergency/create')">
           <ion-icon :icon="addOutline"></ion-icon>
         </ion-fab-button>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   IonPage,
@@ -94,13 +94,16 @@ import {
 import { addOutline, personOutline, checkmarkCircleOutline } from 'ionicons/icons';
 import { emergencyApi } from '../api/emergency';
 import { useApi } from '../composables/useApi';
+import { useAuthStore } from '../stores/auth';
 import StatusBadge from '../components/StatusBadge.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { EmergencyReport } from '../types';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const { loading, execute } = useApi<{ data: EmergencyReport[]; meta?: any }>();
 const reports = ref<EmergencyReport[]>([]);
+const isAuthenticated = computed(() => authStore.isAuthenticated);
 
 async function loadReports() {
   const data = await execute(() => emergencyApi.getAll());

@@ -107,6 +107,41 @@
           </div>
         </div>
 
+        <!-- Emergency Section -->
+        <div class="emergency-section" v-if="recentEmergencies.length > 0">
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                <ion-icon :icon="warningOutline" style="margin-right: 8px; color: #ef5350;"></ion-icon>
+                Recent Emergencies
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="emergency-list">
+                <div v-for="emergency in recentEmergencies" :key="emergency.id" 
+                     class="emergency-item" 
+                     :class="{ 'emergency-open': emergency.status === 'open' }"
+                     @click="goToEmergency(emergency.id)">
+                  <div class="emergency-header">
+                    <span class="emergency-type">{{ emergency.type }}</span>
+                    <span class="emergency-status" :class="emergency.status === 'open' ? 'status-open' : 'status-resolved'">
+                      {{ emergency.status === 'open' ? 'Open' : 'Resolved' }}
+                    </span>
+                  </div>
+                  <p class="emergency-description">{{ emergency.description }}</p>
+                  <div class="emergency-meta">
+                    <small>By {{ emergency.reporter?.name || 'Unknown' }}</small>
+                    <small>{{ formatDate(emergency.created_at) }}</small>
+                  </div>
+                </div>
+              </div>
+              <ion-button expand="block" fill="outline" color="danger" @click="handleViewAllEmergencies" style="margin-top: 12px;">
+                View All Emergencies
+              </ion-button>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
         <!-- Toggle: Calendar / Recent Reservations -->
         <div class="toggle-section">
           <div class="toggle-tabs">
@@ -196,24 +231,29 @@ import {
   listCircleOutline,
   listOutline,
   logInOutline,
+  alertCircleOutline,
 } from 'ionicons/icons';
 import ReservationCard from '../components/ReservationCard.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { reservationsApi } from '../api/reservations';
 import { calendarApi } from '../api/calendar';
+import { emergencyApi } from '../api/emergency';
 import { useApi } from '../composables/useApi';
 import { useAuthStore } from '../stores/auth';
 import { useRequireAuth } from '../composables/useRequireAuth';
-import { Reservation, CalendarEvent } from '../types';
+import { Reservation, CalendarEvent, EmergencyReport } from '../types';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { requireAuth } = useRequireAuth();
 const { loading, execute } = useApi<{ data: Reservation[]; meta?: any }>();
 const { loading: calendarLoading, execute: executeCalendar } = useApi<CalendarEvent[]>();
+const { loading: emergencyLoading, execute: executeEmergency } = useApi<{ data: EmergencyReport[]; meta?: any }>();
 const recentReservations = ref<Reservation[]>([]);
 const allReservations = ref<Reservation[]>([]);
 const calendarEvents = ref<CalendarEvent[]>([]);
+const recentEmergencies = ref<EmergencyReport[]>([]);
+const openEmergenciesCount = ref(0);
 const calendarRef = ref<InstanceType<typeof FullCalendar> | null>(null);
 const activeTab = ref<'calendar' | 'reservations'>('calendar');
 
@@ -364,8 +404,23 @@ async function loadData() {
   }
 }
 
+async function loadEmergencies() {
+  try {
+    const data = await executeEmergency(() => emergencyApi.getAll());
+    if (data) {
+      const emergencies = data.data || [];
+      // Only show open emergencies
+      const openEmergencies = emergencies.filter((e: EmergencyReport) => e.status === 'open');
+      recentEmergencies.value = openEmergencies.slice(0, 3);
+      openEmergenciesCount.value = openEmergencies.length;
+    }
+  } catch (error) {
+    console.error('Failed to load emergencies:', error);
+  }
+}
+
 async function handleRefresh(event: CustomEvent) {
-  await Promise.all([loadData(), loadCalendarEvents()]);
+  await Promise.all([loadData(), loadCalendarEvents(), loadEmergencies()]);
   (event.target as HTMLIonRefresherElement).complete();
 }
 
@@ -381,10 +436,7 @@ async function handleCreateReservation() {
 }
 
 async function handleReportEmergency() {
-  const hasAccess = await requireAuth('You must be logged in to report an emergency.');
-  if (hasAccess) {
-    router.push('/emergency/create');
-  }
+  router.push('/emergency/create');
 }
 
 async function handleViewMyRequests() {
@@ -394,9 +446,33 @@ async function handleViewMyRequests() {
   }
 }
 
+function handleViewEmergencies() {
+  router.push('/emergency');
+}
+
+function handleViewAllEmergencies() {
+  router.push('/emergency');
+}
+
+function goToEmergency(id: number) {
+  router.push(`/emergency/${id}`);
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 onMounted(() => {
   loadData();
   loadCalendarEvents();
+  loadEmergencies();
 });
 </script>
 
@@ -591,6 +667,109 @@ onMounted(() => {
   text-align: center;
   color: #6b7280;
   padding: 2rem;
+}
+
+/* Emergency Section */
+.emergency-section {
+  margin-bottom: 2rem;
+}
+
+.emergency-section ion-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.emergency-section ion-card-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+}
+
+.emergency-section ion-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #b71c1c;
+  display: flex;
+  align-items: center;
+}
+
+.emergency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.emergency-item {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.emergency-item:hover {
+  background: #f3f4f6;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.emergency-item.emergency-open {
+  border-left: 4px solid #ef5350;
+  background: #fef2f2;
+}
+
+.emergency-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.emergency-type {
+  font-weight: 700;
+  font-size: 15px;
+  color: #111827;
+}
+
+.emergency-status {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-open {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-resolved {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.emergency-description {
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 8px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.emergency-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 /* User Badge in Header */

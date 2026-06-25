@@ -43,34 +43,24 @@ class EmergencyController extends Controller
     }
 
     /**
-     * Display a listing of emergency reports (admin only).
-     */
-    public function list(Request $request): JsonResponse
-    {
-        $user = $request->user();
-
-        if (!$user->isAdministrator()) {
-            // Non-admins can only see their own reports
-            $reports = EmergencyReport::where('reporter_id', $user->id)
-                ->with('reporter')
-                ->latest()
-                ->paginate(15);
-        } else {
-            $reports = EmergencyReport::with('reporter')
-                ->latest()
-                ->paginate(15);
-        }
-
-        return response()->json([
-            'data' => EmergencyReportResource::collection($reports),
-            'meta' => [
-                'current_page' => $reports->currentPage(),
-                'last_page' => $reports->lastPage(),
-                'per_page' => $reports->perPage(),
-                'total' => $reports->total(),
-            ],
-        ]);
-    }
+      * Display a listing of emergency reports (public access).
+      */
+     public function list(Request $request): JsonResponse
+     {
+         $reports = EmergencyReport::with('reporter')
+             ->latest()
+             ->paginate(15);
+ 
+         return response()->json([
+             'data' => EmergencyReportResource::collection($reports),
+             'meta' => [
+                 'current_page' => $reports->currentPage(),
+                 'last_page' => $reports->lastPage(),
+                 'per_page' => $reports->perPage(),
+                 'total' => $reports->total(),
+             ],
+         ]);
+     }
 
     /**
      * Display the specified emergency report.

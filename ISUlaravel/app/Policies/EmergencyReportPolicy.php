@@ -22,8 +22,8 @@ class EmergencyReportPolicy
      */
     public function view(User $user, EmergencyReport $emergencyReport): bool
     {
-        // Users can view their own reports, admins can view all
-        return $user->isAdministrator() || $emergencyReport->reporter_id === $user->id;
+        // All users (including guests) can view emergency reports
+        return true;
     }
 
     /**

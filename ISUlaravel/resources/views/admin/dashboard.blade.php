@@ -134,6 +134,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- Recent Emergencies Section -->
+        @if($recent_emergencies->count() > 0)
+        <div class="card mt-4">
+            <div class="card-header" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Recent Open Emergencies</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    @foreach($recent_emergencies as $emergency)
+                    <a href="{{ route('admin.emergency.show', $emergency) }}" class="list-group-item list-group-item-action" style="border-left: 4px solid #ef5350;">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <h6 class="mb-1" style="color: #b71c1c; font-weight: 700;">{{ $emergency->type }}</h6>
+                            <span class="badge bg-danger">Open</span>
+                        </div>
+                        <p class="mb-1" style="color: #4b5563;">{{ Str::limit($emergency->description, 100) }}</p>
+                        <small class="text-muted">
+                            Reported by {{ $emergency->reporter->name }} • {{ $emergency->created_at->diffForHumans() }}
+                        </small>
+                    </a>
+                    @endforeach
+                </div>
+                <a href="{{ route('admin.emergency.index') }}" class="btn btn-outline-danger btn-sm mt-3">
+                    View All Emergencies
+                </a>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
