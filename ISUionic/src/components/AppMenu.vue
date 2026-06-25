@@ -37,6 +37,16 @@
         <ion-item 
           button 
           class="nav-item"
+          :class="{ 'nav-active': $route.name === 'VenueMap' }"
+          @click="navigateTo('/venues/map')"
+        >
+          <ion-icon :icon="mapOutline" slot="start" />
+          <ion-label>Venue Map</ion-label>
+        </ion-item>
+
+        <ion-item 
+          button 
+          class="nav-item"
           :class="{ 'nav-active': $route.name === 'EmergencyReports' || $route.name === 'CreateEmergency' || $route.name === 'EmergencyDetail' }"
           @click="navigateTo('/emergency')"
         >
@@ -92,6 +102,7 @@ import {
 import {
   speedometerOutline,
   calendarOutline,
+  mapOutline,
   warningOutline,
   personCircleOutline,
   logOutOutline,

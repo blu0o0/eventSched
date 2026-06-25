@@ -13,6 +13,7 @@ const Reservations = () => import('../views/Reservations.vue');
 const ReservationDetail = () => import('../views/ReservationDetail.vue');
 const CreateReservation = () => import('../views/CreateReservation.vue');
 const Calendar = () => import('../views/Calendar.vue');
+const VenueMap = () => import('../views/VenueMap.vue');
 const EmergencyReports = () => import('../views/EmergencyReports.vue');
 const CreateEmergency = () => import('../views/CreateEmergency.vue');
 const Profile = () => import('../views/Profile.vue');
@@ -86,6 +87,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/calendar',
     name: 'Calendar',
     component: Calendar,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/venues/map',
+    name: 'VenueMap',
+    component: VenueMap,
     meta: { requiresAuth: false }
   },
   {

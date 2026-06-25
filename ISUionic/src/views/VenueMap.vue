@@ -1,0 +1,648 @@
+<template>
+  <ion-page>
+    <ion-header :translucent="true">
+      <ion-toolbar>
+        <ion-title>
+          <ion-icon :icon="mapOutline" class="header-icon"></ion-icon>
+          Venue Map
+        </ion-title>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content :fullscreen="true">
+      <div class="venue-map-layout">
+        <!-- Sidebar -->
+        <div class="sidebar-container">
+          <VenueSidebar
+            :venues="venues"
+            :venue-availability="venueAvailability"
+            :selected-venue-id="selectedVenueId"
+            @venue-select="onVenueSelect"
+          />
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Date Filter Card -->
+          <ion-card class="filter-card">
+            <ion-card-content>
+              <div class="date-filter">
+                <ion-icon :icon="calendarOutline" class="filter-icon"></ion-icon>
+                <ion-label position="stacked">Select Date</ion-label>
+                <ion-datetime-button datetime="date-picker" class="date-picker"></ion-datetime-button>
+                <ion-modal :keep-contents-mounted="true">
+                  <ion-datetime
+                    id="date-picker"
+                    presentation="date"
+                    :min="minDate"
+                    :value="selectedDate"
+                    @ionChange="onDateChange"
+                  ></ion-datetime>
+                </ion-modal>
+              </div>
+            </ion-card-content>
+          </ion-card>
+
+          <!-- Loading State -->
+          <LoadingSpinner v-if="loading" message="Loading venue map..." />
+
+          <!-- Map Container -->
+          <div v-else class="map-wrapper">
+            <div id="venueMap" class="map-container"></div>
+          </div>
+
+          <!-- Legend Card -->
+          <ion-card class="legend-card">
+            <ion-card-header>
+              <ion-card-title>
+                <ion-icon :icon="informationCircleOutline" class="legend-icon"></ion-icon>
+                Legend
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="legend-items">
+                <div class="legend-item">
+                  <div class="legend-badge available"></div>
+                  <span>Available</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-badge occupied"></div>
+                  <span>Occupied</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-badge no-coords"></div>
+                  <span>No Coordinates</span>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonIcon,
+  IonLabel,
+  IonDatetimeButton,
+  IonModal,
+  IonDatetime,
+} from '@ionic/vue';
+import { useApi } from '../composables/useApi';
+import LoadingSpinner from '../components/LoadingSpinner.vue';
+import VenueSidebar from '../components/VenueSidebar.vue';
+import { mapOutline, calendarOutline, informationCircleOutline } from 'ionicons/icons';
+import { Venue, Reservation } from '../types';
+import { API_BASE_URL, GOOGLE_MAPS_API_KEY } from '../config/env';
+
+// Declare Google Maps types
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
+const { loading, execute } = useApi<any>();
+const selectedDate = ref(new Date().toISOString().split('T')[0]);
+const minDate = new Date().toISOString().split('T')[0];
+const map = ref<any>(null);
+const markers: any[] = [];
+const venues = ref<Venue[]>([]);
+const venueAvailability = ref<Record<number, any>>({});
+const selectedVenueId = ref<number | null>(null);
+
+// Campus boundary coordinates (Santiago Campus)
+const campusBoundary = [
+  { lat: 16.72287, lng: 121.53544 },
+  { lat: 16.72213, lng: 121.53542 },
+  { lat: 16.72214, lng: 121.53735 },
+  { lat: 16.72280, lng: 121.53742 }
+];
+
+function onDateChange(event: CustomEvent) {
+  const date = event.detail.value as string;
+  selectedDate.value = date.split('T')[0];
+  loadMapData();
+}
+
+async function loadMapData() {
+  try {
+    const url = `${API_BASE_URL}/venues/map/data?date=${selectedDate.value}`;
+    console.log('Fetching from:', url);
+    
+    const response = await fetch(url);
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Invalid JSON response:', text);
+      throw new Error('Server returned invalid response. Make sure Laravel server is running at ' + API_BASE_URL);
+    }
+    
+    const data = await response.json();
+    console.log('Map data received:', data);
+
+    if (data) {
+      venues.value = data.venues;
+      venueAvailability.value = data.venue_availability;
+      initializeMap(data.venues, data.venue_availability, data.selected_date);
+    }
+  } catch (error) {
+    console.error('Error loading map data:', error);
+    // You could show an error message to the user here
+  }
+}
+
+function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr: string) {
+  // Clear existing markers
+  markers.forEach(marker => marker.setMap(null));
+  markers.length = 0;
+
+  // Initialize Google Map
+  if (!map.value) {
+    map.value = new window.google.maps.Map(document.getElementById('venueMap'), {
+      center: { lat: 16.72249174514112, lng: 121.53739618722382 },
+      zoom: 16,
+      mapTypeId: 'satellite'
+    });
+
+    // Draw campus boundary polygon
+    const campusPolygon = new window.google.maps.Polygon({
+      paths: campusBoundary,
+      strokeColor: '#FF0000',
+      strokeOpacity: 0.8,
+      strokeWeight: 3,
+      fillColor: '#FF0000',
+      fillOpacity: 0.15
+    });
+    campusPolygon.setMap(map.value);
+  }
+
+  // Create bounds that include campus boundary
+  const bounds = new window.google.maps.LatLngBounds();
+  campusBoundary.forEach((latLng) => {
+    bounds.extend(latLng);
+  });
+
+  // Process each venue
+  venues.forEach((venue) => {
+    const availability = venueAvailability[venue.id];
+    const isAvailable = availability.is_available;
+    const reservations = availability.reservations;
+
+    // Parse coordinates
+    let coordinates = null;
+    if (venue.map_coordinates) {
+      const coords = venue.map_coordinates.split(',');
+      if (coords.length === 2) {
+        coordinates = {
+          lat: parseFloat(coords[0].trim()),
+          lng: parseFloat(coords[1].trim())
+        };
+      }
+    }
+
+    // Skip venues without coordinates
+    if (!coordinates || isNaN(coordinates.lat) || isNaN(coordinates.lng)) {
+      console.warn('Venue ' + venue.name + ' has invalid coordinates: ' + venue.map_coordinates);
+      return;
+    }
+
+    // Determine marker color based on availability
+    const iconColor = isAvailable ? '#28a745' : '#dc3545';
+
+    // Build popup content
+    const statusText = isAvailable ? 'Available' : 'Occupied';
+    const statusBadge = `<span class="badge bg-${isAvailable ? 'success' : 'danger'}">${statusText}</span>`;
+    
+    let popupContent = `
+      <div class="map-popup">
+        <h6 class="popup-title">${venue.name}</h6>
+    `;
+
+    // Add venue photo if available
+    if (venue.photo_url) {
+      popupContent += `
+        <div class="popup-photo">
+          <img src="${venue.photo_url}" alt="${venue.name}" class="popup-image" />
+        </div>
+      `;
+    }
+    
+    popupContent += `
+        <p class="popup-status"><strong>Status:</strong> ${statusBadge}</p>
+        <p class="popup-info"><strong>Location:</strong> ${venue.location}</p>
+        <p class="popup-info"><strong>Max Occupancy:</strong> ${venue.capacity} people</p>
+        <p class="popup-date"><strong>Date:</strong> ${selectedDateStr}</p>
+    `;
+
+    if (venue.description) {
+      const truncatedDesc = venue.description.length > 100 
+        ? venue.description.substring(0, 100) + '...' 
+        : venue.description;
+      popupContent += `<p class="popup-description">${truncatedDesc}</p>`;
+    }
+
+    if (!isAvailable && reservations.length > 0) {
+      popupContent += `
+        <div class="popup-reservations">
+          <strong>Reservations for this date:</strong>
+          <ul class="reservation-list">
+      `;
+      reservations.forEach((reservation: Reservation) => {
+        popupContent += `
+          <li class="reservation-item">
+            <strong>${reservation.title}</strong><br />
+            <small>${reservation.start_time} - ${reservation.end_time}</small>
+          </li>
+        `;
+      });
+      popupContent += `</ul></div>`;
+    }
+
+    popupContent += `</div>`;
+
+    // Create custom marker icon
+    const markerIcon = {
+      path: window.google.maps.SymbolPath.CIRCLE,
+      scale: 15,
+      fillColor: iconColor,
+      fillOpacity: 1,
+      strokeColor: '#ffffff',
+      strokeWeight: 3,
+      anchor: new window.google.maps.Point(0, 0)
+    };
+
+    // Create marker
+    const marker = new window.google.maps.Marker({
+      position: coordinates,
+      map: map.value,
+      icon: markerIcon,
+      title: venue.name
+    });
+
+    // Create InfoWindow
+    const infoWindow = new window.google.maps.InfoWindow({
+      content: popupContent
+    });
+
+    // Add click listener to marker
+    marker.addListener('click', function() {
+      infoWindow.open(map.value, marker);
+    });
+
+    markers.push(marker);
+    bounds.extend(coordinates);
+  });
+
+  // Fit map to show all markers and campus boundary
+  map.value.fitBounds(bounds);
+  
+  // Limit maximum zoom to show campus area
+  window.google.maps.event.addListenerOnce(map.value, 'bounds_changed', function() {
+    if (map.value.getZoom() > 17) {
+      map.value.setZoom(17);
+    }
+    if (map.value.getZoom() < 15) {
+      map.value.setZoom(15);
+    }
+  });
+}
+
+function loadGoogleMaps() {
+  // Check if Google Maps is already loaded
+  if (window.google && window.google.maps) {
+    loadMapData();
+    return;
+  }
+
+  // Load Google Maps script
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=geometry`;
+  script.async = true;
+  script.defer = true;
+  script.onload = () => loadMapData();
+  script.onerror = () => console.error('Failed to load Google Maps');
+  document.head.appendChild(script);
+}
+
+onMounted(() => {
+  loadGoogleMaps();
+});
+
+onUnmounted(() => {
+  // Cleanup markers
+  markers.forEach(marker => marker.setMap(null));
+  markers.length = 0;
+});
+
+function onVenueSelect(venue: Venue): void {
+  selectedVenueId.value = venue.id;
+  
+  // Parse coordinates and center map on selected venue
+  if (venue.map_coordinates) {
+    const coords = venue.map_coordinates.split(',');
+    if (coords.length === 2) {
+      const lat = parseFloat(coords[0].trim());
+      const lng = parseFloat(coords[1].trim());
+      
+      if (!isNaN(lat) && !isNaN(lng) && map.value) {
+        const position = { lat, lng };
+        map.value.panTo(position);
+        map.value.setZoom(17);
+        
+        // Find and open the marker's info window
+        const marker = markers.find(m => {
+          const markerPos = m.getPosition();
+          return markerPos.lat() === lat && markerPos.lng() === lng;
+        });
+        
+        if (marker) {
+          window.google.maps.event.trigger(marker, 'click');
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style scoped>
+.venue-map-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.sidebar-container {
+  width: 350px;
+  min-width: 350px;
+  height: 100%;
+  overflow: hidden;
+  background: var(--ion-color-light);
+  border-right: 1px solid var(--ion-color-medium);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 1rem;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.filter-card {
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.date-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-icon {
+  font-size: 24px;
+  color: var(--ion-color-primary);
+}
+
+.date-picker {
+  flex: 1;
+}
+
+.map-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--ion-color-light);
+}
+
+.map-container {
+  height: 500px;
+  width: 100%;
+  background: #f5f5f5;
+}
+
+.legend-card {
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.legend-card ion-card-header {
+  padding-bottom: 0.5rem;
+}
+
+.legend-icon {
+  font-size: 20px;
+  color: var(--ion-color-primary);
+  margin-right: 0.5rem;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: space-around;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.legend-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.legend-badge.available {
+  background-color: #28a745;
+}
+
+.legend-badge.occupied {
+  background-color: #dc3545;
+}
+
+.legend-badge.no-coords {
+  background-color: #6c757d;
+}
+
+.header-icon {
+  margin-right: 0.5rem;
+  font-size: 20px;
+}
+
+/* Map Popup Styles */
+:deep(.map-popup) {
+  padding: 8px;
+  min-width: 250px;
+  max-width: 350px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:deep(.popup-title) {
+  margin: 0 0 10px 0;
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 16px;
+}
+
+:deep(.popup-photo) {
+  margin-bottom: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+:deep(.popup-image) {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+:deep(.popup-status),
+:deep(.popup-info),
+:deep(.popup-date) {
+  margin: 6px 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+:deep(.popup-status strong),
+:deep(.popup-info strong),
+:deep(.popup-date strong) {
+  font-weight: 600;
+  color: #374151;
+}
+
+:deep(.popup-description) {
+  margin: 8px 0;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+:deep(.popup-reservations) {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+:deep(.reservation-list) {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  list-style-type: disc;
+}
+
+:deep(.reservation-item) {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+:deep(.reservation-item strong) {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+:deep(.reservation-item small) {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+:deep(.badge) {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+:deep(.badge.bg-success) {
+  background-color: #10b981;
+  color: white;
+}
+
+:deep(.badge.bg-danger) {
+  background-color: #ef4444;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .venue-map-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-container {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--ion-color-medium);
+  }
+
+  .main-content {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .map-container {
+    height: 400px;
+  }
+
+  .legend-items {
+    gap: 1rem;
+  }
+
+  .legend-item {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar-container {
+    max-height: 35vh;
+  }
+
+  .main-content {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .map-container {
+    height: 350px;
+  }
+
+  .filter-card {
+    margin: 0 -0.5rem;
+  }
+
+  .legend-card {
+    margin: 0 -0.5rem;
+  }
+}
+</style>

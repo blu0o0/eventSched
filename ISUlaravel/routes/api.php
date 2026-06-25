@@ -25,6 +25,7 @@ Route::get('/reservations', [ReservationController::class, 'index']);
 Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
 Route::get('/venues', [VenueController::class, 'index']);
 Route::get('/venues/{venue}', [VenueController::class, 'show']);
+Route::get('/venues/map/data', [VenueController::class, 'mapData']);
 Route::get('/calendar/events', [CalendarController::class, 'events']);
 Route::get('/emergency/list', [EmergencyController::class, 'list']);
 Route::get('/emergency/{emergency}', [EmergencyController::class, 'show']);
