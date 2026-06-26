@@ -27,7 +27,7 @@
             <ion-textarea
               v-model="form.description"
               placeholder="Enter description (optional)"
-              rows="4"
+              :rows="4"
             ></ion-textarea>
           </ion-item>
 
@@ -68,45 +68,45 @@
           </div>
 
           <ion-item :class="{ 'ion-invalid': errors.date }">
-            <ion-label position="stacked">Date <span class="required">*</span></ion-label>
-            <ion-datetime-button datetime="date"></ion-datetime-button>
-            <ion-modal :keep-contents-mounted="true">
-              <ion-datetime
-                id="date"
-                presentation="date"
-                :min="minDate"
-                :value="form.date || undefined"
-                @ionChange="onDateChange"
-              ></ion-datetime>
-            </ion-modal>
+            <ion-label position="stacked">
+              <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
+              Event Date <span class="required">*</span>
+            </ion-label>
+            <input
+              type="date"
+              v-model="form.date"
+              class="native-datetime-input"
+              @input="clearError('date')"
+              :min="minDate"
+            />
             <ion-note slot="error" v-if="errors.date">{{ errors.date }}</ion-note>
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.start_time }">
-            <ion-label position="stacked">Start Time <span class="required">*</span></ion-label>
-            <ion-datetime-button datetime="start-time"></ion-datetime-button>
-            <ion-modal :keep-contents-mounted="true">
-              <ion-datetime
-                id="start-time"
-                presentation="time"
-                :value="form.start_time || undefined"
-                @ionChange="onStartTimeChange"
-              ></ion-datetime>
-            </ion-modal>
+            <ion-label position="stacked">
+              <ion-icon :icon="timeOutline" style="margin-right: 4px;"></ion-icon>
+              Start Time <span class="required">*</span>
+            </ion-label>
+            <input
+              type="time"
+              v-model="form.start_time"
+              class="native-datetime-input"
+              @input="clearError('start_time')"
+            />
             <ion-note slot="error" v-if="errors.start_time">{{ errors.start_time }}</ion-note>
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.end_time }">
-            <ion-label position="stacked">End Time <span class="required">*</span></ion-label>
-            <ion-datetime-button datetime="end-time"></ion-datetime-button>
-            <ion-modal :keep-contents-mounted="true">
-              <ion-datetime
-                id="end-time"
-                presentation="time"
-                :value="form.end_time || undefined"
-                @ionChange="onEndTimeChange"
-              ></ion-datetime>
-            </ion-modal>
+            <ion-label position="stacked">
+              <ion-icon :icon="timeOutline" style="margin-right: 4px;"></ion-icon>
+              End Time <span class="required">*</span>
+            </ion-label>
+            <input
+              type="time"
+              v-model="form.end_time"
+              class="native-datetime-input"
+              @input="clearError('end_time')"
+            />
             <ion-note slot="error" v-if="errors.end_time">{{ errors.end_time }}</ion-note>
           </ion-item>
 
@@ -248,9 +248,6 @@ import {
   IonButton,
   IonNote,
   IonSpinner,
-  IonDatetimeButton,
-  IonModal,
-  IonDatetime,
   IonCard,
   IonCardHeader,
   IonCardTitle,
@@ -366,58 +363,6 @@ function handleImageError(event: Event) {
   const img = event.target as HTMLImageElement;
   img.style.display = 'none';
   console.error('Failed to load venue image:', selectedVenue.value?.photo_url);
-}
-
-function onDateChange(event: CustomEvent) {
-  const dateValue = event.detail.value;
-  if (dateValue) {
-    // Handle both ISO string and date string formats
-    const dateStr = typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
-    form.value.date = dateStr.split('T')[0];
-    clearError('date');
-  }
-}
-
-function onStartTimeChange(event: CustomEvent) {
-  const timeValue = event.detail.value;
-  if (timeValue) {
-    // Handle ISO datetime string (e.g., "2024-01-01T14:30:00" or "14:30:00")
-    let timeString = '';
-    if (typeof timeValue === 'string') {
-      if (timeValue.includes('T')) {
-        timeString = timeValue.split('T')[1];
-      } else {
-        timeString = timeValue;
-      }
-    } else {
-      // If it's a Date object, convert to ISO and extract time
-      timeString = timeValue.toISOString().split('T')[1];
-    }
-    // Extract HH:mm format
-    form.value.start_time = timeString.substring(0, 5);
-    clearError('start_time');
-  }
-}
-
-function onEndTimeChange(event: CustomEvent) {
-  const timeValue = event.detail.value;
-  if (timeValue) {
-    // Handle ISO datetime string (e.g., "2024-01-01T14:30:00" or "14:30:00")
-    let timeString = '';
-    if (typeof timeValue === 'string') {
-      if (timeValue.includes('T')) {
-        timeString = timeValue.split('T')[1];
-      } else {
-        timeString = timeValue;
-      }
-    } else {
-      // If it's a Date object, convert to ISO and extract time
-      timeString = timeValue.toISOString().split('T')[1];
-    }
-    // Extract HH:mm format
-    form.value.end_time = timeString.substring(0, 5);
-    clearError('end_time');
-  }
 }
 
 function formatTime(timeString: string): string {
@@ -712,6 +657,35 @@ ion-item {
 .venue-image-preview ion-card-content p:last-child {
   margin-top: 0.75rem;
   font-weight: 500;
+}
+
+/* Native datetime input styling - like Laravel edit form */
+.native-datetime-input {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--ion-color-light-shade, #ccc);
+  background: var(--ion-color-light, #f4f5f8);
+  font-size: 0.95rem;
+  padding: 0 0.75rem;
+  color: var(--ion-color-dark, #222);
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.native-datetime-input:focus {
+  border-color: var(--ion-color-primary, #3880ff);
+  outline: none;
+}
+
+.native-datetime-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0.25rem;
+}
+
+.native-datetime-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
 }
 
 @keyframes slideIn {
