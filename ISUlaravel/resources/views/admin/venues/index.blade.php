@@ -5,12 +5,24 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h1><i class="bi bi-building"></i> Venues</h1>
+        <div class="d-flex justify-content-end mb-3">
             <a href="{{ route('admin.venues.create') }}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Add Venue
             </a>
         </div>
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="managementTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="venues-tab" data-bs-toggle="tab" data-bs-target="#venues-content" type="button" role="tab">
+                    <i class="bi bi-building"></i> Venues
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" href="{{ route('admin.areas.index') }}" role="tab">
+                    <i class="bi bi-grid"></i> Areas
+                </a>
+            </li>
+        </ul>
         <div class="card">
             <div class="card-body">
                 <form method="GET" action="{{ route('admin.venues.index') }}" class="d-flex align-items-center gap-3">
@@ -24,7 +36,7 @@
                     </div>
                     @if(($location ?? 'Santiago Campus') !== '')
                         <a href="{{ route('admin.venues.index', ['location' => '']) }}" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> Show All
+                            <i class="bi bi-x-circle"></i> All Locations
                         </a>
                     @endif
                 </form>

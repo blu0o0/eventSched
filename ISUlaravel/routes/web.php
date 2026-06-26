@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\AdminReservationController;
 use App\Http\Controllers\Admin\AdminVenueController;
 use App\Http\Controllers\Admin\AdminEmergencyController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminAreaController;
 use App\Http\Controllers\Api\CalendarController;
 
 // Public routes
@@ -42,6 +43,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     // Venues
     Route::resource('venues', AdminVenueController::class);
     Route::get('/venues-map', [AdminVenueController::class, 'map'])->name('venues.map');
+
+    // Areas
+    Route::resource('areas', AdminAreaController::class);
 
     // Emergency Reports
     Route::get('/emergency/create', [AdminEmergencyController::class, 'create'])->name('emergency.create');

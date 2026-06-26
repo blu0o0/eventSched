@@ -351,6 +351,14 @@
             letter-spacing: -0.5px;
         }
 
+        /* Tab text color */
+        .nav-tabs .nav-link {
+            color: #000;
+        }
+        .nav-tabs .nav-link.active {
+            color: #000;
+        }
+
         .page-subtitle {
             margin: 6px 0 0 0;
             font-size: 14px;
