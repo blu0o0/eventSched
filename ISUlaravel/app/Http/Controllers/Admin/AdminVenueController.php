@@ -37,7 +37,7 @@ class AdminVenueController extends Controller
         
         // Default to All Locations if no location filter is provided (first visit)
         // If location is explicitly set to empty string or 'all', show all
-        $location = $request->has('location') ? $request->get('location') : '';
+        $location = $request->has('location') ? $request->get('location') : 'all';
         
         // Filter by location
         if ($location !== '' && $location !== 'all') {
