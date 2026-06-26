@@ -70,6 +70,15 @@ class AdminReservationController extends Controller
         // Refresh to get updated statuses
         $reservations->load(['venue', 'user']);
 
+        if ($request->wantsJson() || $request->ajax()) {
+            $html = view('admin.reservations.partials.table', compact('reservations'))->render();
+            $pagination = $reservations->links()->toHtml();
+            return response()->json([
+                'html' => $html,
+                'pagination' => $pagination,
+            ]);
+        }
+
         return view('admin.reservations.index', compact('reservations'));
     }
 
