@@ -126,6 +126,18 @@ export interface CreateEmergencyData {
   description: string;
 }
 
+export interface ConflictingReservation {
+  id: number;
+  title: string;
+  user_name: string;
+  venue_name: string;
+  date: string; // YYYY-MM-DD
+  start_time: string; // HH:mm
+  end_time: string; // HH:mm
+  capacity: number;
+  description: string | null;
+}
+
 export interface RescheduleReservationData {
   venue_id?: number;
   date?: string; // YYYY-MM-DD

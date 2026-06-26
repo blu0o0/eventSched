@@ -30,6 +30,7 @@ class StoreReservationRequest extends FormRequest
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'capacity' => 'required|integer|min:1',
+            'force' => 'boolean',
         ];
     }
 }

@@ -122,22 +122,6 @@
             <ion-note slot="error" v-if="errors.capacity">{{ errors.capacity }}</ion-note>
           </ion-item>
 
-          <!-- Overlap Error Alert -->
-          <ion-card v-if="overlapError" color="danger" class="overlap-error-card">
-            <ion-card-header>
-              <ion-card-title>
-                <ion-icon :icon="warningOutline" style="margin-right: 0.5rem;"></ion-icon>
-                Reservation Conflict
-              </ion-card-title>
-            </ion-card-header>
-            <ion-card-content>
-              <p>{{ overlapError }}</p>
-              <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.9;">
-                Please choose a different date, time, or venue to avoid conflicts.
-              </p>
-            </ion-card-content>
-          </ion-card>
-
           <div class="form-actions">
             <!-- Debug info (remove in production) -->
             <ion-note v-if="!isFormValid && !loading" color="warning" style="display: block; margin-bottom: 1rem; font-size: 0.8rem;">
@@ -162,6 +146,95 @@
         </form>
       </div>
     </ion-content>
+
+    <!-- Conflict Modal -->
+    <ion-modal
+      :is-open="showConflictModal"
+      @didDismiss="showConflictModal = false"
+      :backdrop-dismiss="false"
+      class="conflict-modal"
+    >
+      <div class="conflict-modal-wrapper">
+        <ion-header>
+          <ion-toolbar color="danger">
+            <ion-buttons slot="start">
+              <ion-button @click="goBackHome">
+                <ion-icon :icon="homeOutline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <ion-title>
+              <ion-icon :icon="warningOutline" style="margin-right: 0.5rem;"></ion-icon>
+              Reservation Conflict Detected
+            </ion-title>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <div class="conflict-modal-content">
+            <div v-for="conflict in conflicts" :key="conflict.id" class="conflict-card-item">
+              <ion-card class="conflict-card">
+                <ion-card-header>
+                  <ion-card-title>{{ conflict.title }}</ion-card-title>
+                  <ion-card-subtitle>
+                    <ion-icon :icon="personOutline" /> {{ conflict.user_name }}
+                  </ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                  <div class="conflict-info">
+                    <div class="info-item">
+                      <ion-icon :icon="calendarOutline" />
+                      <span>{{ formatDate(conflict.date) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <ion-icon :icon="timeOutline" />
+                      <span>{{ formatTime(conflict.start_time) }} - {{ formatTime(conflict.end_time) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <ion-icon :icon="locationOutline" />
+                      <span>{{ conflict.venue_name }}</span>
+                    </div>
+                    <div class="info-item" v-if="conflict.description">
+                      <ion-icon :icon="documentTextOutline" />
+                      <span>{{ truncateText(conflict.description, 80) }}</span>
+                    </div>
+                  </div>
+                </ion-card-content>
+              </ion-card>
+            </div>
+
+            <p class="conflict-question">
+              What would you like to do?
+            </p>
+
+            <div class="conflict-actions">
+              <ion-button
+                expand="block"
+                color="medium"
+                fill="outline"
+                @click="keepEditing"
+                class="keep-editing-btn"
+              >
+                <ion-icon :icon="createOutline" /> Keep Editing
+              </ion-button>
+
+              <ion-button
+                expand="block"
+                color="primary"
+                @click="keepReservationAnyway"
+                :disabled="forceLoading"
+              >
+                <ion-spinner v-if="forceLoading" name="crescent"></ion-spinner>
+                <span v-else>
+                  <ion-icon :icon="checkmarkCircleOutline" /> Keep Reservation Anyway
+                </span>
+              </ion-button>
+              <p class="conflict-note">
+                Your reservation will be created as "pending" and will be reviewed by an administrator.
+              </p>
+            </div>
+          </div>
+        </ion-content>
+      </div>
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -196,13 +269,23 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { warningOutline } from 'ionicons/icons';
+import {
+  warningOutline,
+  personOutline,
+  calendarOutline,
+  timeOutline,
+  locationOutline,
+  documentTextOutline,
+  checkmarkCircleOutline,
+  createOutline,
+  homeOutline,
+} from 'ionicons/icons';
 import { venuesApi } from '../api/venues';
 import { reservationsApi } from '../api/reservations';
 import { useApi } from '../composables/useApi';
 import { validators } from '../utils/validators';
 import { useRequireAuth } from '../composables/useRequireAuth';
-import { Venue, CreateReservationData } from '../types';
+import { Venue, CreateReservationData, ConflictingReservation } from '../types';
 import { API_BASE_URL } from '../config/env';
 
 const route = useRoute();
@@ -228,7 +311,9 @@ const form = ref<CreateReservationData & { date: string }>({
 });
 
 const errors = ref<Record<string, string>>({});
-const overlapError = ref<string>('');
+const conflicts = ref<ConflictingReservation[]>([]);
+const showConflictModal = ref(false);
+const forceLoading = ref(false);
 
 const minDate = new Date().toISOString().split('T')[0];
 
@@ -281,15 +366,10 @@ function clearError(field: string) {
   if (errors.value[field]) {
     delete errors.value[field];
   }
-  // Clear overlap error when user changes date, time, or venue
-  if (field === 'date' || field === 'start_time' || field === 'end_time' || field === 'venue_id') {
-    overlapError.value = '';
-  }
 }
 
 function onVenueChange() {
   clearError('venue_id');
-  overlapError.value = '';
 }
 
 function handleImageError(event: Event) {
@@ -306,7 +386,6 @@ function onDateChange(event: CustomEvent) {
     const dateStr = typeof dateValue === 'string' ? dateValue : dateValue.toISOString();
     form.value.date = dateStr.split('T')[0];
     clearError('date');
-    overlapError.value = ''; // Clear overlap error when date changes
   }
 }
 
@@ -328,7 +407,6 @@ function onStartTimeChange(event: CustomEvent) {
     // Extract HH:mm format
     form.value.start_time = timeString.substring(0, 5);
     clearError('start_time');
-    overlapError.value = ''; // Clear overlap error when time changes
   }
 }
 
@@ -350,8 +428,31 @@ function onEndTimeChange(event: CustomEvent) {
     // Extract HH:mm format
     form.value.end_time = timeString.substring(0, 5);
     clearError('end_time');
-    overlapError.value = ''; // Clear overlap error when time changes
   }
+}
+
+function formatTime(timeString: string): string {
+  if (!timeString) return '';
+  const [hours, minutes] = timeString.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'short', 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
+
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
 }
 
 async function loadVenues() {
@@ -432,9 +533,6 @@ async function handleSubmit() {
     return;
   }
 
-  // Clear previous overlap error
-  overlapError.value = '';
-
   const submitData: CreateReservationData = {
     title: form.value.title,
     description: form.value.description || undefined,
@@ -449,48 +547,99 @@ async function handleSubmit() {
   if (isEdit.value) {
     const id = parseInt(route.params.id as string);
     result = await executeSubmit(() => reservationsApi.update(id, submitData));
-  } else {
-    result = await executeSubmit(() => reservationsApi.create(submitData));
-  }
-
-  // Check if the request failed (useApi returns null on error)
-  if (result === null) {
-    // Get error message from useApi error ref or from the API response
-    const errorMessage = submitError.value || 'Failed to save reservation';
     
-    // Check if error message contains overlap/conflict information
-    if (errorMessage.toLowerCase().includes('overlap') || 
-        errorMessage.toLowerCase().includes('conflict') ||
-        errorMessage.toLowerCase().includes('reservation')) {
-      overlapError.value = errorMessage;
+    if (result === null) {
+      return;
+    }
+
+    // Success - show success message and navigate
+    showSuccess('Reservation updated successfully');
+    router.push('/reservations');
+  } else {
+    try {
+      const response = await reservationsApi.create(submitData, false);
       
-      // Also show toast for visibility (useApi already shows one, but we show another with longer duration)
+      // Check if response has conflicts (status 409)
+      if (response.conflicts && response.conflicts.length > 0) {
+        // Show the conflict modal with conflicting reservation details
+        conflicts.value = response.conflicts;
+        showConflictModal.value = true;
+        return;
+      }
+      
+      // Success
+      if (response.data) {
+        showSuccess('Reservation created successfully');
+        router.push('/reservations');
+      }
+    } catch (err: any) {
+      // Check if the error response contains conflicts
+      if (err.response?.status === 409 && err.response?.data?.conflicts) {
+        conflicts.value = err.response.data.conflicts;
+        showConflictModal.value = true;
+        return;
+      }
+      
+      // For other errors, useApi's toast will handle it
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
+      
+      // Let useApi handle showing the toast
       const toast = await toastController.create({
         message: errorMessage,
         duration: 5000,
         position: 'top',
         color: 'danger',
-        buttons: [
-          {
-            text: 'OK',
-            role: 'cancel'
-          }
-        ]
+        buttons: [{ text: 'OK', role: 'cancel' }]
       });
       await toast.present();
+      return;
     }
-    // Note: useApi already shows a toast, so we don't need to show another for non-overlap errors
-    return;
   }
+}
 
-  // Success - show success message and navigate
-  if (isEdit.value) {
-    showSuccess('Reservation updated successfully');
-  } else {
-    showSuccess('Reservation created successfully');
-  }
+async function keepReservationAnyway() {
+  forceLoading.value = true;
   
-  router.push('/reservations');
+  const submitData: CreateReservationData = {
+    title: form.value.title,
+    description: form.value.description || undefined,
+    venue_id: form.value.venue_id,
+    date: form.value.date,
+    start_time: form.value.start_time,
+    end_time: form.value.end_time,
+    capacity: form.value.capacity,
+  };
+
+  try {
+    const response = await reservationsApi.create(submitData, true);
+    
+    if (response.data) {
+      showSuccess('Reservation created successfully. It is now pending and will be reviewed by an administrator.');
+      showConflictModal.value = false;
+      router.push('/reservations');
+    }
+  } catch (err: any) {
+    const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
+    const toast = await toastController.create({
+      message: errorMessage,
+      duration: 5000,
+      position: 'top',
+      color: 'danger',
+      buttons: [{ text: 'OK', role: 'cancel' }]
+    });
+    await toast.present();
+  } finally {
+    forceLoading.value = false;
+  }
+}
+
+function keepEditing() {
+  showConflictModal.value = false;
+}
+
+function goBackHome() {
+  showConflictModal.value = false;
+  router.push('/home');
 }
 
 onMounted(async () => {
@@ -524,33 +673,6 @@ ion-item {
 .form-actions {
   margin-top: 2rem;
   padding: 0 1rem;
-}
-
-.overlap-error-card {
-  margin: 1rem 0;
-  animation: slideIn 0.3s ease-out;
-}
-
-.overlap-error-card ion-card-title {
-  display: flex;
-  align-items: center;
-  font-size: 1.1rem;
-}
-
-.overlap-error-card ion-card-content p {
-  margin: 0;
-  line-height: 1.5;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .venue-image-preview {
@@ -602,5 +724,142 @@ ion-item {
   margin-top: 0.75rem;
   font-weight: 500;
 }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Conflict Modal Styles */
+
+.conflict-modal-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.conflict-modal-wrapper ion-content {
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+}
+
+.conflict-modal-content {
+  padding: 0;
+}
+
+.conflict-card-item {
+  margin-bottom: 0.75rem;
+}
+
+.conflict-card {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid var(--ion-color-danger);
+  margin: 0;
+}
+
+.conflict-card ion-card-header {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 0, 0, 0.03);
+}
+
+.conflict-card ion-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+}
+
+.conflict-card ion-card-subtitle {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.conflict-card ion-card-content {
+  padding: 0.75rem 1rem;
+}
+
+.conflict-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.conflict-info .info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--ion-color-medium);
+}
+
+.conflict-info .info-item ion-icon {
+  font-size: 1rem;
+  color: var(--ion-color-primary);
+  min-width: 1rem;
+}
+
+.conflict-question {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ion-color-dark);
+  margin: 1.5rem 0 1rem 0;
+  text-align: center;
+}
+
+.conflict-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+.conflict-actions ion-button {
+  margin: 0;
+}
+
+.conflict-actions ion-button ion-icon {
+  margin-right: 0.4rem;
+}
+
+.conflict-note {
+  font-size: 0.8rem;
+  color: var(--ion-color-medium);
+  text-align: center;
+  margin: 0 0.5rem;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.keep-editing-btn {
+  --border-color: var(--ion-color-medium);
+  --color: var(--ion-color-medium);
+}
+
+.go-home-btn {
+  --color: var(--ion-color-dark);
+}
 </style>
 
+<style>
+/* Global styles for conflict modal - not scoped so CSS custom properties work on ion-modal */
+.conflict-modal {
+  --width: 90%;
+  --height: 80%;
+  --max-width: 500px;
+  --border-radius: 16px;
+}
+</style>

@@ -78,10 +78,13 @@ class ReservationController extends Controller
     {
         $this->authorize('create', Reservation::class);
 
+        $force = $request->boolean('force', false);
+
         try {
             $reservation = $this->reservationService->create(
                 $request->validated(),
-                $request->user()->id
+                $request->user()->id,
+                $force
             );
 
             return response()->json([
@@ -89,9 +92,24 @@ class ReservationController extends Controller
                 'data' => new ReservationResource($reservation),
             ], 201);
         } catch (\Exception $e) {
+            // If the error contains overlap/conflict info, return structured conflict data
+            $errorMessage = $e->getMessage();
+            if (str_contains($errorMessage, 'overlaps') || str_contains($errorMessage, 'conflict')) {
+                // Build a temp reservation to get conflict details
+                $tempReservation = new \App\Models\Reservation($request->validated());
+                $tempReservation->user_id = $request->user()->id;
+                $conflicts = $this->reservationService->getConflictingReservations($tempReservation);
+
+                return response()->json([
+                    'message' => 'This reservation overlaps with existing reservation(s).',
+                    'error' => $errorMessage,
+                    'conflicts' => $conflicts,
+                ], 409);
+            }
+
             return response()->json([
                 'message' => 'Failed to create reservation',
-                'error' => $e->getMessage(),
+                'error' => $errorMessage,
             ], 422);
         }
     }

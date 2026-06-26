@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Reservation;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+
+class ChangeTrackerController extends Controller
+{
+    /**
+     * Check for changes since a given timestamp
+     * Returns true if there are newer changes
+     */
+    public function check(Request $request): JsonResponse
+    {
+        $request->validate([
+            'since' => 'required|date',
+            'type' => 'nullable|string|in:reservations,venues,all',
+        ]);
+
+        $since = $request->input('since');
+        $type = $request->input('type', 'all');
+
+        $hasChanges = false;
+        $changes = [];
+
+        // Check reservations
+        if ($type === 'all' || $type === 'reservations') {
+            $latestReservation = Reservation::where('updated_at', '>', $since)
+                ->orWhere('created_at', '>', $since)
+                ->latest('updated_at')
+                ->first(['id', 'updated_at', 'created_at']);
+
+            if ($latestReservation) {
+                $hasChanges = true;
+                $changes['reservations'] = [
+                    'has_changes' => true,
+                    'latest_id' => $latestReservation->id,
+                    'latest_update' => $latestReservation->updated_at?->toIso8601String() ?? $latestReservation->created_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'has_changes' => $hasChanges,
+            'changes' => $changes,
+            'server_time' => now()->toIso8601String(),
+        ]);
+    }
+}

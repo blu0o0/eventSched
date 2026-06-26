@@ -1,5 +1,12 @@
 import apiClient from './client';
-import { Reservation, CreateReservationData, RescheduleReservationData, ApiResponse } from '../types';
+import { Reservation, CreateReservationData, RescheduleReservationData, ConflictingReservation } from '../types';
+
+export interface CreateReservationResponse {
+  message: string;
+  data?: Reservation;
+  conflicts?: ConflictingReservation[];
+  error?: string;
+}
 
 export const reservationsApi = {
   async getAll(status?: 'pending' | 'approved' | 'rejected' | 'postponed', mine?: boolean): Promise<{ data: Reservation[]; meta?: any }> {
@@ -15,9 +22,9 @@ export const reservationsApi = {
     return response.data.data;
   },
 
-  async create(data: CreateReservationData): Promise<Reservation> {
-    const response = await apiClient.post<{ message: string; data: Reservation }>('/reservations', data);
-    return response.data.data;
+  async create(data: CreateReservationData, force: boolean = false): Promise<CreateReservationResponse> {
+    const response = await apiClient.post<CreateReservationResponse>('/reservations', { ...data, force });
+    return response.data;
   },
 
   async update(id: number, data: CreateReservationData): Promise<Reservation> {

@@ -10,13 +10,13 @@ use Illuminate\Support\Facades\DB;
 class ReservationService
 {
     /**
-     * Check if a reservation conflicts with existing approved reservations
+     * Check if a reservation conflicts with existing pending or approved reservations
      */
     public function hasConflict(Reservation $reservation): bool
     {
         $conflictingReservations = Reservation::where('venue_id', $reservation->venue_id)
             ->where('date', $reservation->date)
-            ->where('status', 'approved')
+            ->whereIn('status', ['pending', 'approved'])
             ->where('id', '!=', $reservation->id ?? 0)
             ->get();
 
@@ -36,7 +36,7 @@ class ReservationService
     {
         $conflictingReservations = Reservation::where('venue_id', $reservation->venue_id)
             ->where('date', $reservation->date)
-            ->where('status', 'approved')
+            ->whereIn('status', ['pending', 'approved'])
             ->where('id', '!=', $reservation->id ?? 0)
             ->with(['user', 'venue'])
             ->get();
@@ -48,8 +48,12 @@ class ReservationService
                     'id' => $existing->id,
                     'title' => $existing->title,
                     'user_name' => $existing->user->name ?? 'Unknown',
+                    'venue_name' => $existing->venue->name ?? 'Unknown',
+                    'date' => $existing->date instanceof Carbon ? $existing->date->format('Y-m-d') : (string) $existing->date,
                     'start_time' => $existing->start_time,
                     'end_time' => $existing->end_time,
+                    'capacity' => $existing->capacity,
+                    'description' => $existing->description,
                 ];
             }
         }
@@ -60,7 +64,7 @@ class ReservationService
     /**
      * Create a new reservation
      */
-    public function create(array $data, int $userId): Reservation
+    public function create(array $data, int $userId, bool $force = false): Reservation
     {
         // Check if venue is available
         $venue = Venue::find($data['venue_id']);
@@ -82,20 +86,22 @@ class ReservationService
         $reservation->user_id = $userId;
         $reservation->status = 'pending';
         
-        // Check for overlaps with approved reservations
-        $conflicts = $this->getConflictingReservations($reservation);
-        if (!empty($conflicts)) {
-            $conflictMessages = [];
-            foreach ($conflicts as $conflict) {
-                $conflictMessages[] = sprintf(
-                    '"%s" by %s (%s - %s)',
-                    $conflict['title'],
-                    $conflict['user_name'],
-                    Carbon::parse($conflict['start_time'])->format('g:i A'),
-                    Carbon::parse($conflict['end_time'])->format('g:i A')
-                );
+        // Check for overlaps with approved reservations (skip if force=true)
+        if (!$force) {
+            $conflicts = $this->getConflictingReservations($reservation);
+            if (!empty($conflicts)) {
+                $conflictMessages = [];
+                foreach ($conflicts as $conflict) {
+                    $conflictMessages[] = sprintf(
+                        '"%s" by %s (%s - %s)',
+                        $conflict['title'],
+                        $conflict['user_name'],
+                        Carbon::parse($conflict['start_time'])->format('g:i A'),
+                        Carbon::parse($conflict['end_time'])->format('g:i A')
+                    );
+                }
+                throw new \Exception('This reservation overlaps with existing approved reservation(s): ' . implode(', ', $conflictMessages));
             }
-            throw new \Exception('This reservation overlaps with existing approved reservation(s): ' . implode(', ', $conflictMessages));
         }
         
         $reservation->save();
@@ -221,4 +227,3 @@ class ReservationService
         return $slots;
     }
 }
-
