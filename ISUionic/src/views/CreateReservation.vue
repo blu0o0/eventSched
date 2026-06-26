@@ -155,15 +155,14 @@
       class="conflict-modal"
     >
       <div class="conflict-modal-wrapper">
-        <ion-header>
-          <ion-toolbar color="danger">
+        <ion-header class="conflict-header">
+          <ion-toolbar class="conflict-toolbar">
             <ion-buttons slot="start">
-              <ion-button @click="goBackHome">
+              <ion-button @click="goBackHome" class="conflict-home-btn">
                 <ion-icon :icon="homeOutline" slot="icon-only"></ion-icon>
               </ion-button>
             </ion-buttons>
             <ion-title>
-              <ion-icon :icon="warningOutline" style="margin-right: 0.5rem;"></ion-icon>
               Reservation Conflict Detected
             </ion-title>
           </ion-toolbar>
@@ -200,37 +199,28 @@
                 </ion-card-content>
               </ion-card>
             </div>
+          </div>
 
-            <p class="conflict-question">
-              What would you like to do?
-            </p>
+          <div class="conflict-actions">
+            <ion-button
+              expand="block"
+              color="medium"
+              fill="outline"
+              @click="keepEditing"
+              class="keep-editing-btn"
+            >
+              Keep Editing
+            </ion-button>
 
-            <div class="conflict-actions">
-              <ion-button
-                expand="block"
-                color="medium"
-                fill="outline"
-                @click="keepEditing"
-                class="keep-editing-btn"
-              >
-                <ion-icon :icon="createOutline" /> Keep Editing
-              </ion-button>
-
-              <ion-button
-                expand="block"
-                color="primary"
-                @click="keepReservationAnyway"
-                :disabled="forceLoading"
-              >
-                <ion-spinner v-if="forceLoading" name="crescent"></ion-spinner>
-                <span v-else>
-                  <ion-icon :icon="checkmarkCircleOutline" /> Keep Reservation Anyway
-                </span>
-              </ion-button>
-              <p class="conflict-note">
-                Your reservation will be created as "pending" and will be reviewed by an administrator.
-              </p>
-            </div>
+            <ion-button
+              expand="block"
+              color="primary"
+              @click="keepReservationAnyway"
+              :disabled="forceLoading"
+            >
+              <ion-spinner v-if="forceLoading" name="crescent"></ion-spinner>
+              <span v-else>Keep Reservation Anyway</span>
+            </ion-button>
           </div>
         </ion-content>
       </div>
@@ -270,7 +260,6 @@ import {
   toastController,
 } from '@ionic/vue';
 import {
-  warningOutline,
   personOutline,
   calendarOutline,
   timeOutline,
@@ -737,6 +726,40 @@ ion-item {
 }
 
 /* Conflict Modal Styles */
+
+.conflict-header {
+  background: transparent;
+}
+
+.conflict-toolbar {
+  --background: linear-gradient(135deg, #d32f2f 0%, #9f0505 50%, rgb(128, 6, 6)100%);
+  --color: white;
+}
+
+.conflict-toolbar ion-title {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.conflict-home-btn {
+  --background: rgb(179, 3, 3);
+  --color: #370909;
+  --border-radius: 10%;
+  --width: 1em;
+  --height: 1em;
+  --padding-start: 0;
+  --padding-end: 0;
+  --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
+}
+
+.conflict-home-btn ion-icon {
+  
+  font-size: 1rem;
+}
 
 .conflict-modal-wrapper {
   width: 100%;
