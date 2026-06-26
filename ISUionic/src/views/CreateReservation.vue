@@ -67,6 +67,59 @@
             </ion-card>
           </div>
 
+          <ion-item :class="{ 'ion-invalid': errors.area_name }">
+            <ion-label position="stacked">Area <span class="required">*</span></ion-label>
+            <ion-select
+              v-model="selectedAreaId"
+              :placeholder="form.venue_id ? 'Select an area' : 'Please select a venue first'"
+              interface="popover"
+              @ionChange="onAreaChange"
+              :disabled="!form.venue_id"
+            >
+              <ion-select-option value="none">None</ion-select-option>
+              <ion-select-option
+                v-for="area in filteredAreas"
+                :key="area.id"
+                :value="area.id"
+              >
+                {{ area.name }}
+              </ion-select-option>
+              <ion-select-option value="others" class="others-option">Others:</ion-select-option>
+            </ion-select>
+            <ion-note slot="error" v-if="errors.area_name">{{ errors.area_name }}</ion-note>
+            <ion-note slot="helper" v-if="form.venue_id && filteredAreas.length === 0 && !areasLoading" color="medium">
+              No areas available for this venue
+            </ion-note>
+          </ion-item>
+
+          <!-- Custom Area Input -->
+          <ion-item v-if="selectedAreaId === 'others'">
+            <ion-label position="stacked">Enter Custom Area Name</ion-label>
+            <ion-input
+              v-model="form.area_name"
+              placeholder="Enter area name (e.g., Room 101, Lab 2)"
+              @ion-input="clearError('area_name')"
+            ></ion-input>
+          </ion-item>
+
+          <!-- Area Image Preview -->
+          <div v-if="selectedArea && selectedAreaImageUrl" class="area-image-preview">
+            <ion-card>
+              <img :src="selectedAreaImageUrl" :alt="selectedArea.name" @error="handleAreaImageError" />
+              <ion-card-header>
+                <ion-card-title>{{ selectedArea.name }}</ion-card-title>
+                <ion-card-subtitle>{{ selectedArea.venue?.name || 'No Venue' }}</ion-card-subtitle>
+              </ion-card-header>
+              <ion-card-content>
+                <p><strong>Status:</strong> 
+                  <ion-badge :color="getStatusColor(selectedArea.status)">
+                    {{ formatStatus(selectedArea.status) }}
+                  </ion-badge>
+                </p>
+              </ion-card-content>
+            </ion-card>
+          </div>
+
           <ion-item :class="{ 'ion-invalid': errors.date }">
             <ion-label position="stacked">
               <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
@@ -267,11 +320,12 @@ import {
   homeOutline,
 } from 'ionicons/icons';
 import { venuesApi } from '../api/venues';
+import { areasApi } from '../api/areas';
 import { reservationsApi } from '../api/reservations';
 import { useApi } from '../composables/useApi';
 import { validators } from '../utils/validators';
 import { useRequireAuth } from '../composables/useRequireAuth';
-import { Venue, CreateReservationData, ConflictingReservation } from '../types';
+import { Venue, Area, CreateReservationData, ConflictingReservation } from '../types';
 import { API_BASE_URL } from '../config/env';
 
 const route = useRoute();
@@ -280,16 +334,20 @@ const { requireAuth } = useRequireAuth();
 const isEdit = computed(() => !!route.params.id);
 
 const { loading: venuesLoading, execute: executeVenues } = useApi<Venue[]>();
+const { loading: areasLoading, execute: executeAreas } = useApi<Area[]>();
 const { loading: reservationLoading, execute: executeReservation } = useApi<any>();
 const { loading: submitLoading, execute: executeSubmit, showSuccess, error: submitError } = useApi<any>();
 
-const loading = computed(() => venuesLoading.value || reservationLoading.value || submitLoading.value);
+const loading = computed(() => venuesLoading.value || areasLoading.value || reservationLoading.value || submitLoading.value);
 
 const venues = ref<Venue[]>([]);
-const form = ref<CreateReservationData & { date: string }>({
+const areas = ref<Area[]>([]);
+const selectedAreaId = ref<number | string | null>(null);
+const form = ref<CreateReservationData & { date: string; area_name: string }>({
   title: '',
   description: '',
   venue_id: 0,
+  area_name: '',
   date: '',
   start_time: '',
   end_time: '',
@@ -339,13 +397,15 @@ const selectedVenueImageUrl = computed(() => {
 const isFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
+  const hasArea = selectedAreaId.value && (typeof selectedAreaId.value === 'number' || selectedAreaId.value === 'others');
+  const hasCustomArea = selectedAreaId.value === 'others' && validators.required(form.value.area_name);
   const hasDate = validators.required(form.value.date) && validators.dateNotPast(form.value.date);
   const hasStartTime = validators.required(form.value.start_time);
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
   const hasCapacity = validators.required(form.value.capacity) && validators.positiveNumber(form.value.capacity);
   
-  return hasTitle && hasVenue && hasDate && timesValid && hasCapacity;
+  return hasTitle && hasVenue && (hasArea || hasCustomArea) && hasDate && timesValid && hasCapacity;
 });
 
 function clearError(field: string) {
@@ -356,6 +416,17 @@ function clearError(field: string) {
 
 function onVenueChange() {
   clearError('venue_id');
+  console.log('🏟️ Venue changed to:', form.value.venue_id, 'type:', typeof form.value.venue_id);
+  console.log('🏟️ selectedVenue:', selectedVenue.value);
+  // Reset area selection when venue changes
+  selectedAreaId.value = null;
+  form.value.area_name = '';
+}
+
+function onAreaChange() {
+  if (selectedAreaId.value) {
+    form.value.area_name = '';
+  }
 }
 
 function handleImageError(event: Event) {
@@ -408,6 +479,92 @@ async function loadVenues() {
   }
 }
 
+async function loadAreas() {
+  const data = await executeAreas(() => areasApi.getAll());
+  if (data) {
+    areas.value = data;
+    console.log('✅ Areas loaded:', areas.value);
+    console.log('✅ Areas count:', areas.value.length);
+    if (areas.value.length > 0) {
+      console.log('✅ First area:', areas.value[0]);
+    }
+  } else {
+    console.error('❌ Failed to load areas');
+  }
+}
+
+// Filter areas based on selected venue
+const filteredAreas = computed(() => {
+  console.log('🔍 Filtering areas...');
+  console.log('  form.venue_id:', form.value.venue_id, 'type:', typeof form.value.venue_id);
+  
+  if (!form.value.venue_id) {
+    console.log('  ❌ No venue selected, returning empty array');
+    return [];
+  }
+  
+  // Convert venue_id to number to ensure type matching
+  const venueIdNum = typeof form.value.venue_id === 'string' 
+    ? parseInt(form.value.venue_id) 
+    : form.value.venue_id;
+  
+  console.log('  venueIdNum:', venueIdNum, 'type:', typeof venueIdNum);
+  console.log('  Total areas:', areas.value.length);
+  
+  const filtered = areas.value.filter(a => {
+    const match = a.venue_id === venueIdNum;
+    console.log('  Area:', a.name, 'venue_id:', a.venue_id, 'match:', match);
+    return match;
+  });
+  
+  console.log('  ✅ Filtered areas:', filtered);
+  return filtered;
+});
+
+// Get selected area for image preview
+const selectedArea = computed(() => {
+  if (!selectedAreaId.value || typeof selectedAreaId.value === 'string') return null;
+  return areas.value.find(a => a.id === selectedAreaId.value) || null;
+});
+
+// Computed property for selected area image URL
+const selectedAreaImageUrl = computed(() => {
+  if (!selectedArea.value?.photo_url) return null;
+  return getImageUrl(selectedArea.value.photo_url);
+});
+
+function handleAreaImageError(event: Event) {
+  const img = event.target as HTMLImageElement;
+  img.style.display = 'none';
+  console.error('Failed to load area image:', selectedArea.value?.photo_url);
+}
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'available':
+      return 'success';
+    case 'occupied':
+      return 'warning';
+    case 'not_available':
+      return 'danger';
+    default:
+      return 'medium';
+  }
+}
+
+function formatStatus(status: string): string {
+  switch (status) {
+    case 'available':
+      return 'Available';
+    case 'occupied':
+      return 'Occupied';
+    case 'not_available':
+      return 'Not Available';
+    default:
+      return status;
+  }
+}
+
 async function loadReservation() {
   if (!isEdit.value || !route.params.id || isNaN(Number(route.params.id))) return;
   
@@ -418,6 +575,7 @@ async function loadReservation() {
       title: data.title,
       description: data.description || '',
       venue_id: data.venue_id,
+      area_name: '',
       date: data.date,
       start_time: data.start_time,
       end_time: data.end_time,
@@ -435,6 +593,12 @@ function validateForm(): boolean {
 
   if (!form.value.venue_id || form.value.venue_id <= 0) {
     errors.value.venue_id = 'Please select a venue';
+  }
+
+  if (!selectedAreaId.value) {
+    errors.value.area_name = 'Please select an area';
+  } else if (selectedAreaId.value === 'others' && !validators.required(form.value.area_name)) {
+    errors.value.area_name = 'Please enter a custom area name';
   }
 
   if (!validators.required(form.value.date)) {
@@ -585,6 +749,7 @@ onMounted(async () => {
   }
   
   await loadVenues();
+  await loadAreas();
   if (isEdit.value) {
     await loadReservation();
   }
@@ -657,6 +822,51 @@ ion-item {
 .venue-image-preview ion-card-content p:last-child {
   margin-top: 0.75rem;
   font-weight: 500;
+}
+
+.area-image-preview {
+  margin: 1rem 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+.area-image-preview ion-card {
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.area-image-preview img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  display: block;
+}
+
+.area-image-preview ion-card-header {
+  padding: 1rem;
+}
+
+.area-image-preview ion-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.area-image-preview ion-card-subtitle {
+  font-size: 0.9rem;
+  color: var(--ion-color-medium);
+}
+
+.area-image-preview ion-card-content {
+  padding: 0 1rem 1rem 1rem;
+}
+
+.area-image-preview ion-card-content p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--ion-color-dark);
 }
 
 /* Native datetime input styling - like Laravel edit form */

@@ -2,6 +2,7 @@
     <tr>
         <td>{{ $reservation->title }}</td>
         <td>{{ $reservation->venue->name }}</td>
+        <td>{{ $reservation->area_name ?? 'N/A' }}</td>
         <td>{{ $reservation->date->format('M d, Y') }}</td>
         <td>{{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}</td>
         <td>{{ $reservation->user->name }}</td>
@@ -81,6 +82,6 @@
     </div>
 @empty
     <tr>
-        <td colspan="7" class="text-center">No reservations found</td>
+        <td colspan="8" class="text-center">No reservations found</td>
     </tr>
 @endforelse

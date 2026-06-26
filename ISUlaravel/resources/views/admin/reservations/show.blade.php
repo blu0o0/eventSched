@@ -25,6 +25,9 @@
                 <h5>Venue</h5>
                 <p>{{ optional($reservation->venue)->name ?? 'N/A' }} ({{ optional($reservation->venue)->location ?? 'N/A' }})</p>
 
+                <h5>Area</h5>
+                <p>{{ $reservation->area_name ?? 'N/A' }}</p>
+
                 <h5>Date & Time</h5>
                 <p>
                     @if($reservation->date)

@@ -35,6 +35,7 @@
                     <tr>
                         <th>Title</th>
                         <th>Venue</th>
+                        <th>Area</th>
                         <th>Date</th>
                         <th>Time</th>
                         <th>User</th>

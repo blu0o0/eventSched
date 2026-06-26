@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\VenueController;
+use App\Http\Controllers\Api\AreaController;
 use App\Http\Controllers\Api\EmergencyController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\OtpController;
@@ -24,6 +25,8 @@ Route::post('/forgot-password/reset-password', [OtpController::class, 'verifyRes
 Route::get('/venues', [VenueController::class, 'index']);
 Route::get('/venues/{venue}', [VenueController::class, 'show']);
 Route::get('/venues/map/data', [VenueController::class, 'mapData']);
+Route::get('/areas', [AreaController::class, 'index']);
+Route::get('/areas/{area}', [AreaController::class, 'show']);
 Route::get('/calendar/events', [CalendarController::class, 'events']);
 Route::get('/emergency/list', [EmergencyController::class, 'list']);
 Route::get('/emergency/{emergency}', [EmergencyController::class, 'show']);

@@ -26,12 +26,24 @@ export interface Venue {
   updated_at: string;
 }
 
+export interface Area {
+  id: number;
+  name: string;
+  venue_id: number;
+  venue?: Venue;
+  photo_url?: string | null;
+  status: 'available' | 'occupied' | 'not_available';
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Reservation {
   id: number;
   title: string;
   description: string | null;
   venue: Venue;
   venue_id: number;
+  area_name?: string | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:mm
   end_time: string; // HH:mm

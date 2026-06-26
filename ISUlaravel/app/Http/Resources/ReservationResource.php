@@ -20,6 +20,7 @@ class ReservationResource extends JsonResource
             'description' => $this->description,
             'venue' => new VenueResource($this->whenLoaded('venue')),
             'venue_id' => $this->venue_id,
+            'area_name' => $this->area_name,
             'date' => $this->date->format('Y-m-d'),
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,

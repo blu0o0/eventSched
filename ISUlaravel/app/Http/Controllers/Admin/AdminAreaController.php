@@ -129,4 +129,11 @@ class AdminAreaController extends Controller
         return redirect()->route('admin.areas.index')
             ->with('success', 'Area deleted successfully.');
     }
+
+    public function show(Area $area)
+    {
+        $this->ensureAdmin();
+        $area->load('venue');
+        return view('admin.areas.show', compact('area'));
+    }
 }

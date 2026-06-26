@@ -13,6 +13,10 @@
       <ion-card-subtitle>
         <ion-icon :icon="locationOutline" />
         {{ reservation.venue.name }}
+        <span v-if="reservation.area_name" class="area-info">
+          <ion-icon :icon="gridOutline" />
+          {{ reservation.area_name }}
+        </span>
       </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
@@ -39,7 +43,7 @@
 
 <script setup lang="ts">
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonIcon } from '@ionic/vue';
-import { calendarOutline, timeOutline, peopleOutline, locationOutline, pencilOutline } from 'ionicons/icons';
+import { calendarOutline, timeOutline, peopleOutline, locationOutline, pencilOutline, gridOutline } from 'ionicons/icons';
 import { Reservation } from '../types';
 import StatusBadge from './StatusBadge.vue';
 import { formatTime } from '../utils/validators';
