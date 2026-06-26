@@ -49,7 +49,7 @@
               </div>
               <div class="info-item">
                 <ion-icon :icon="timeOutline" />
-                <span>{{ reservation.start_time }} - {{ reservation.end_time }}</span>
+                <span>{{ formatTime(reservation.start_time) }} - {{ formatTime(reservation.end_time) }}</span>
               </div>
               <div class="info-item">
                 <ion-icon :icon="peopleOutline" />
@@ -306,6 +306,7 @@ import { useAuthStore } from '../stores/auth';
 import StatusBadge from '../components/StatusBadge.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { Reservation, Venue, RescheduleReservationData } from '../types';
+import { formatTime } from '../utils/validators';
 
 const route = useRoute();
 const router = useRouter();

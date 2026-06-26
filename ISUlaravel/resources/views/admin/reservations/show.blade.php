@@ -28,7 +28,7 @@
                 <h5>Date & Time</h5>
                 <p>
                     {{ $reservation->date->format('F d, Y') }}<br>
-                    {{ $reservation->start_time }} - {{ $reservation->end_time }}
+                    {{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}
                 </p>
             </div>
             <div class="col-md-6">

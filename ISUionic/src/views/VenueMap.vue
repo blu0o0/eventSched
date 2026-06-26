@@ -64,6 +64,7 @@ import VenueSidebar from '../components/VenueSidebar.vue';
 import { mapOutline, calendarOutline, informationCircleOutline, menuOutline } from 'ionicons/icons';
 import { Venue, Reservation } from '../types';
 import { API_BASE_URL, GOOGLE_MAPS_API_KEY } from '../config/env';
+import { formatTime } from '../utils/validators';
 
 // Declare Google Maps types
 declare global {
@@ -228,7 +229,7 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
         popupContent += `
           <li class="reservation-item">
             <strong>${reservation.title}</strong><br />
-            <small>${reservation.start_time} - ${reservation.end_time}</small>
+            <small>${formatTime(reservation.start_time)} - ${formatTime(reservation.end_time)}</small>
           </li>
         `;
       });

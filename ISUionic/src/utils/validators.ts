@@ -68,6 +68,18 @@ export const validators = {
   },
 };
 
+/**
+ * Format military time (HH:mm) to AM/PM format (h:mm AM/PM)
+ */
+export function formatTime(timeString: string): string {
+  if (!timeString) return '';
+  const [hours, minutes] = timeString.split(':');
+  const h = parseInt(hours, 10);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
+
 export interface ValidationRule {
   validator: (value: any, ...args: any[]) => boolean;
   message: string;

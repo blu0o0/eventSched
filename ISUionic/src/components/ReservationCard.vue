@@ -23,7 +23,7 @@
         </div>
         <div class="info-item">
           <ion-icon :icon="timeOutline" />
-          <span>{{ reservation.start_time }} - {{ reservation.end_time }}</span>
+          <span>{{ formatTime(reservation.start_time) }} - {{ formatTime(reservation.end_time) }}</span>
         </div>
         <div class="info-item">
           <ion-icon :icon="peopleOutline" />
@@ -42,6 +42,7 @@ import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, 
 import { calendarOutline, timeOutline, peopleOutline, locationOutline, pencilOutline } from 'ionicons/icons';
 import { Reservation } from '../types';
 import StatusBadge from './StatusBadge.vue';
+import { formatTime } from '../utils/validators';
 
 interface Props {
   reservation: Reservation;

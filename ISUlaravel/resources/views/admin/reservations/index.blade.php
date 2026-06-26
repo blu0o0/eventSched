@@ -50,7 +50,7 @@
                             <td>{{ $reservation->title }}</td>
                             <td>{{ $reservation->venue->name }}</td>
                             <td>{{ $reservation->date->format('M d, Y') }}</td>
-                            <td>{{ $reservation->start_time }} - {{ $reservation->end_time }}</td>
+                            <td>{{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}</td>
                             <td>{{ $reservation->user->name }}</td>
                             <td>
                                 @if($reservation->status === 'pending')
