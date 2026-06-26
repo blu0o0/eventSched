@@ -36,7 +36,7 @@ class AdminDashboardController extends Controller
             'total_users' => User::count(),
         ];
 
-        $recent_reservations = Reservation::with(['venue', 'user'])
+        $recent_reservations = Reservation::with(['venue', 'user', 'area'])
             ->whereHas('venue', function ($q) {
                 $q->where('location', 'Santiago Campus');
             })

@@ -70,7 +70,14 @@
                                             {{ $reservation->title }}
                                         </a>
                                     </td>
-                                    <td>{{ $reservation->venue->name }}</td>
+                                    <td>
+                                        {{ $reservation->venue->name }}
+                                        @if($reservation->area)
+                                            - {{ $reservation->area->name }}
+                                        @elseif($reservation->area_name)
+                                            - {{ $reservation->area_name }}
+                                        @endif
+                                    </td>
                                     <td>{{ $reservation->date->format('M d, Y') }}</td>
                                     <td>
                                         @if($reservation->status === 'pending')

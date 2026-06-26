@@ -1,14 +1,7 @@
 @forelse($reservations as $reservation)
     <tr>
         <td>{{ $reservation->title }}</td>
-        <td>
-            {{ $reservation->venue->name }}
-            @if($reservation->area)
-                - {{ $reservation->area->name }}
-            @elseif($reservation->area_name)
-                - {{ $reservation->area_name }}
-            @endif
-        </td>
+        <td>{{ $reservation->venue->name }}</td>
         <td>
             @if($reservation->area)
                 {{ $reservation->area->name }}
