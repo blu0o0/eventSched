@@ -6,7 +6,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-end mb-3">
-            <a href="{{ route('admin.venues.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.venues.create') }}" class="btn" style="background-color: #176d2d; color: white;">
                 <i class="bi bi-plus-circle"></i> Add Venue
             </a>
         </div>
@@ -34,11 +34,6 @@
                             <option value="" {{ ($location ?? '') === '' ? 'selected' : '' }}>All Locations</option>
                         </select>
                     </div>
-                    @if(($location ?? 'Santiago Campus') !== '')
-                        <a href="{{ route('admin.venues.index', ['location' => '']) }}" class="btn btn-secondary">
-                            <i class="bi bi-x-circle"></i> All Locations
-                        </a>
-                    @endif
                 </form>
             </div>
         </div>

@@ -6,7 +6,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="d-flex justify-content-end mb-3">
-            <a href="{{ route('admin.areas.create') }}" class="btn btn-primary">
+            <a href="{{ route('admin.areas.create') }}" class="btn" style="background-color: #176d2d; color: white;">
                 <i class="bi bi-plus-circle"></i> Add Area
             </a>
         </div>
@@ -28,12 +28,12 @@
         <div class="card">
             <div class="card-body">
                 <form method="GET" action="{{ route('admin.areas.index') }}" class="d-flex align-items-end gap-3 mb-3">
-                    <button type="submit" class="btn btn-primary" style="margin-bottom: 8px;">
-                        <i class="bi bi-search"></i> Search
+                    <button type="submit" class="btn" style="background-color: #176d2d; color: white; margin-bottom: 8px;">
+                        <i class="bi bi-search"></i>
                     </button>
                     <div class="flex-grow-1">
                         <label for="search" class="form-label mb-0">Search by Name:</label>
-                        <input type="text" class="form-control" name="search" id="search" value="{{ $search ?? '' }}" placeholder="Search areas...">
+                        <input type="text" class="form-control" name="search" id="search" value="{{ $search ?? '' }}">
                     </div>
                     <div class="flex-grow-1">
                         <label for="venue_id" class="form-label mb-0">Filter by Venue:</label>
