@@ -52,21 +52,6 @@
             <ion-note slot="error" v-if="errors.venue_id">{{ errors.venue_id }}</ion-note>
           </ion-item>
 
-          <!-- Venue Image Preview -->
-          <div v-if="selectedVenue && selectedVenueImageUrl" class="venue-image-preview">
-            <ion-card>
-              <img :src="selectedVenueImageUrl" :alt="selectedVenue.name" @error="handleImageError" />
-              <ion-card-header>
-                <ion-card-title>{{ selectedVenue.name }}</ion-card-title>
-                <ion-card-subtitle>{{ selectedVenue.location }}</ion-card-subtitle>
-              </ion-card-header>
-              <ion-card-content>
-                <p v-if="selectedVenue.description">{{ selectedVenue.description }}</p>
-                <p><strong>Max Occupancy:</strong> {{ selectedVenue.capacity }} people</p>
-              </ion-card-content>
-            </ion-card>
-          </div>
-
           <ion-item :class="{ 'ion-invalid': errors.area_name }">
             <ion-label position="stacked">Area <span class="required">*</span></ion-label>
             <ion-select
@@ -101,24 +86,6 @@
               @ion-input="clearError('area_name')"
             ></ion-input>
           </ion-item>
-
-          <!-- Area Image Preview -->
-          <div v-if="selectedArea && selectedAreaImageUrl" class="area-image-preview">
-            <ion-card>
-              <img :src="selectedAreaImageUrl" :alt="selectedArea.name" @error="handleAreaImageError" />
-              <ion-card-header>
-                <ion-card-title>{{ selectedArea.name }}</ion-card-title>
-                <ion-card-subtitle>{{ selectedArea.venue?.name || 'No Venue' }}</ion-card-subtitle>
-              </ion-card-header>
-              <ion-card-content>
-                <p><strong>Status:</strong> 
-                  <ion-badge :color="getStatusColor(selectedArea.status)">
-                    {{ formatStatus(selectedArea.status) }}
-                  </ion-badge>
-                </p>
-              </ion-card-content>
-            </ion-card>
-          </div>
 
           <ion-item :class="{ 'ion-invalid': errors.date }">
             <ion-label position="stacked">
@@ -361,39 +328,6 @@ const forceLoading = ref(false);
 
 const minDate = new Date().toISOString().split('T')[0];
 
-// Get selected venue for image preview
-const selectedVenue = computed(() => {
-  if (!form.value.venue_id) return null;
-  return venues.value.find(v => v.id === form.value.venue_id) || null;
-});
-
-// Get full image URL
-function getImageUrl(photoUrl: string | null | undefined): string | null {
-  if (!photoUrl) return null;
-  
-  // If already a full URL, return as is
-  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
-    return photoUrl;
-  }
-  
-  // Extract base URL from API_BASE_URL (remove /api)
-  // API_BASE_URL format: http://localhost:8000/api or https://domain.com/api
-  const baseUrl = API_BASE_URL.replace('/api', '').replace(/\/$/, '');
-  
-  // If photoUrl starts with /, use it directly, otherwise prepend /
-  const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
-  
-  const fullUrl = `${baseUrl}${path}`;
-  console.log('Image URL:', { photoUrl, baseUrl, path, fullUrl });
-  return fullUrl;
-}
-
-// Computed property for selected venue image URL
-const selectedVenueImageUrl = computed(() => {
-  if (!selectedVenue.value?.photo_url) return null;
-  return getImageUrl(selectedVenue.value.photo_url);
-});
-
 const isFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
@@ -417,7 +351,6 @@ function clearError(field: string) {
 function onVenueChange() {
   clearError('venue_id');
   console.log('🏟️ Venue changed to:', form.value.venue_id, 'type:', typeof form.value.venue_id);
-  console.log('🏟️ selectedVenue:', selectedVenue.value);
   // Reset area selection when venue changes
   selectedAreaId.value = null;
   form.value.area_name = '';
@@ -427,13 +360,6 @@ function onAreaChange() {
   if (selectedAreaId.value) {
     form.value.area_name = '';
   }
-}
-
-function handleImageError(event: Event) {
-  // Hide image on error
-  const img = event.target as HTMLImageElement;
-  img.style.display = 'none';
-  console.error('Failed to load venue image:', selectedVenue.value?.photo_url);
 }
 
 function formatTime(timeString: string): string {
@@ -520,50 +446,6 @@ const filteredAreas = computed(() => {
   console.log('  ✅ Filtered areas:', filtered);
   return filtered;
 });
-
-// Get selected area for image preview
-const selectedArea = computed(() => {
-  if (!selectedAreaId.value || typeof selectedAreaId.value === 'string') return null;
-  return areas.value.find(a => a.id === selectedAreaId.value) || null;
-});
-
-// Computed property for selected area image URL
-const selectedAreaImageUrl = computed(() => {
-  if (!selectedArea.value?.photo_url) return null;
-  return getImageUrl(selectedArea.value.photo_url);
-});
-
-function handleAreaImageError(event: Event) {
-  const img = event.target as HTMLImageElement;
-  img.style.display = 'none';
-  console.error('Failed to load area image:', selectedArea.value?.photo_url);
-}
-
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'available':
-      return 'success';
-    case 'occupied':
-      return 'warning';
-    case 'not_available':
-      return 'danger';
-    default:
-      return 'medium';
-  }
-}
-
-function formatStatus(status: string): string {
-  switch (status) {
-    case 'available':
-      return 'Available';
-    case 'occupied':
-      return 'Occupied';
-    case 'not_available':
-      return 'Not Available';
-    default:
-      return status;
-  }
-}
 
 async function loadReservation() {
   if (!isEdit.value || !route.params.id || isNaN(Number(route.params.id))) return;
@@ -772,101 +654,6 @@ ion-item {
 .form-actions {
   margin-top: 2rem;
   padding: 0 1rem;
-}
-
-.venue-image-preview {
-  margin: 1rem 0;
-  animation: slideIn 0.3s ease-out;
-}
-
-.venue-image-preview ion-card {
-  margin: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.venue-image-preview img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-.venue-image-preview ion-card-header {
-  padding: 1rem;
-}
-
-.venue-image-preview ion-card-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.venue-image-preview ion-card-subtitle {
-  font-size: 0.9rem;
-  color: var(--ion-color-medium);
-}
-
-.venue-image-preview ion-card-content {
-  padding: 0 1rem 1rem 1rem;
-}
-
-.venue-image-preview ion-card-content p {
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--ion-color-dark);
-}
-
-.venue-image-preview ion-card-content p:last-child {
-  margin-top: 0.75rem;
-  font-weight: 500;
-}
-
-.area-image-preview {
-  margin: 1rem 0;
-  animation: slideIn 0.3s ease-out;
-}
-
-.area-image-preview ion-card {
-  margin: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.area-image-preview img {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  display: block;
-}
-
-.area-image-preview ion-card-header {
-  padding: 1rem;
-}
-
-.area-image-preview ion-card-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.area-image-preview ion-card-subtitle {
-  font-size: 0.9rem;
-  color: var(--ion-color-medium);
-}
-
-.area-image-preview ion-card-content {
-  padding: 0 1rem 1rem 1rem;
-}
-
-.area-image-preview ion-card-content p {
-  margin: 0.5rem 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--ion-color-dark);
 }
 
 /* Native datetime input styling - like Laravel edit form */
