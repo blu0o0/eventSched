@@ -91,5 +91,62 @@
             </div>
         </div>
     </div>
-</div>
+
+    @if($area->reservations && $area->reservations->count() > 0)
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Reservations in this Area</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Reserved By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($area->reservations as $reservation)
+                                    <tr>
+                                        <td>
+                                            <a href="{{ route('admin.reservations.show', $reservation) }}">
+                                                {{ $reservation->title }}
+                                            </a>
+                                        </td>
+                                        <td>{{ $reservation->date->format('M d, Y') }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}</td>
+                                        <td>
+                                            @if($reservation->status === 'pending')
+                                                <span class="badge bg-warning">Pending</span>
+                                            @elseif($reservation->status === 'approved')
+                                                <span class="badge bg-success">Approved</span>
+                                            @elseif($reservation->status === 'postponed')
+                                                <span class="badge bg-info">Postponed</span>
+                                            @else
+                                                <span class="badge bg-danger">Rejected</span>
+                                            @endif
+                                        </td>
+                                        <td>{{ $reservation->user->name }}</td>
+                                        <td>
+                                            <a href="{{ route('admin.reservations.show', $reservation) }}" class="btn btn-sm btn-info">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 @endsection

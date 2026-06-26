@@ -33,7 +33,7 @@ class AdminVenueController extends Controller
     {
         $this->ensureAdmin();
         
-        $query = Venue::withCount('reservations');
+        $query = Venue::withCount('reservations')->with('areas');
         
         // Default to All Locations if no location filter is provided (first visit)
         // If location is explicitly set to empty string or 'all', show all

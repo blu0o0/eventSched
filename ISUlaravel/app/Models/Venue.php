@@ -57,6 +57,14 @@ class Venue extends Model
     }
 
     /**
+     * Get areas for this venue
+     */
+    public function areas()
+    {
+        return $this->hasMany(Area::class);
+    }
+
+    /**
      * Get the photo URL
      */
     public function getPhotoUrlAttribute()

@@ -109,6 +109,9 @@
                                 @endif
                             </td>
                             <td>
+                                <a href="{{ route('admin.areas.show', $area) }}" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
                                 <a href="{{ route('admin.areas.edit', $area) }}" class="btn btn-sm btn-warning">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>

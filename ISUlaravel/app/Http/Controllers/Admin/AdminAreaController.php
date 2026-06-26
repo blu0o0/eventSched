@@ -133,7 +133,7 @@ class AdminAreaController extends Controller
     public function show(Area $area)
     {
         $this->ensureAdmin();
-        $area->load('venue');
+        $area->load('venue', 'reservations.user');
         return view('admin.areas.show', compact('area'));
     }
 }
