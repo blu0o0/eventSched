@@ -26,6 +26,7 @@ class StoreReservationRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'venue_id' => 'required|exists:venues,id',
+            'area_name' => 'nullable|string|max:255',
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',

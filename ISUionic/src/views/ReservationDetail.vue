@@ -30,7 +30,7 @@
               <h3>Venue Information</h3>
               <div class="info-item">
                 <ion-icon :icon="locationOutline" />
-                <span>{{ reservation.venue.name }}</span>
+                <span>{{ reservation.venue.name }}<span v-if="reservation.area_name">, Area: {{ reservation.area_name }}</span></span>
               </div>
               <div class="info-item">
                 <span>{{ reservation.venue.location }}</span>
@@ -54,6 +54,16 @@
               <div class="info-item">
                 <ion-icon :icon="peopleOutline" />
                 <span>Expected Max Occupancy: {{ reservation.capacity }} people</span>
+              </div>
+              <div class="info-item" v-if="reservation.area || reservation.area_name">
+                <ion-icon :icon="gridOutline" />
+                <span>
+                  <span v-if="reservation.area">{{ reservation.area.name }}</span>
+                  <span v-else>{{ reservation.area_name }}</span>
+                </span>
+              </div>
+              <div v-if="reservation.area && reservation.area.photo_url" class="area-photo">
+                <img :src="reservation.area.photo_url" :alt="reservation.area.name" />
               </div>
             </div>
 
@@ -298,6 +308,7 @@ import {
   personOutline,
   checkmarkCircleOutline,
   createOutline,
+  gridOutline,
 } from 'ionicons/icons';
 import { reservationsApi } from '../api/reservations';
 import { venuesApi } from '../api/venues';
@@ -674,6 +685,19 @@ onMounted(() => {
 
 .mt-2 {
   margin-top: 0.5rem;
+}
+
+.area-photo {
+  margin-top: 1rem;
+}
+
+.area-photo img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  object-fit: cover;
 }
 </style>
 

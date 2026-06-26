@@ -54,6 +54,14 @@ class Reservation extends Model
     }
 
     /**
+     * Get the area for this reservation
+     */
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
+    }
+
+    /**
      * Get the admin who approved this reservation
      */
     public function approver()

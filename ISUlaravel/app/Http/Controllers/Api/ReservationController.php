@@ -25,7 +25,7 @@ class ReservationController extends Controller
     {
         $user = $request->user();
 
-        $query = Reservation::with(['venue', 'user']);
+        $query = Reservation::with(['venue', 'user', 'area']);
         
         // If user is authenticated, filter by mine parameter
         if ($user && $request->has('mine') && $request->mine === 'true') {
@@ -58,7 +58,7 @@ class ReservationController extends Controller
         }
 
         // Refresh reservations to get updated statuses
-        $reservations->load(['venue', 'user']);
+        $reservations->load(['venue', 'user', 'area']);
 
         return response()->json([
             'data' => ReservationResource::collection($reservations),
@@ -128,7 +128,7 @@ class ReservationController extends Controller
         }
 
         return response()->json([
-            'data' => new ReservationResource($reservation->load(['venue', 'user', 'approver'])),
+            'data' => new ReservationResource($reservation->load(['venue', 'user', 'approver', 'area'])),
         ]);
     }
 
@@ -371,7 +371,7 @@ class ReservationController extends Controller
 
             return response()->json([
                 'message' => 'Reservation rescheduled successfully. Status changed to pending for admin approval.',
-                'data' => new ReservationResource($reservation->load(['venue', 'user'])),
+                'data' => new ReservationResource($reservation->load(['venue', 'user', 'area'])),
             ]);
         } catch (\Exception $e) {
             return response()->json([

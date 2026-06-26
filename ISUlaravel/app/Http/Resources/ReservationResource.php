@@ -20,7 +20,15 @@ class ReservationResource extends JsonResource
             'description' => $this->description,
             'venue' => new VenueResource($this->whenLoaded('venue')),
             'venue_id' => $this->venue_id,
-            'area_name' => $this->area_name,
+            'area' => $this->whenLoaded('area', function () {
+                return [
+                    'id' => $this->area->id,
+                    'name' => $this->area->name,
+                    'photo_url' => $this->area->photo_url,
+                ];
+            }),
+            'area_name' => $this->area_name ?? ($this->whenLoaded('area') ? $this->area->name : null),
+            'area_id' => $this->area_id,
             'date' => $this->date->format('Y-m-d'),
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,

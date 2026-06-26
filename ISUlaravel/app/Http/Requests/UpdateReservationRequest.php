@@ -25,6 +25,7 @@ class UpdateReservationRequest extends FormRequest
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
             'venue_id' => 'sometimes|required|exists:venues,id',
+            'area_name' => 'nullable|string|max:255',
             'date' => 'sometimes|required|date|after_or_equal:today',
             'start_time' => 'sometimes|required|date_format:H:i',
             'end_time' => 'sometimes|required|date_format:H:i|after:start_time',

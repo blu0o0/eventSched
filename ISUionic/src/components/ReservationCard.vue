@@ -13,9 +13,9 @@
       <ion-card-subtitle>
         <ion-icon :icon="locationOutline" />
         {{ reservation.venue.name }}
-        <span v-if="reservation.area_name" class="area-info">
-          <ion-icon :icon="gridOutline" />
-          {{ reservation.area_name }}
+        <span v-if="reservation.area || reservation.area_name">
+          <span v-if="reservation.area">, {{ reservation.area.name }}</span>
+          <span v-else>, Area: {{ reservation.area_name }}</span>
         </span>
       </ion-card-subtitle>
     </ion-card-header>

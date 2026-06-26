@@ -41,7 +41,7 @@ class AdminReservationController extends Controller
     public function index(Request $request)
     {
         $this->ensureAdminOrOsas();
-        $query = Reservation::with(['venue', 'user'])
+        $query = Reservation::with(['venue', 'user', 'area'])
             ->whereHas('venue', function ($q) {
                 $q->where('location', 'Santiago Campus');
             });
@@ -73,7 +73,7 @@ class AdminReservationController extends Controller
         }
 
         // Refresh to get updated statuses
-        $reservations->load(['venue', 'user']);
+        $reservations->load(['venue', 'user', 'area']);
 
         if ($request->wantsJson() || $request->ajax()) {
             $html = view('admin.reservations.partials.table', compact('reservations'))->render();
@@ -93,12 +93,12 @@ class AdminReservationController extends Controller
     public function show(Request $request, Reservation $reservation)
     {
         $this->ensureAdminOrOsas();
-        $reservation->load(['venue', 'user', 'approver']);
+        $reservation->load(['venue', 'user', 'approver', 'area']);
 
         // Check if venue is unavailable and automatically postpone if needed
         if ($reservation->isApproved() && $reservation->venue && $reservation->venue->isUnavailable()) {
             $this->checkAndPostponeReservation($reservation);
-            $reservation->refresh()->load(['venue', 'user', 'approver']);
+            $reservation->refresh()->load(['venue', 'user', 'approver', 'area']);
         }
 
         // Fix null capacities for rejected reservations that may have been deleted

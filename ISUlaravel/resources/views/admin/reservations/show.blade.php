@@ -26,7 +26,18 @@
                 <p>{{ optional($reservation->venue)->name ?? 'N/A' }} ({{ optional($reservation->venue)->location ?? 'N/A' }})</p>
 
                 <h5>Area</h5>
-                <p>{{ $reservation->area_name ?? 'N/A' }}</p>
+                <p>
+                    @if($reservation->area)
+                        {{ $reservation->area->name }}
+                        @if($reservation->area->photo_url)
+                            <br><img src="{{ $reservation->area->photo_url }}" alt="{{ $reservation->area->name }}" style="max-width: 200px; margin-top: 8px; border-radius: 4px;">
+                        @endif
+                    @elseif($reservation->area_name)
+                        {{ $reservation->area_name }}
+                    @else
+                        N/A
+                    @endif
+                </p>
 
                 <h5>Date & Time</h5>
                 <p>

@@ -357,7 +357,15 @@ function onVenueChange() {
 }
 
 function onAreaChange() {
-  if (selectedAreaId.value) {
+  if (selectedAreaId.value === 'others') {
+    // User selected "Others:" - clear area_name to allow custom input
+    form.value.area_name = '';
+  } else if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
+    // User selected an existing area - get the area name
+    const selectedArea = areas.value.find(a => a.id === selectedAreaId.value);
+    form.value.area_name = selectedArea?.name || '';
+  } else {
+    // User selected "None" or cleared selection
     form.value.area_name = '';
   }
 }
@@ -517,6 +525,7 @@ async function handleSubmit() {
     title: form.value.title,
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
+    area_name: form.value.area_name || undefined,
     date: form.value.date,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
@@ -584,6 +593,7 @@ async function keepReservationAnyway() {
     title: form.value.title,
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
+    area_name: form.value.area_name || undefined,
     date: form.value.date,
     start_time: form.value.start_time,
     end_time: form.value.end_time,

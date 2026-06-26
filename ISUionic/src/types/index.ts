@@ -43,7 +43,13 @@ export interface Reservation {
   description: string | null;
   venue: Venue;
   venue_id: number;
+  area?: {
+    id: number;
+    name: string;
+    photo_url?: string | null;
+  } | null;
   area_name?: string | null;
+  area_id?: number | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:mm
   end_time: string; // HH:mm
@@ -127,6 +133,7 @@ export interface CreateReservationData {
   title: string;
   description?: string;
   venue_id: number;
+  area_name?: string;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:mm
   end_time: string; // HH:mm
