@@ -46,7 +46,16 @@
                             @endforeach
                         </select>
                     </div>
-                    @if(($search ?? '') || ($venueId ?? ''))
+                    <div class="flex-grow-1">
+                        <label for="status" class="form-label mb-0">Filter by Status:</label>
+                        <select name="status" id="status" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Statuses</option>
+                            <option value="available" {{ (request('status') ?? '') === 'available' ? 'selected' : '' }}>Available</option>
+                            <option value="occupied" {{ (request('status') ?? '') === 'occupied' ? 'selected' : '' }}>Occupied</option>
+                            <option value="not_available" {{ (request('status') ?? '') === 'not_available' ? 'selected' : '' }}>Not Available</option>
+                        </select>
+                    </div>
+                    @if(($search ?? '') || ($venueId ?? '') || (request('status') ?? ''))
                         <a href="{{ route('admin.areas.index') }}" class="btn btn-secondary" style="margin-bottom: 8px;">
                             <i class="bi bi-x-circle"></i> Clear
                         </a>
@@ -63,10 +72,11 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Photo</th>
-                        <th>Name</th>
-                        <th>Venue</th>
-                        <th>Actions</th>
+                    <th>Photo</th>
+                    <th>Name</th>
+                    <th>Venue</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -90,6 +100,15 @@
                                 @endif
                             </td>
                             <td>
+                                @if($area->status === 'available')
+                                    <span class="badge bg-success">Available</span>
+                                @elseif($area->status === 'occupied')
+                                    <span class="badge bg-warning text-dark">Occupied</span>
+                                @elseif($area->status === 'not_available')
+                                    <span class="badge bg-danger">Not Available</span>
+                                @endif
+                            </td>
+                            <td>
                                 <a href="{{ route('admin.areas.edit', $area) }}" class="btn btn-sm btn-warning">
                                     <i class="bi bi-pencil"></i> Edit
                                 </a>
@@ -104,7 +123,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center">No areas found</td>
+                            <td colspan="5" class="text-center">No areas found</td>
                         </tr>
                     @endforelse
                 </tbody>

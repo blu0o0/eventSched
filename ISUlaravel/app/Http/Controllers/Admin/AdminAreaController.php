@@ -37,6 +37,11 @@ class AdminAreaController extends Controller
             $query->where('venue_id', $request->venue_id);
         }
 
+        // Filter by status
+        if ($request->has('status') && $request->status) {
+            $query->where('status', $request->status);
+        }
+
         $areas = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
         $venues = Venue::orderBy('name')->get();
         $search = $request->get('search', '');
@@ -59,6 +64,7 @@ class AdminAreaController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'venue_id' => 'required|exists:venues,id',
+            'status' => 'required|in:available,occupied,not_available',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 
@@ -86,6 +92,7 @@ class AdminAreaController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'venue_id' => 'required|exists:venues,id',
+            'status' => 'required|in:available,occupied,not_available',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
         ]);
 

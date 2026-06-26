@@ -39,6 +39,17 @@
                 @enderror
             </div>
             <div class="mb-3">
+                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                    <option value="available" {{ old('status', $area->status) == 'available' ? 'selected' : '' }}>Available</option>
+                    <option value="occupied" {{ old('status', $area->status) == 'occupied' ? 'selected' : '' }}>Occupied</option>
+                    <option value="not_available" {{ old('status', $area->status) == 'not_available' ? 'selected' : '' }}>Not Available</option>
+                </select>
+                @error('status')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="mb-3">
                 <label for="photo" class="form-label">Area Photo</label>
                 
                 @if($area->photo_url)

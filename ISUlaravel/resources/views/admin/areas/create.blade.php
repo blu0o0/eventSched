@@ -38,6 +38,14 @@
                 @enderror
             </div>
             <div class="mb-3">
+                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                <select class="form-select" id="status" name="status" required>
+                    <option value="available">Available</option>
+                    <option value="occupied">Occupied</option>
+                    <option value="not_available">Not Available</option>
+                </select>
+            </div>
+            <div class="mb-3">
                 <label for="photo" class="form-label">Area Photo</label>
                 <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
                 <small class="form-text text-muted">Upload a photo of the area (Max: 5MB, Formats: JPEG, PNG, JPG, GIF, WEBP)</small>

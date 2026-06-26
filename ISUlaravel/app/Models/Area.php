@@ -14,6 +14,11 @@ class Area extends Model
         'name',
         'venue_id',
         'photo',
+        'status',
+    ];
+
+    protected $attributes = [
+        'status' => 'available',
     ];
 
     protected $appends = ['photo_url'];
