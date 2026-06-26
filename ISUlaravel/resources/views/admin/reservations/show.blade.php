@@ -23,12 +23,21 @@
                 <p>{{ $reservation->description ?? 'N/A' }}</p>
 
                 <h5>Venue</h5>
-                <p>{{ $reservation->venue->name }} ({{ $reservation->venue->location }})</p>
+                <p>{{ optional($reservation->venue)->name ?? 'N/A' }} ({{ optional($reservation->venue)->location ?? 'N/A' }})</p>
 
                 <h5>Date & Time</h5>
                 <p>
-                    {{ $reservation->date->format('F d, Y') }}<br>
-                    {{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}
+                    @if($reservation->date)
+                        {{ $reservation->date instanceof \Carbon\Carbon ? $reservation->date->format('F d, Y') : \Carbon\Carbon::parse($reservation->date)->format('F d, Y') }}
+                    @else
+                        N/A
+                    @endif
+                    <br>
+                    @if($reservation->start_time && $reservation->end_time)
+                        {{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}
+                    @else
+                        N/A
+                    @endif
                 </p>
             </div>
             <div class="col-md-6">
@@ -49,11 +58,11 @@
                 </p>
 
                 <h5>Requested By</h5>
-                <p>{{ $reservation->user->name }} ({{ $reservation->user->email }})</p>
+                <p>{{ optional($reservation->user)->name ?? 'N/A' }} ({{ optional($reservation->user)->email ?? 'N/A' }})</p>
 
-                @if($reservation->approved_by)
+                @if($reservation->approved_by && $reservation->approver)
                     <h5>Approved/Rejected By</h5>
-                    <p>{{ $reservation->approver->name }} on {{ $reservation->approved_at->format('M d, Y H:i') }}</p>
+                    <p>{{ $reservation->approver->name }} on {{ optional($reservation->approved_at)->format('M d, Y H:i') ?? 'N/A' }}</p>
                 @endif
 
                 @if($reservation->rejection_reason)

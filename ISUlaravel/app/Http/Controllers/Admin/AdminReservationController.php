@@ -101,6 +101,20 @@ class AdminReservationController extends Controller
             $reservation->refresh()->load(['venue', 'user', 'approver']);
         }
 
+        // Fix null capacities for rejected reservations that may have been deleted
+        if (!$reservation->capacity) {
+            $reservation->capacity = 0;
+        }
+        if (!$reservation->date) {
+            $reservation->date = now()->toDateString();
+        }
+        if (!$reservation->start_time) {
+            $reservation->start_time = '00:00:00';
+        }
+        if (!$reservation->end_time) {
+            $reservation->end_time = '00:00:00';
+        }
+
         // Return JSON if requested via AJAX
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
