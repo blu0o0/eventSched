@@ -35,12 +35,12 @@ class AdminVenueController extends Controller
         
         $query = Venue::withCount('reservations');
         
-        // Default to Santiago Campus if no location filter is provided (first visit)
-        // If location is explicitly set to empty string, show all
-        $location = $request->has('location') ? $request->get('location') : 'Santiago Campus';
+        // Default to All Locations if no location filter is provided (first visit)
+        // If location is explicitly set to empty string or 'all', show all
+        $location = $request->has('location') ? $request->get('location') : '';
         
         // Filter by location
-        if ($location !== '') {
+        if ($location !== '' && $location !== 'all') {
             $query->where('location', $location);
         }
         

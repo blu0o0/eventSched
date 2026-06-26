@@ -28,10 +28,10 @@
                 <form method="GET" action="{{ route('admin.venues.index') }}" class="d-flex align-items-center gap-3">
                     <div class="flex-grow-1">
                         <label for="location" class="form-label mb-0">Filter by Location:</label>
-                        <select name="location" id="location" class="form-select" onchange="this.form.submit()">
-                            <option value="Santiago Campus" {{ ($location ?? 'Santiago Campus') === 'Santiago Campus' ? 'selected' : '' }}>Santiago Campus</option>
+                        <select name="location" id="location" class="form-select" onchange="document.getElementById('location').value = this.value; this.form.submit();">
+                            <option value="Santiago Campus" {{ ($location ?? '') === 'Santiago Campus' ? 'selected' : '' }}>Santiago Campus</option>
                             <option value="Main Campus" {{ ($location ?? '') === 'Main Campus' ? 'selected' : '' }}>Main Campus</option>
-                            <option value="" {{ ($location ?? '') === '' ? 'selected' : '' }}>All Locations</option>
+                            <option value="all" {{ ($location ?? 'all') === 'all' ? 'selected' : '' }}>All Locations</option>
                         </select>
                     </div>
                 </form>
