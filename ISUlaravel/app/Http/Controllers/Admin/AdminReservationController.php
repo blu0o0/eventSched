@@ -58,6 +58,11 @@ class AdminReservationController extends Controller
             });
         }
 
+        if ($request->has('date') && $request->date !== '') {
+            $query->whereDate('start_time', $request->date)
+                  ->orWhereDate('end_time', $request->date);
+        }
+
         $reservations = $query->latest()->paginate(15);
 
         // Check and postpone any approved reservations with unavailable venues

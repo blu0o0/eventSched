@@ -6,10 +6,18 @@
 <div class="card">
     <div class="card-header">
         <div class="row g-3">
-            <div class="col-md-4">
-                <input type="text" name="search" class="form-control" placeholder="Search reservations..." id="search-input" value="{{ request('search') }}">
-            </div>
             <div class="col-md-3">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search reservations..." id="search-input" value="{{ request('search') }}">
+                    <button class="btn btn-outline-secondary" type="button" id="search-clear" title="Clear search" style="border-color: #cacacaa0; color: #6c757d;">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date" class="form-control" id="date-filter" value="{{ request('date') }}" placeholder="Filter by date">
+            </div>
+            <div class="col-md-4">
                 <select name="status" class="form-select" id="status-select">
                     <option value="">All Status</option>
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -46,6 +54,14 @@
 </div>
 @endsection
 
+@push('styles')
+<style>
+    #search-clear:hover {
+        opacity: 0.3;
+    }
+</style>
+@endpush
+
 @push('scripts')
 <script>
     let searchTimeout;
@@ -53,10 +69,12 @@
     function fetchReservations() {
         const search = document.getElementById('search-input').value;
         const status = document.getElementById('status-select').value;
+        const date = document.getElementById('date-filter').value;
 
         const params = new URLSearchParams();
         if (search) params.append('search', search);
         if (status) params.append('status', status);
+        if (date) params.append('date', date);
 
         fetch('{{ route('admin.reservations.index') }}?' + params.toString(), {
             headers: {
@@ -78,6 +96,12 @@
     });
 
     document.getElementById('status-select').addEventListener('change', fetchReservations);
+    document.getElementById('date-filter').addEventListener('change', fetchReservations);
+
+    document.getElementById('search-clear').addEventListener('click', function() {
+        document.getElementById('search-input').value = '';
+        fetchReservations();
+    });
 </script>
 @endpush
 
