@@ -21,8 +21,6 @@ Route::post('/forgot-password/verify-otp', [OtpController::class, 'verifyResetOt
 Route::post('/forgot-password/reset-password', [OtpController::class, 'verifyResetOtpAndReset']);
 
 // Public viewing routes (anyone can view)
-Route::get('/reservations', [ReservationController::class, 'index']);
-Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
 Route::get('/venues', [VenueController::class, 'index']);
 Route::get('/venues/{venue}', [VenueController::class, 'show']);
 Route::get('/venues/map/data', [VenueController::class, 'mapData']);
@@ -37,7 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
-    // Reservations - Create/Update/Delete
+    // Reservations - View/Create/Update/Delete
+    Route::get('/reservations', [ReservationController::class, 'index']);
+    Route::get('/reservations/{reservation}', [ReservationController::class, 'show']);
     Route::post('/reservations', [ReservationController::class, 'store']);
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
