@@ -28,10 +28,11 @@ class StoreReservationRequest extends FormRequest
             'venue_id' => 'required|exists:venues,id',
             'area_id' => 'nullable|integer|exists:areas,id',
             'area_name' => 'nullable|string|max:255',
-            'date' => 'required|date|after_or_equal:+7 days',
+            'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'capacity' => 'required|integer|min:1',
+            'end_date' => 'nullable|date|after_or_equal:date',
             'force' => 'boolean',
         ];
     }

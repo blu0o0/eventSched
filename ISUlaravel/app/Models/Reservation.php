@@ -17,6 +17,7 @@ class Reservation extends Model
         'area_id',
         'area_name',
         'date',
+        'end_date',
         'start_time',
         'end_time',
         'capacity',

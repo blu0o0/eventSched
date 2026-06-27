@@ -135,7 +135,8 @@ export interface CreateReservationData {
   venue_id: number;
   area_id?: number | null;
   area_name?: string;
-  date: string; // YYYY-MM-DD
+  date: string; // YYYY-MM-DD (start date)
+  end_date?: string; // YYYY-MM-DD (optional end date for multi-day events)
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   capacity: number;

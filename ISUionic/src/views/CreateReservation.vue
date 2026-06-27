@@ -96,7 +96,7 @@
           <ion-item :class="{ 'ion-invalid': errors.date }">
             <ion-label position="stacked">
               <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
-              Event Date <span class="required">*</span>
+              Start Date <span class="required">*</span>
             </ion-label>
             <input
               type="date"
@@ -109,6 +109,25 @@
             </div>
             <ion-note slot="helper" color="medium">
               Reservations must be made at least 7 days in advance
+            </ion-note>
+          </ion-item>
+
+          <ion-item :class="{ 'ion-invalid': errors.end_date }">
+            <ion-label position="stacked">
+              <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
+              End Date <span class="optional">(Optional)</span>
+            </ion-label>
+            <input
+              type="date"
+              v-model="form.end_date"
+              class="native-datetime-input"
+              :min="getEndDateMin()"
+            />
+            <div v-if="errors.end_date" style="color: var(--ion-color-danger); font-size: 0.85rem; margin-top: 0.5rem;">
+              {{ errors.end_date }}
+            </div>
+            <ion-note slot="helper" color="medium">
+              Leave empty for single-day events
             </ion-note>
           </ion-item>
 
@@ -329,6 +348,7 @@ const form = ref<CreateReservationData & { date: string; area_name: string }>({
   area_id: null,
   area_name: '',
   date: '',
+  end_date: '',
   start_time: '',
   end_time: '',
   capacity: 1,
@@ -345,7 +365,7 @@ const hasApprovedConflicts = computed(() => {
 });
 
 const minDate = new Date();
-minDate.setDate(minDate.getDate() + 7);
+minDate.setDate(minDate.getDate() + 6);
 const minDateStr = minDate.toISOString().split('T')[0];
 
 const isFormValid = computed(() => {
@@ -364,6 +384,27 @@ function clearError(field: string) {
   if (errors.value[field]) {
     delete errors.value[field];
   }
+}
+
+function validateEndDate() {
+  if (form.value.end_date && form.value.date) {
+    if (form.value.end_date <= form.value.date) {
+      errors.value.end_date = 'the end date must be 1 day more than the selected start date';
+    } else {
+      clearError('end_date');
+    }
+  }
+}
+
+function getEndDateMin(): string {
+  if (form.value.date) {
+    // End date must be at least 1 day after start date
+    const minDate = new Date(form.value.date);
+    minDate.setDate(minDate.getDate() + 1);
+    return minDate.toISOString().split('T')[0];
+  }
+  // If no start date selected, default to global min date (7 days from now)
+  return minDateStr;
 }
 
 // Watch for date changes and validate in real-time
@@ -615,6 +656,7 @@ async function handleSubmit() {
     area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
     area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
+    end_date: form.value.end_date || undefined,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
     capacity: form.value.capacity,
@@ -701,6 +743,7 @@ async function keepReservationAnyway() {
     area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
     area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
+    end_date: form.value.end_date || undefined,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
     capacity: form.value.capacity,

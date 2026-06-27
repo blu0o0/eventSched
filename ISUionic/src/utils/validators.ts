@@ -66,7 +66,7 @@ export const validators = {
   dateNotTooSoon: (date: string): boolean => {
     const selectedDate = new Date(date);
     const minDate = new Date();
-    minDate.setDate(minDate.getDate() + 7);
+    minDate.setDate(minDate.getDate() + 6);
     minDate.setHours(0, 0, 0, 0);
     return selectedDate >= minDate;
   },
