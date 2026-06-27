@@ -43,6 +43,42 @@
                     @enderror
                 </div>
 
+                <div class="col-md-6 mb-3">
+                    <label for="area_id" class="form-label">Area <span class="text-danger">*</span></label>
+                    <select id="area_id" name="area_id" class="form-select @error('area_id') is-invalid @enderror">
+                        <option value="">None</option>
+                        @foreach($areas as $area)
+                            <option value="{{ $area->id }}" 
+                                    data-venue-id="{{ $area->venue_id }}"
+                                    {{ old('area_id', $reservation->area_id) == $area->id ? 'selected' : '' }}>
+                                {{ $area->name }}
+                            </option>
+                        @endforeach
+                        <option value="others" {{ old('area_id', $reservation->area_id) === null && $reservation->area_name && !$reservation->area ? 'selected' : '' }}>Others:</option>
+                    </select>
+                    @error('area_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text" id="area-helper-text">
+                        @if(old('venue_id', $reservation->venue_id))
+                            Select an area for this venue
+                        @else
+                            Please select a venue first
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Custom Area Input (shown when "Others:" is selected) -->
+                <div class="col-md-6 mb-3" id="custom-area-container" style="display: {{ old('area_id', $reservation->area_id) === null && $reservation->area_name && !$reservation->area ? 'block' : 'none' }};">
+                    <label for="area_name" class="form-label">Enter Custom Area Name</label>
+                    <input type="text" id="area_name" name="area_name" class="form-control @error('area_name') is-invalid @enderror" 
+                           value="{{ old('area_name', $reservation->area_name) }}" 
+                           placeholder="e.g., Room 101, Lab 2">
+                    @error('area_name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="col-md-4 mb-3">
                     <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
                     <input type="date" id="date" name="date" class="form-control @error('date') is-invalid @enderror" 
@@ -98,3 +134,114 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const venueSelect = document.getElementById('venue_id');
+    const areaSelect = document.getElementById('area_id');
+    const areaHelperText = document.getElementById('area-helper-text');
+    const customAreaContainer = document.getElementById('custom-area-container');
+    const areaNameInput = document.getElementById('area_name');
+
+    // Store current reservation's area info for initial state
+    const currentAreaId = '{{ $reservation->area_id }}';
+    const currentAreaName = '{{ $reservation->area_name ? addslashes($reservation->area_name) : '' }}';
+    const hasLinkedArea = currentAreaId !== '' && currentAreaId !== null;
+
+    /**
+     * Filter areas based on selected venue
+     */
+    function filterAreasByVenue() {
+        const venueId = venueSelect.value;
+        
+        if (!venueId) {
+            // No venue selected - disable area select
+            areaSelect.disabled = true;
+            areaSelect.value = '';
+            areaHelperText.textContent = 'Please select a venue first';
+            hideCustomArea();
+            return;
+        }
+
+        areaSelect.disabled = false;
+        areaHelperText.textContent = 'Select an area for this venue';
+
+        // Get all area options (excluding "None" and "Others:")
+        const areaOptions = areaSelect.querySelectorAll('option[data-venue-id]');
+        
+        let visibleAreaCount = 0;
+        let currentValueMatch = false;
+
+        areaOptions.forEach(function(option) {
+            if (option.getAttribute('data-venue-id') === venueId) {
+                option.style.display = '';
+                visibleAreaCount++;
+                // Check if current selected value is among visible options
+                if (option.value === areaSelect.value) {
+                    currentValueMatch = true;
+                }
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        if (visibleAreaCount === 0) {
+            areaHelperText.textContent = 'No areas available for this venue';
+        }
+
+        // If current selection is no longer valid (hidden), reset to "None"
+        if (areaSelect.value && areaSelect.value !== 'others' && !currentValueMatch) {
+            areaSelect.value = '';
+            hideCustomArea();
+        }
+
+        // Toggle "Others:" visibility based on whether venue has areas
+        const othersOption = areaSelect.querySelector('option[value="others"]');
+        if (othersOption) {
+            othersOption.style.display = visibleAreaCount > 0 ? '' : 'none';
+        }
+    }
+
+    /**
+     * Show/hide custom area input
+     */
+    function toggleCustomArea() {
+        if (areaSelect.value === 'others') {
+            customAreaContainer.style.display = 'block';
+            areaNameInput.required = false; // Not strictly required but encouraged
+            areaNameInput.focus();
+        } else {
+            hideCustomArea();
+        }
+    }
+
+    function hideCustomArea() {
+        customAreaContainer.style.display = 'none';
+        areaNameInput.value = '';
+        areaNameInput.required = false;
+    }
+
+    // Initial filter on page load
+    filterAreasByVenue();
+
+    // If the reservation has a custom area name (not linked to an area table record)
+    // and "Others:" was the saved selection, ensure custom input is shown
+    if (areaSelect.value === 'others') {
+        customAreaContainer.style.display = 'block';
+    }
+
+    // Event listeners
+    venueSelect.addEventListener('change', function() {
+        filterAreasByVenue();
+        // Reset area selection when venue changes (like Ionic does)
+        if (!hasLinkedArea || venueSelect.value !== '{{ $reservation->venue_id }}') {
+            areaSelect.value = '';
+            hideCustomArea();
+        }
+    });
+
+    areaSelect.addEventListener('change', toggleCustomArea);
+});
+</script>
+@endpush

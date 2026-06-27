@@ -202,10 +202,11 @@ class AdminReservationController extends Controller
     public function edit(Reservation $reservation)
     {
         $this->ensureAdmin();
-        $reservation->load(['venue', 'user']);
+        $reservation->load(['venue', 'user', 'area']);
         $venues = \App\Models\Venue::where('location', 'Santiago Campus')->get();
+        $areas = \App\Models\Area::with('venue')->orderBy('name')->get();
 
-        return view('admin.reservations.edit', compact('reservation', 'venues'));
+        return view('admin.reservations.edit', compact('reservation', 'venues', 'areas'));
     }
 
     /**
@@ -223,7 +224,20 @@ class AdminReservationController extends Controller
             'start_time' => ['required'],
             'end_time' => ['required'],
             'capacity' => ['required', 'integer', 'min:1'],
+            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
+            'area_name' => ['nullable', 'string', 'max:255'],
         ]);
+
+        // Handle area field
+        if ($request->filled('area_id')) {
+            // A specific existing area was selected
+            $validated['area_name'] = \App\Models\Area::find($request->area_id)->name ?? null;
+        } elseif ($request->area_id === '' || $request->area_id === null) {
+            // "None" selected - clear both fields
+            $validated['area_id'] = null;
+            $validated['area_name'] = null;
+        }
+        // If area_id is 'others', area_name will come from the custom input field
 
         $reservation->update($validated);
         
