@@ -57,7 +57,11 @@ class VenueController extends Controller
         foreach ($venues as $venue) {
             $venueReservations = $reservations->get($venue->id, collect());
             $reservationCount = $venueReservations->count();
-            $isAvailable = $reservationCount === 0;
+            
+            // A venue is only available if:
+            // 1. Its status is 'available' (not damaged or under_construction)
+            // 2. It has no approved/pending reservations for the selected date
+            $isAvailable = $venue->isAvailable() && $reservationCount === 0;
             $isCurrentlyOccupied = false;
             
             // Check if currently occupied (current time falls within any reservation)

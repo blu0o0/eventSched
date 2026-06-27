@@ -207,10 +207,10 @@ class AdminVenueController extends Controller
         $selectedDateCarbon = \Carbon\Carbon::parse($selectedDate);
         
         foreach ($venues as $venue) {
-            // Get approved reservations for the selected date
+            // Get approved and pending reservations for the selected date (matching API logic)
             $reservations = $venue->reservations()
                 ->where('date', $selectedDate)
-                ->where('status', 'approved')
+                ->whereIn('status', ['approved', 'pending'])
                 ->get();
 
             // Check if venue is currently occupied (has active reservation at current time)
@@ -229,8 +229,13 @@ class AdminVenueController extends Controller
                 }
             }
 
+            // A venue is only available if:
+            // 1. Its status is 'available' (not damaged or under_construction)
+            // 2. It has no approved/pending reservations for the selected date
+            $isAvailable = $venue->isAvailable() && $reservations->isEmpty();
+
             $venueAvailability[$venue->id] = [
-                'is_available' => $reservations->isEmpty(),
+                'is_available' => $isAvailable,
                 'is_currently_occupied' => $isCurrentlyOccupied,
                 'reservations' => $reservations,
                 'reservation_count' => $reservations->count(),

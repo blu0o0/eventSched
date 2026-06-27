@@ -160,36 +160,49 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
     bounds.extend(latLng);
   });
 
-  // Process each venue
-  venues.forEach((venue) => {
-    const availability = venueAvailability[venue.id];
-    const isAvailable = availability.is_available;
-    const reservations = availability.reservations;
+    // Process each venue
+    venues.forEach((venue) => {
+      const availability = venueAvailability[venue.id];
+      const isAvailable = availability.is_available;
+      const isCurrentlyOccupied = availability.is_currently_occupied;
+      const reservations = availability.reservations;
 
-    // Parse coordinates
-    let coordinates = null;
-    if (venue.map_coordinates) {
-      const coords = venue.map_coordinates.split(',');
-      if (coords.length === 2) {
-        coordinates = {
-          lat: parseFloat(coords[0].trim()),
-          lng: parseFloat(coords[1].trim())
-        };
+      // Parse coordinates
+      let coordinates = null;
+      if (venue.map_coordinates) {
+        const coords = venue.map_coordinates.split(',');
+        if (coords.length === 2) {
+          coordinates = {
+            lat: parseFloat(coords[0].trim()),
+            lng: parseFloat(coords[1].trim())
+          };
+        }
       }
-    }
 
-    // Skip venues without coordinates
-    if (!coordinates || isNaN(coordinates.lat) || isNaN(coordinates.lng)) {
-      console.warn('Venue ' + venue.name + ' has invalid coordinates: ' + venue.map_coordinates);
-      return;
-    }
+      // Skip venues without coordinates
+      if (!coordinates || isNaN(coordinates.lat) || isNaN(coordinates.lng)) {
+        console.warn('Venue ' + venue.name + ' has invalid coordinates: ' + venue.map_coordinates);
+        return;
+      }
 
-    // Determine marker color based on availability
-    const iconColor = isAvailable ? '#28a745' : '#dc3545';
-
-    // Build popup content
-    const statusText = isAvailable ? 'Available' : 'Occupied';
-    const statusBadge = `<span class="badge bg-${isAvailable ? 'success' : 'danger'}">${statusText}</span>`;
+      // Determine marker color and status text (matching Laravel logic)
+      let iconColor: string;
+      let statusText: string;
+      let statusBadge: string;
+      
+      if (isAvailable) {
+        iconColor = '#28a745';
+        statusText = 'Available';
+        statusBadge = `<span class="badge bg-success">${statusText}</span>`;
+      } else if (isCurrentlyOccupied) {
+        iconColor = '#dc3545';
+        statusText = 'In Use';
+        statusBadge = `<span class="badge bg-danger">${statusText}</span>`;
+      } else {
+        iconColor = '#ffc107';
+        statusText = 'Reserved';
+        statusBadge = `<span class="badge bg-warning">${statusText}</span>`;
+      }
     
     let popupContent = `
       <div class="map-popup">
