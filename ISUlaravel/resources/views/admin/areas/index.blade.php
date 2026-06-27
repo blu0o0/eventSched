@@ -76,6 +76,7 @@
                     <th>Name</th>
                     <th>Venue</th>
                     <th>Status</th>
+                    <th>Reservations</th>
                     <th>Actions</th>
                     </tr>
                 </thead>
@@ -109,6 +110,9 @@
                                 @endif
                             </td>
                             <td>
+                                {{ $area->reservations->count() }}
+                            </td>
+                            <td>
                                 <a href="{{ route('admin.areas.show', $area) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-eye"></i> View
                                 </a>
@@ -124,11 +128,11 @@
                                 </form>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center">No areas found</td>
-                        </tr>
-                    @endforelse
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center">No areas found</td>
+                            </tr>
+                        @endforelse
                 </tbody>
             </table>
         </div>

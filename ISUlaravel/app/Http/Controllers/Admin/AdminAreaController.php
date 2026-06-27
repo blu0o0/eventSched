@@ -47,6 +47,17 @@ class AdminAreaController extends Controller
         $search = $request->get('search', '');
         $venueId = $request->get('venue_id', '');
 
+        // Load reservations for each area by area_id OR area_name
+        foreach ($areas as $area) {
+            $area->setRelation('reservations', \App\Models\Reservation::where(function($q) use ($area) {
+                $q->where('area_id', $area->id)
+                  ->orWhere('area_name', $area->name);
+            })
+            ->with('user')
+            ->orderBy('date', 'desc')
+            ->get());
+        }
+
         return view('admin.areas.index', compact('areas', 'venues', 'search', 'venueId'));
     }
 
@@ -133,7 +144,17 @@ class AdminAreaController extends Controller
     public function show(Area $area)
     {
         $this->ensureAdmin();
-        $area->load('venue', 'reservations.user');
-        return view('admin.areas.show', compact('area'));
+        $area->load('venue');
+        
+        // Get reservations by area_id OR by area_name matching this area's name
+        $reservations = \App\Models\Reservation::where(function($query) use ($area) {
+            $query->where('area_id', $area->id)
+                  ->orWhere('area_name', $area->name);
+        })
+        ->with('user')
+        ->orderBy('date', 'desc')
+        ->get();
+        
+        return view('admin.areas.show', compact('area', 'reservations'));
     }
 }

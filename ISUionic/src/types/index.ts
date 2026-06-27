@@ -133,6 +133,7 @@ export interface CreateReservationData {
   title: string;
   description?: string;
   venue_id: number;
+  area_id?: number | null;
   area_name?: string;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:mm

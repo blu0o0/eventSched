@@ -72,7 +72,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($area->reservations as $reservation)
+                            @forelse($reservations as $reservation)
                                 <tr>
                                     <td>
                                         <a href="{{ route('admin.reservations.show', $reservation) }}">
