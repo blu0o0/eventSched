@@ -30,6 +30,7 @@ class ReservationResource extends JsonResource
             'area_name' => $this->area_name ?? ($this->whenLoaded('area') ? $this->area->name : null),
             'area_id' => $this->area_id,
             'date' => $this->date->format('Y-m-d'),
+            'end_date' => $this->end_date ? $this->end_date->format('Y-m-d') : null,
             'start_time' => \Carbon\Carbon::parse($this->start_time)->format('H:i'),
             'end_time' => \Carbon\Carbon::parse($this->end_time)->format('H:i'),
             'capacity' => $this->capacity,

@@ -80,12 +80,22 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label for="date" class="form-label">Date <span class="text-danger">*</span></label>
+                    <label for="date" class="form-label">Start Date <span class="text-danger">*</span></label>
                     <input type="date" id="date" name="date" class="form-control @error('date') is-invalid @enderror" 
                            value="{{ old('date', $reservation->date->format('Y-m-d')) }}" required>
                     @error('date')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label for="end_date" class="form-label">End Date <span class="text-muted">(Optional)</span></label>
+                    <input type="date" id="end_date" name="end_date" class="form-control @error('end_date') is-invalid @enderror" 
+                           value="{{ old('end_date', $reservation->end_date ? $reservation->end_date->format('Y-m-d') : '') }}">
+                    @error('end_date')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                    <div class="form-text">Leave empty for single-day events</div>
                 </div>
 
                 <div class="col-md-4 mb-3">

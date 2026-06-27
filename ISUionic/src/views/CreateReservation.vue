@@ -610,6 +610,7 @@ async function loadReservation() {
       area_id: data.area_id || null,
       area_name: data.area_name || '',
       date: data.date,
+      end_date: data.end_date || '',
       start_time: normalizeTime(data.start_time),
       end_time: normalizeTime(data.end_time),
       capacity: data.capacity,

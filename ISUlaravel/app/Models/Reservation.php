@@ -34,6 +34,7 @@ class Reservation extends Model
     {
         return [
             'date' => 'date',
+            'end_date' => 'date',
             'approved_at' => 'datetime',
             'edited_at' => 'datetime',
         ];
