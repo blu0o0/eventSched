@@ -234,6 +234,20 @@
                 </div>
             @endif
 
+            @if(isset($isLocked) && $isLocked)
+                <div class="alert alert-danger" id="lockout-alert">
+                    <strong>Account Locked</strong><br>
+                    Too many failed attempts. Please wait for the cooldown period to end.
+                    <div id="countdown-timer" class="mt-2" style="font-weight: bold;"></div>
+                </div>
+            @endif
+
+            @if(isset($attemptsRemaining) && $attemptsRemaining < 5 && !isset($isLocked))
+                <div class="alert alert-warning" style="background-color: #fff3cd; border-color: #ffc107; color: #856404;">
+                    <strong>Warning:</strong> You have <strong>{{ $attemptsRemaining }}</strong> attempt(s) remaining before your account is locked.
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('admin.login') }}">
                 @csrf
                 <div class="form-group">
@@ -265,8 +279,12 @@
                     </div>
                 </div>
                 <input type="hidden" name="recaptcha_token" id="recaptcha_token">
-                <button type="submit" class="btn btn-login">
-                    Login
+                <button type="submit" class="btn btn-login" id="login-button" @if(isset($isLocked) && $isLocked) disabled @endif>
+                    @if(isset($isLocked) && $isLocked)
+                        Locked
+                    @else
+                        Login
+                    @endif
                 </button>
             </form>
         </div>
@@ -312,6 +330,33 @@
                 });
             });
         });
+
+        // Countdown timer for lockout
+        @if(isset($isLocked) && $isLocked && isset($lockedUntil))
+            const lockoutEnd = new Date('{{ $lockedUntil->toIso8601String() }}').getTime();
+            
+            function updateCountdown() {
+                const now = new Date().getTime();
+                const distance = lockoutEnd - now;
+                
+                if (distance < 0) {
+                    document.getElementById('countdown-timer').innerHTML = 'Cooldown period has ended. You can now try logging in.';
+                    document.getElementById('login-button').disabled = false;
+                    document.getElementById('login-button').textContent = 'Login';
+                    document.getElementById('lockout-alert').style.display = 'none';
+                    return;
+                }
+                
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                document.getElementById('countdown-timer').innerHTML = 
+                    'Time remaining: ' + minutes + 'm ' + seconds + 's';
+            }
+            
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        @endif
     </script>
 </body>
 </html>

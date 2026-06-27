@@ -56,14 +56,28 @@
 
               <input type="hidden" name="recaptcha_token" id="recaptcha_token">
 
+              <div v-if="attemptsRemaining !== null && attemptsRemaining < 5 && !isLocked" class="attempts-warning">
+                <ion-icon :icon="warningOutline"></ion-icon>
+                <span>Warning: You have <strong>{{ attemptsRemaining }}</strong> attempt(s) remaining before your account is locked.</span>
+              </div>
+
+              <div v-if="isLocked" class="lockout-alert">
+                <ion-icon :icon="lockClosedOutline"></ion-icon>
+                <div>
+                  <strong>Account Locked</strong><br>
+                  Too many failed attempts. Please wait for the cooldown period to end.
+                  <div id="countdown-timer" class="countdown-timer">{{ countdownText }}</div>
+                </div>
+              </div>
+
               <ion-button
                 expand="block"
                 type="submit"
-                :disabled="loading || !isFormValid"
+                :disabled="loading || !isFormValid || isLocked"
                 class="btn-login"
               >
                 <ion-spinner v-if="loading" name="crescent"></ion-spinner>
-                <span v-else>Login</span>
+                <span v-else>{{ isLocked ? 'Locked' : 'Login' }}</span>
               </ion-button>
             </form>
 
@@ -115,7 +129,7 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline, homeOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline, homeOutline, warningOutline, lockClosedOutline } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
 import { RECAPTCHA_SITE_KEY } from '../config/env';
@@ -131,6 +145,12 @@ const form = ref({
 const showPassword = ref(false);
 
 const errors = ref<Record<string, string>>({});
+
+const attemptsRemaining = ref<number | null>(null);
+const isLocked = ref(false);
+const lockedUntil = ref<Date | null>(null);
+const countdownText = ref('');
+let countdownInterval: number | null = null;
 
 const isFormValid = computed(() => {
   return (
@@ -180,8 +200,21 @@ async function handleLogin() {
     });
     await toast.present();
   } catch (error: any) {
-    const errorMessage =
-      error.response?.data?.message || error.message || 'Login failed. Please try again.';
+    const errorData = error.response?.data;
+    const errorMessage = errorData?.message || error.message || 'Login failed. Please try again.';
+    
+    // Update attempts remaining
+    if (errorData?.attempts_remaining !== undefined) {
+      attemptsRemaining.value = errorData.attempts_remaining;
+    }
+    
+    // Handle lockout
+    if (errorData?.locked || errorData?.locked_until) {
+      isLocked.value = true;
+      lockedUntil.value = new Date(errorData.locked_until);
+      startCountdown();
+    }
+    
     const toast = await toastController.create({
       message: errorMessage,
       duration: 3000,
@@ -190,6 +223,40 @@ async function handleLogin() {
     });
     await toast.present();
   }
+}
+
+function startCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+  }
+  
+  if (!lockedUntil.value) return;
+  
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
+  if (!lockedUntil.value) return;
+  
+  const now = new Date().getTime();
+  const distance = lockedUntil.value.getTime() - now;
+  
+  if (distance < 0) {
+    countdownText.value = 'Cooldown period has ended. You can now try logging in.';
+    isLocked.value = false;
+    attemptsRemaining.value = 5;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
+  
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  
+  countdownText.value = `Time remaining: ${minutes}m ${seconds}s`;
 }
 
 async function getRecaptchaToken(): Promise<string> {
@@ -223,6 +290,10 @@ onUnmounted(() => {
     badge.style.visibility = '';
     badge.style.opacity = '';
     badge.style.pointerEvents = '';
+  }
+  
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
   }
 });
 </script>
@@ -518,6 +589,51 @@ onUnmounted(() => {
 .security-badge ion-icon {
   color: #ffc107;
   font-size: 16px;
+}
+
+.attempts-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 15px;
+  color: #856404;
+  font-size: 14px;
+}
+
+.attempts-warning ion-icon {
+  font-size: 20px;
+  color: #ffc107;
+  flex-shrink: 0;
+}
+
+.lockout-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 15px;
+  color: #721c24;
+  font-size: 14px;
+}
+
+.lockout-alert ion-icon {
+  font-size: 24px;
+  color: #dc3545;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.countdown-timer {
+  margin-top: 8px;
+  font-weight: bold;
+  font-size: 15px;
 }
 
 </style>

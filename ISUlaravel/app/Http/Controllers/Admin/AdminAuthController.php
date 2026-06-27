@@ -3,19 +3,45 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LoginAttempt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class AdminAuthController extends Controller
 {
+    const MAX_ATTEMPTS = 5;
+    const LOCKOUT_MINUTES = 3;
+    
     /**
      * Show the login form
      */
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
+        $email = $request->input('email');
+        $ipAddress = $request->ip();
+        
+        $attemptsRemaining = self::MAX_ATTEMPTS;
+        $isLocked = false;
+        $lockedUntil = null;
+        
+        if ($email) {
+            $loginAttempt = LoginAttempt::where('email', $email)
+                ->where('ip_address', $ipAddress)
+                ->first();
+            
+            if ($loginAttempt) {
+                $attemptsRemaining = max(0, self::MAX_ATTEMPTS - $loginAttempt->attempts);
+                
+                if ($loginAttempt->locked_until && $loginAttempt->locked_until->isFuture()) {
+                    $isLocked = true;
+                    $lockedUntil = $loginAttempt->locked_until;
+                }
+            }
+        }
+        
         // Always show login form (user can logout from dashboard if already authenticated)
-        return view('admin.auth.login');
+        return view('admin.auth.login', compact('attemptsRemaining', 'isLocked', 'lockedUntil', 'email'));
     }
 
     /**
@@ -28,6 +54,23 @@ class AdminAuthController extends Controller
             'password' => 'required',
             'recaptcha_token' => 'required',
         ]);
+
+        $email = $request->input('email');
+        $ipAddress = $request->ip();
+
+        // Check if account is locked
+        $loginAttempt = LoginAttempt::where('email', $email)
+            ->where('ip_address', $ipAddress)
+            ->first();
+
+        if ($loginAttempt && $loginAttempt->locked_until && $loginAttempt->locked_until->isFuture()) {
+            $remainingSeconds = now()->diffInSeconds($loginAttempt->locked_until);
+            $remainingMinutes = ceil($remainingSeconds / 60);
+            
+            throw ValidationException::withMessages([
+                'email' => ["Too many failed attempts. Please try again in {$remainingMinutes} minute(s)."],
+            ]);
+        }
 
         // Verify reCAPTCHA v3
         $recaptchaResponse = $request->input('recaptcha_token');
@@ -46,6 +89,11 @@ class AdminAuthController extends Controller
         $credentials = $request->only('email', 'password');
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            // Clear login attempts on successful login
+            if ($loginAttempt) {
+                $loginAttempt->delete();
+            }
+            
             $request->session()->regenerate();
 
             $user = Auth::user();
@@ -55,9 +103,58 @@ class AdminAuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
+        // Failed login - increment attempts
+        $this->incrementLoginAttempts($email, $ipAddress);
+        
+        // Get updated attempt count
+        $updatedAttempt = LoginAttempt::where('email', $email)
+            ->where('ip_address', $ipAddress)
+            ->first();
+        
+        $attemptsRemaining = self::MAX_ATTEMPTS;
+        if ($updatedAttempt) {
+            $attemptsRemaining = max(0, self::MAX_ATTEMPTS - $updatedAttempt->attempts);
+        }
+        
+        // Check if user exists to provide specific error message
+        $userExists = \App\Models\User::where('email', $email)->exists();
+        
+        if (!$userExists) {
+            throw ValidationException::withMessages([
+                'email' => ['No registered email account.'],
+            ]);
+        }
+
         throw ValidationException::withMessages([
-            'email' => ['The provided credentials do not match our records.'],
+            'email' => ['Incorrect password.'],
         ]);
+    }
+
+    /**
+     * Increment login attempts and lock account if needed
+     */
+    private function incrementLoginAttempts(string $email, string $ipAddress): void
+    {
+        $loginAttempt = LoginAttempt::where('email', $email)
+            ->where('ip_address', $ipAddress)
+            ->first();
+
+        if (!$loginAttempt) {
+            $loginAttempt = new LoginAttempt([
+                'email' => $email,
+                'ip_address' => $ipAddress,
+                'attempts' => 0,
+            ]);
+        }
+
+        $loginAttempt->attempts += 1;
+        $loginAttempt->last_attempt_at = now();
+
+        if ($loginAttempt->attempts >= self::MAX_ATTEMPTS) {
+            $loginAttempt->locked_until = now()->addMinutes(self::LOCKOUT_MINUTES);
+        }
+
+        $loginAttempt->save();
     }
 
     /**
