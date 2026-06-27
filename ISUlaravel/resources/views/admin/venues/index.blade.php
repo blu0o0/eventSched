@@ -25,15 +25,28 @@
         </ul>
         <div class="card">
             <div class="card-body">
-                <form method="GET" action="{{ route('admin.venues.index') }}" class="d-flex align-items-center gap-3">
+                <form method="GET" action="{{ route('admin.venues.index') }}" class="d-flex align-items-end gap-3">
+                    <button type="submit" class="btn" style="background-color: #176d2d; color: white; margin-bottom: 8px;">
+                        <i class="bi bi-search"></i>
+                    </button>
                     <div class="flex-grow-1">
-                        <label for="location" class="form-label mb-0">Filter by Location:</label>
-                        <select name="location" id="location" class="form-select" onchange="document.getElementById('location').value = this.value; this.form.submit();">
-                            <option value="Santiago Campus" {{ ($location ?? '') === 'Santiago Campus' ? 'selected' : '' }}>Santiago Campus</option>
-                            <option value="Main Campus" {{ ($location ?? '') === 'Main Campus' ? 'selected' : '' }}>Main Campus</option>
-                            <option value="all" {{ ($location ?? 'all') === 'all' ? 'selected' : '' }}>All Locations</option>
+                        <label for="search" class="form-label mb-0">Search by Name or Location:</label>
+                        <input type="text" class="form-control" name="search" id="search" value="{{ $search ?? '' }}">
+                    </div>
+                    <div class="flex-grow-1">
+                        <label for="status" class="form-label mb-0">Filter by Status:</label>
+                        <select name="status" id="status" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Statuses</option>
+                            <option value="available" {{ (request('status') ?? '') === 'available' ? 'selected' : '' }}>Available</option>
+                            <option value="damaged" {{ (request('status') ?? '') === 'damaged' ? 'selected' : '' }}>Damaged</option>
+                            <option value="under_construction" {{ (request('status') ?? '') === 'under_construction' ? 'selected' : '' }}>Under Construction</option>
                         </select>
                     </div>
+                    @if(($search ?? '') || (request('status') ?? ''))
+                        <a href="{{ route('admin.venues.index') }}" class="btn btn-secondary" style="margin-bottom: 8px;">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                    @endif
                 </form>
             </div>
         </div>

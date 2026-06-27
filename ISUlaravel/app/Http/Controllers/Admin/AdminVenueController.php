@@ -35,22 +35,26 @@ class AdminVenueController extends Controller
         
         $query = Venue::withCount('reservations')->with('areas');
         
-        // Default to All Locations if no location filter is provided (first visit)
-        // If location is explicitly set to empty string or 'all', show all
-        $location = $request->has('location') ? $request->get('location') : 'all';
-        
-        // Filter by location
-        if ($location !== '' && $location !== 'all') {
-            $query->where('location', $location);
+        // Search by name or location
+        $search = $request->get('search');
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
         }
         
-        // Order: Santiago Campus first, then Main Campus, then by latest
-        $venues = $query->orderByRaw("CASE WHEN location = 'Santiago Campus' THEN 1 WHEN location = 'Main Campus' THEN 2 ELSE 3 END")
-            ->orderBy('created_at', 'desc')
+        // Filter by status
+        $status = $request->get('status');
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        $venues = $query->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
 
-        return view('admin.venues.index', compact('venues', 'location'));
+        return view('admin.venues.index', compact('venues', 'search', 'status'));
     }
 
     /**
