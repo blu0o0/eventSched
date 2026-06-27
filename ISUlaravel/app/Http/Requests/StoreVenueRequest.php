@@ -25,7 +25,7 @@ class StoreVenueRequest extends FormRequest
         
         return [
             'name' => 'required|string|max:255',
-            'location' => 'required|in:Santiago Campus,Main Campus',
+            'location' => 'required|string|max:255',
             'capacity' => 'required|integer|min:1',
             'description' => 'nullable|string',
             'map_coordinates' => 'nullable|string|max:255',

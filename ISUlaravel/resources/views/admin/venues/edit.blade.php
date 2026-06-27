@@ -26,10 +26,7 @@
             </div>
             <div class="mb-3">
                 <label for="location" class="form-label">Location *</label>
-                <select class="form-select @error('location') is-invalid @enderror" id="location" name="location" required>
-                    <option value="Santiago Campus" {{ old('location', $venue->location) === 'Santiago Campus' ? 'selected' : '' }}>Santiago Campus</option>
-                    <option value="Main Campus" {{ old('location', $venue->location) === 'Main Campus' ? 'selected' : '' }}>Main Campus</option>
-                </select>
+                <input type="text" class="form-control @error('location') is-invalid @enderror" id="location" name="location" value="{{ old('location', $venue->location) }}" required>
                 @error('location')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror

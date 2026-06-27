@@ -25,8 +25,7 @@
             </div>
             <div class="mb-3">
                 <label for="location" class="form-label">Location *</label>
-                <input type="text" class="form-control" value="Santiago Campus" readonly style="cursor: default; background-color: #e9ecef; pointer-events: none;">
-                <input type="hidden" name="location" value="Santiago Campus">
+                <input type="text" class="form-control @error('location') is-invalid @enderror" id="location" name="location" value="{{ old('location') }}" required>
                 @error('location')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
