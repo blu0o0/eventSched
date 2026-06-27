@@ -114,12 +114,17 @@ class ReservationService
      */
     public function update(Reservation $reservation, array $data): Reservation
     {
-        // Temporarily update to check for conflicts
-        $tempReservation = $reservation->replicate();
-        $tempReservation->fill($data);
-        
         // Check for overlaps with approved reservations (if date, time, or venue changed)
         if (isset($data['date']) || isset($data['start_time']) || isset($data['end_time']) || isset($data['venue_id'])) {
+            // Build a temp reservation for conflict checking but keep the original ID
+            // so getConflictingReservations can exclude this reservation from the check
+            $tempReservation = new Reservation();
+            $tempReservation->id = $reservation->id;
+            $tempReservation->venue_id = $data['venue_id'] ?? $reservation->venue_id;
+            $tempReservation->date = $data['date'] ?? $reservation->date;
+            $tempReservation->start_time = $data['start_time'] ?? $reservation->start_time;
+            $tempReservation->end_time = $data['end_time'] ?? $reservation->end_time;
+            
             $conflicts = $this->getConflictingReservations($tempReservation);
             if (!empty($conflicts)) {
                 $conflictMessages = [];

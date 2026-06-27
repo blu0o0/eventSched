@@ -53,7 +53,7 @@
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.area_name }">
-            <ion-label position="stacked">Area <span class="required">*</span></ion-label>
+            <ion-label position="stacked">Area</ion-label>
             <ion-select
               v-model="selectedAreaId"
               :placeholder="form.venue_id ? 'Select an area' : 'Please select a venue first'"
@@ -69,6 +69,13 @@
               >
                 {{ area.name }}
               </ion-select-option>
+              <!-- Show custom area name as a regular option if it exists and doesn't match an existing area -->
+              <ion-select-option 
+                v-if="form.area_name && !areas.find(a => a.name === form.area_name && a.venue_id === form.venue_id)" 
+                :value="'custom-' + form.area_name"
+              >
+                {{ form.area_name }}
+              </ion-select-option>
               <ion-select-option value="others" class="others-option">Others:</ion-select-option>
             </ion-select>
             <ion-note slot="error" v-if="errors.area_name">{{ errors.area_name }}</ion-note>
@@ -77,7 +84,7 @@
             </ion-note>
           </ion-item>
 
-          <!-- Custom Area Input -->
+          <!-- Custom Area Input (shown when "Others:" is selected) -->
           <ion-item v-if="selectedAreaId === 'others'">
             <ion-label position="stacked">Enter Custom Area Name</ion-label>
             <ion-input
@@ -251,6 +258,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 import {
   IonPage,
   IonHeader,
@@ -297,6 +305,7 @@ import { API_BASE_URL } from '../config/env';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const { requireAuth } = useRequireAuth();
 const isEdit = computed(() => !!route.params.id);
 
@@ -314,6 +323,7 @@ const form = ref<CreateReservationData & { date: string; area_name: string }>({
   title: '',
   description: '',
   venue_id: 0,
+  area_id: null,
   area_name: '',
   date: '',
   start_time: '',
@@ -331,15 +341,13 @@ const minDate = new Date().toISOString().split('T')[0];
 const isFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
-  const hasArea = selectedAreaId.value && (typeof selectedAreaId.value === 'number' || selectedAreaId.value === 'others');
-  const hasCustomArea = selectedAreaId.value === 'others' && validators.required(form.value.area_name);
   const hasDate = validators.required(form.value.date) && validators.dateNotPast(form.value.date);
   const hasStartTime = validators.required(form.value.start_time);
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
   const hasCapacity = validators.required(form.value.capacity) && validators.positiveNumber(form.value.capacity);
   
-  return hasTitle && hasVenue && (hasArea || hasCustomArea) && hasDate && timesValid && hasCapacity;
+  return hasTitle && hasVenue && hasDate && timesValid && hasCapacity;
 });
 
 function clearError(field: string) {
@@ -350,7 +358,6 @@ function clearError(field: string) {
 
 function onVenueChange() {
   clearError('venue_id');
-  console.log('🏟️ Venue changed to:', form.value.venue_id, 'type:', typeof form.value.venue_id);
   // Reset area selection when venue changes
   selectedAreaId.value = null;
   form.value.area_name = '';
@@ -364,6 +371,9 @@ function onAreaChange() {
     // User selected an existing area - get the area name
     const selectedArea = areas.value.find(a => a.id === selectedAreaId.value);
     form.value.area_name = selectedArea?.name || '';
+  } else if (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-')) {
+    // User selected a custom area name from the dropdown
+    form.value.area_name = selectedAreaId.value.replace('custom-', '');
   } else {
     // User selected "None" or cleared selection
     form.value.area_name = '';
@@ -461,16 +471,74 @@ async function loadReservation() {
   const id = parseInt(route.params.id as string);
   const data = await executeReservation(() => reservationsApi.getById(id));
   if (data) {
+    // Authorization checks for editing:
+    // 1. Only the owner can edit their reservation
+    // 2. Only pending reservations can be edited
+    if (data.user_id !== authStore.user?.id) {
+      const toast = await toastController.create({
+        message: 'You are not authorized to edit this reservation. You can only edit your own reservations.',
+        duration: 5000,
+        position: 'top',
+        color: 'danger',
+        buttons: [{ text: 'OK', role: 'cancel' }]
+      });
+      await toast.present();
+      router.push('/reservations');
+      return;
+    }
+
+    if (data.status !== 'pending') {
+      const toast = await toastController.create({
+        message: 'This reservation cannot be edited because its status is "' + data.status + '". Only pending reservations can be edited.',
+        duration: 5000,
+        position: 'top',
+        color: 'warning',
+        buttons: [{ text: 'OK', role: 'cancel' }]
+      });
+      await toast.present();
+      router.push('/reservations');
+      return;
+    }
+
+    // Ensure times are in H:i format (trim seconds if present)
+    const normalizeTime = (time: string) => time ? time.substring(0, 5) : '';
+
     form.value = {
       title: data.title,
       description: data.description || '',
       venue_id: data.venue_id,
+      area_id: data.area_id || null,
       area_name: data.area_name || '',
       date: data.date,
-      start_time: data.start_time,
-      end_time: data.end_time,
+      start_time: normalizeTime(data.start_time),
+      end_time: normalizeTime(data.end_time),
       capacity: data.capacity,
     };
+
+    // Pre-select the area if the reservation has one
+    if (data.area_id) {
+      // Existing area linked in the areas table
+      selectedAreaId.value = data.area_id;
+    } else if (data.area_name) {
+      // Check if the area_name matches an existing area in the areas table
+      const matchingArea = areas.value.find(a => 
+        a.name.toLowerCase() === data.area_name.toLowerCase() && 
+        a.venue_id === data.venue_id
+      );
+      
+      if (matchingArea) {
+        // Area exists in the table, select it by ID
+        selectedAreaId.value = matchingArea.id;
+        form.value.area_name = matchingArea.name;
+      } else {
+        // Custom area name (not in the areas table) - select it as custom
+        selectedAreaId.value = 'custom-' + data.area_name;
+        form.value.area_name = data.area_name;
+      }
+    } else {
+      // No area selected
+      selectedAreaId.value = null;
+    }
   }
 }
 
@@ -485,11 +553,7 @@ function validateForm(): boolean {
     errors.value.venue_id = 'Please select a venue';
   }
 
-  if (!selectedAreaId.value) {
-    errors.value.area_name = 'Please select an area';
-  } else if (selectedAreaId.value === 'others' && !validators.required(form.value.area_name)) {
-    errors.value.area_name = 'Please enter a custom area name';
-  }
+  // Area is optional, no validation needed
 
   if (!validators.required(form.value.date)) {
     errors.value.date = 'Date is required';
@@ -526,25 +590,34 @@ async function handleSubmit() {
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
     area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
-    area_name: selectedAreaId.value === 'others' ? form.value.area_name || undefined : undefined,
+    area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
     capacity: form.value.capacity,
   };
 
-  let result;
   if (isEdit.value) {
     const id = parseInt(route.params.id as string);
-    result = await executeSubmit(() => reservationsApi.update(id, submitData));
-    
-    if (result === null) {
+    try {
+      const response = await reservationsApi.update(id, submitData);
+      
+      if (response) {
+        showSuccess('Reservation updated successfully');
+        router.push('/reservations');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to update reservation';
+      const toast = await toastController.create({
+        message: errorMessage,
+        duration: 5000,
+        position: 'top',
+        color: 'danger',
+        buttons: [{ text: 'OK', role: 'cancel' }]
+      });
+      await toast.present();
       return;
     }
-
-    // Success - show success message and navigate
-    showSuccess('Reservation updated successfully');
-    router.push('/reservations');
   } else {
     try {
       const response = await reservationsApi.create(submitData, false);
@@ -595,7 +668,7 @@ async function keepReservationAnyway() {
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
     area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
-    area_name: selectedAreaId.value === 'others' ? form.value.area_name || undefined : undefined,
+    area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
@@ -644,6 +717,8 @@ onMounted(async () => {
   
   await loadVenues();
   await loadAreas();
+  
+  // Load reservation AFTER areas are loaded so we can match area names
   if (isEdit.value) {
     await loadReservation();
   }

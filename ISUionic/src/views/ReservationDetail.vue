@@ -344,8 +344,8 @@ const canReschedule = computed(() => {
 const canDelete = computed(() => {
   if (!reservation.value) return false;
   return (
-    (reservation.value.status === 'pending' ||
-      reservation.value.user_id === authStore.user?.id)
+    reservation.value.user_id === authStore.user?.id &&
+    reservation.value.status === 'pending'
   );
 });
 

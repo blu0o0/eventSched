@@ -39,12 +39,12 @@ class ReservationPolicy
      */
     public function update(User $user, Reservation $reservation): bool
     {
-        // Users can update their own pending or postponed reservations, admins can update any
+        // Admins can update any reservation
         if ($user->isAdministrator()) {
             return true;
         }
-        return $reservation->user_id === $user->id && 
-               ($reservation->isPending() || $reservation->isPostponed());
+        // Users can only update their own pending reservations
+        return $reservation->user_id === $user->id && $reservation->isPending();
     }
 
     /**
