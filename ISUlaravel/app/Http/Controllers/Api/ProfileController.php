@@ -26,4 +26,23 @@ class ProfileController extends Controller
             'user' => $user,
         ]);
     }
+
+    /**
+     * Update the authenticated user's role.
+     */
+    public function updateRole(Request $request)
+    {
+        $request->validate([
+            'role' => 'required|string|in:SBO BSIT WMAD,SBO BSIT NETSEC,SBO BSA,SBL BSLEA,SSC OFFICER,FACULTY/STAFF,STUDENT',
+        ]);
+
+        $user = $request->user();
+        $user->role = $request->role;
+        $user->save();
+
+        return response()->json([
+            'message' => 'Role updated successfully.',
+            'user' => $user,
+        ]);
+    }
 }

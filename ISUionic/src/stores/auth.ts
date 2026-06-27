@@ -126,6 +126,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateRole(role: string) {
+    try {
+      const response = await authApi.updateRole(role);
+      user.value = response.user;
+      await storage.setUser(response.user);
+      return response;
+    } catch (error) {
+      console.error('Update role error:', error);
+      throw error;
+    }
+  }
+
   function clearAuth() {
     token.value = null;
     user.value = null;
@@ -144,6 +156,7 @@ export const useAuthStore = defineStore('auth', () => {
     checkAuth,
     updateUser,
     updateName,
+    updateRole,
     clearAuth,
   };
 });

@@ -34,19 +34,20 @@
             <ion-icon :icon="createOutline" slot="end" />
           </ion-item>
 
+          <ion-item button @click="handleEditRole" detail>
+            <ion-icon :icon="shieldCheckmarkOutline" slot="start" />
+            <ion-label>
+              <h3>Role</h3>
+              <p>{{ formatRole(user?.role) }}</p>
+            </ion-label>
+            <ion-icon :icon="createOutline" slot="end" />
+          </ion-item>
+
           <ion-item>
             <ion-icon :icon="mailOutline" slot="start" />
             <ion-label>
               <h3>Email</h3>
               <p>{{ user?.email }}</p>
-            </ion-label>
-          </ion-item>
-
-          <ion-item>
-            <ion-icon :icon="shieldCheckmarkOutline" slot="start" />
-            <ion-label>
-              <h3>Role</h3>
-              <p>{{ formatRole(user?.role) }}</p>
             </ion-label>
           </ion-item>
         </ion-list>
@@ -105,6 +106,7 @@ const { logout } = useAuth();
 const { show: showToast } = useToast();
 const user = computed(() => authStore.user);
 const isUpdatingName = ref(false);
+const isUpdatingRole = ref(false);
 
 function formatRole(role?: string): string {
   if (!role) return 'General User';
@@ -148,6 +150,91 @@ async function handleEditName() {
             showToast(message, 'danger');
           } finally {
             isUpdatingName.value = false;
+          }
+        },
+      },
+    ],
+  });
+
+  await alert.present();
+}
+
+async function handleEditRole() {
+  const currentRole = user.value?.role;
+  
+  const alert = await alertController.create({
+    header: 'Change Role',
+    inputs: [
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'SBO BSIT WMAD',
+        value: 'SBO BSIT WMAD',
+        checked: currentRole === 'SBO BSIT WMAD',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'SBO BSIT NETSEC',
+        value: 'SBO BSIT NETSEC',
+        checked: currentRole === 'SBO BSIT NETSEC',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'SBO BSA',
+        value: 'SBO BSA',
+        checked: currentRole === 'SBO BSA',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'SBL BSLEA',
+        value: 'SBL BSLEA',
+        checked: currentRole === 'SBL BSLEA',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'SSC Officer',
+        value: 'SSC OFFICER',
+        checked: currentRole === 'SSC OFFICER',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'Faculty/Staff',
+        value: 'FACULTY/STAFF',
+        checked: currentRole === 'FACULTY/STAFF',
+      },
+      {
+        name: 'role',
+        type: 'radio',
+        label: 'Student',
+        value: 'STUDENT',
+        checked: currentRole === 'STUDENT',
+      },
+    ],
+    buttons: [
+      {
+        text: 'Cancel',
+        role: 'cancel',
+      },
+      {
+        text: 'Save',
+        handler: async (data) => {
+          if (!data) {
+            return false;
+          }
+          try {
+            isUpdatingRole.value = true;
+            await authStore.updateRole(data);
+            showToast('Role updated successfully!', 'success');
+          } catch (error: any) {
+            const message = error?.response?.data?.message || 'Failed to update role. Please try again.';
+            showToast(message, 'danger');
+          } finally {
+            isUpdatingRole.value = false;
           }
         },
       },

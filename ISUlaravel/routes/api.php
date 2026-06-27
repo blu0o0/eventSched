@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Profile management
     Route::put('/profile/name', [ProfileController::class, 'updateName']);
+    Route::put('/profile/role', [ProfileController::class, 'updateRole']);
 
     // Emergency Reports - Create
     Route::post('/emergency', [EmergencyController::class, 'store']);

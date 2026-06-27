@@ -51,4 +51,9 @@ export const authApi = {
     const response = await apiClient.put<{ message: string; user: User }>('/profile/name', { name });
     return response.data;
   },
+
+  async updateRole(role: string): Promise<{ message: string; user: User }> {
+    const response = await apiClient.put<{ message: string; user: User }>('/profile/role', { role });
+    return response.data;
+  },
 };
