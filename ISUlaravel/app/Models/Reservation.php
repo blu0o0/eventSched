@@ -14,6 +14,7 @@ class Reservation extends Model
         'title',
         'description',
         'venue_id',
+        'area_id',
         'area_name',
         'date',
         'start_time',

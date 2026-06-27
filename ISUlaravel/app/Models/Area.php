@@ -35,7 +35,7 @@ class Area extends Model
 
     public function reservations()
     {
-        return $this->hasMany(Reservation::class);
+        return $this->hasMany(Reservation::class, 'area_id');
     }
 
     public function getPhotoUrlAttribute()
