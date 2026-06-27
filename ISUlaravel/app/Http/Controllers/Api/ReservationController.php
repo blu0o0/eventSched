@@ -49,7 +49,7 @@ class ReservationController extends Controller
             $query->where('status', $request->status);
         }
 
-        $reservations = $query->latest()->paginate(15);
+        $reservations = $query->latest()->get();
 
         // Check and postpone any approved reservations with unavailable venues
         foreach ($reservations as $reservation) {
@@ -64,10 +64,7 @@ class ReservationController extends Controller
         return response()->json([
             'data' => ReservationResource::collection($reservations),
             'meta' => [
-                'current_page' => $reservations->currentPage(),
-                'last_page' => $reservations->lastPage(),
-                'per_page' => $reservations->perPage(),
-                'total' => $reservations->total(),
+                'total' => $reservations->count(),
             ],
         ]);
     }
