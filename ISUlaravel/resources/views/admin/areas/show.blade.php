@@ -16,7 +16,7 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-5">
         <div class="card mb-3">
             @if($area->photo_url)
                 <img src="{{ $area->photo_url }}" class="card-img-top" alt="{{ $area->name }}" style="max-height: 400px; object-fit: cover;">
@@ -29,7 +29,9 @@
                 </div>
             @endif
         </div>
-        <div class="card">
+    </div>
+    <div class="col-md-7">
+        <div class="card mb-3">
             <div class="card-header">
                 <h5>Area Information</h5>
             </div>
@@ -55,8 +57,6 @@
                 <p><strong>Last Updated:</strong> {{ $area->updated_at->format('M d, Y h:i A') }}</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h5>Reservations</h5>
