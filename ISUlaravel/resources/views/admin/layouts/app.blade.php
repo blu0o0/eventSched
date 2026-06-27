@@ -55,7 +55,9 @@
         .navbar-center {
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 35px;
+            margin-left: auto;
+            margin-right: 70px;
         }
 
         .nav-icon-link {
