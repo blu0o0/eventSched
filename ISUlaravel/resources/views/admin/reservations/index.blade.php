@@ -36,28 +36,30 @@
                     <i class="bi bi-check-square"></i> Select
                 </button>
             </div>
-            <div class="col-md-2">
-                <div id="bulk-actions" style="display: none;" class="d-flex align-items-center gap-1">
-                    <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" style="display: none;">
-                    <span class="text-muted" id="selected-count" style="font-size: 0.8rem; display: none;">0 selected</span>
-                    <button type="button" class="btn btn-sm btn-danger py-0 px-1" onclick="executeBulkAction('reject')" title="Reject Selected" style="display: none;">
-                        Reject
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger py-0 px-1" onclick="executeBulkAction('delete')" title="Delete Selected" style="display: none;">
-                        Delete
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" onclick="executeBulkAction('reject_delete')" title="Reject & Delete Selected" style="display: none;">
-                        Reject & Delete
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="toggleSelectMode()" title="Cancel" style="display: none;">
-                        Cancel
-                    </button>
-                </div>
-            </div>
+            <div class="col-md-2"></div>
         </div>
     </div>
     <div class="card-body">
-        <div class="table-responsive">
+        <!-- Sticky Bulk Actions Bar -->
+        <div id="bulk-actions-sticky" style="display: none; position: fixed; top: 64px; right: 20px; z-index: 1050; background: #fff; padding: 8px 12px; border: 1px solid #dee2e6; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+            <div class="d-flex align-items-center gap-2 justify-content-end">
+                <input type="checkbox" id="select-all-sticky" onchange="toggleSelectAll(this)">
+                <span class="text-muted" id="selected-count-sticky" style="font-size: 0.8rem;">0 selected</span>
+                <button type="button" class="btn btn-sm btn-danger py-0 px-2" onclick="executeBulkAction('reject')">
+                    Reject
+                </button>
+                <button type="button" class="btn btn-sm btn-danger py-0 px-2" onclick="executeBulkAction('delete')">
+                    Delete
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="executeBulkAction('reject_delete')">
+                    Reject & Delete
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="toggleSelectMode()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive" id="table-container">
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -68,7 +70,7 @@
                         <th>Time</th>
                         <th>User</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th id="actions-th">Actions</th>
                         <th style="width: 40px;"></th>
                     </tr>
                 </thead>
@@ -85,6 +87,12 @@
 <style>
     #search-clear:hover {
         opacity: 0.3;
+    }
+    .select-mode .reservation-checkbox-col {
+        display: table-cell !important;
+    }
+    .select-mode .reservation-checkbox {
+        display: inline-block !important;
     }
 </style>
 @endpush
@@ -134,51 +142,29 @@
 
     let selectModeActive = false;
 
-    // Toggle selection mode
     function toggleSelectMode() {
         selectModeActive = !selectModeActive;
+        const toggleBtn = document.getElementById('toggle-select-btn');
+        const container = document.getElementById('table-container');
+        const stickyBar = document.getElementById('bulk-actions-sticky');
         const checkboxes = document.querySelectorAll('.reservation-checkbox');
         const checkboxCols = document.querySelectorAll('.reservation-checkbox-col');
-        const selectAllCheckbox = document.getElementById('select-all');
-        const selectedCount = document.getElementById('selected-count');
-        const rejectBtn = document.querySelector('#bulk-actions button[onclick*="reject"]');
-        const deleteBtn = document.querySelector('#bulk-actions button[onclick*="delete"][onclick*="\'delete\'"]');
-        const rejectDeleteBtn = document.querySelector('#bulk-actions button[onclick*="reject_delete"]');
-        const cancelBtn = document.querySelector('#bulk-actions button[onclick*="toggleSelectMode"]');
-        const toggleBtn = document.getElementById('toggle-select-btn');
 
         if (selectModeActive) {
-            // Show select mode
             toggleBtn.innerHTML = '<i class="bi bi-x"></i> Cancel';
             toggleBtn.classList.remove('btn-outline-secondary');
             toggleBtn.classList.add('btn-secondary');
-            checkboxes.forEach(cb => cb.style.display = 'inline-block');
-            checkboxCols.forEach(col => col.style.display = 'table-cell');
-            document.getElementById('bulk-actions').style.display = 'flex';
-            selectAllCheckbox.style.display = 'inline-block';
-            selectedCount.style.display = 'inline';
-            rejectBtn.style.display = 'inline-block';
-            deleteBtn.style.display = 'inline-block';
-            rejectDeleteBtn.style.display = 'inline-block';
-            cancelBtn.style.display = 'none';
+            container.classList.add('select-mode');
+            stickyBar.style.display = 'block';
+            checkboxes.forEach(cb => cb.checked = false);
             updateSelectedCount();
         } else {
-            // Hide select mode
             toggleBtn.innerHTML = '<i class="bi bi-check-square"></i> Select';
             toggleBtn.classList.remove('btn-secondary');
             toggleBtn.classList.add('btn-outline-secondary');
-            checkboxes.forEach(cb => {
-                cb.style.display = 'none';
-                cb.checked = false;
-            });
-            checkboxCols.forEach(col => col.style.display = 'none');
-            document.getElementById('bulk-actions').style.display = 'none';
-            selectAllCheckbox.style.display = 'none';
-            selectedCount.style.display = 'none';
-            rejectBtn.style.display = 'none';
-            deleteBtn.style.display = 'none';
-            rejectDeleteBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
+            container.classList.remove('select-mode');
+            stickyBar.style.display = 'none';
+            checkboxes.forEach(cb => cb.checked = false);
         }
     }
 
@@ -191,27 +177,25 @@
     function updateSelectedCount() {
         const checked = document.querySelectorAll('.reservation-checkbox:checked');
         const count = checked.length;
-        document.getElementById('selected-count').textContent = count + ' selected';
+        document.getElementById('selected-count-sticky').textContent = count + ' selected';
 
-        // Determine which buttons to show based on selected statuses
-        let hasRejectable = false; // pending or postponed
-        let hasDeletable = false;  // any status
+        let hasRejectable = false;
 
         checked.forEach(cb => {
             const status = cb.getAttribute('data-status');
             if (status === 'pending' || status === 'postponed') {
                 hasRejectable = true;
             }
-            hasDeletable = true;
         });
 
-        const rejectBtn = document.querySelector('#bulk-actions button[onclick*="reject"]');
-        const deleteBtn = document.querySelector('#bulk-actions button[onclick*="delete"][onclick*="\'delete\'"]');
-        const rejectDeleteBtn = document.querySelector('#bulk-actions button[onclick*="reject_delete"]');
+        const buttons = document.querySelectorAll('#bulk-actions-sticky .btn');
+        const rejectBtn = buttons[0];
+        const deleteBtn = buttons[1];
+        const rejectDeleteBtn = buttons[2];
 
         if (count > 0) {
             rejectBtn.style.display = hasRejectable ? 'inline-block' : 'none';
-            deleteBtn.style.display = hasDeletable ? 'inline-block' : 'none';
+            deleteBtn.style.display = 'inline-block';
             rejectDeleteBtn.style.display = hasRejectable ? 'inline-block' : 'none';
         } else {
             rejectBtn.style.display = 'none';
@@ -248,7 +232,6 @@
             return;
         }
 
-        // Build form data
         const formData = new FormData();
         formData.append('action', action);
         ids.forEach(id => formData.append('ids[]', id));
@@ -275,4 +258,3 @@
     }
 </script>
 @endpush
-

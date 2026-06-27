@@ -25,7 +25,7 @@
                 <span class="badge bg-danger">Rejected</span>
             @endif
         </td>
-        <td>
+        <td class="action-column">
             <a href="{{ route('admin.reservations.show', $reservation) }}" class="btn btn-sm btn-info">
                 <i class="bi bi-eye"></i> View
             </a>
