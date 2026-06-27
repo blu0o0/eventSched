@@ -221,6 +221,7 @@ class AdminReservationController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'venue_id' => ['required', 'exists:venues,id'],
             'date' => ['required', 'date'],
+            'end_date' => ['nullable', 'date'],
             'start_time' => ['required'],
             'end_time' => ['required'],
             'capacity' => ['required', 'integer', 'min:1'],
