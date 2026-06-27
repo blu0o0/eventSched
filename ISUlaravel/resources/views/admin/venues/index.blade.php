@@ -48,7 +48,7 @@
                     <tr>
                         <th>Photo</th>
                         <th>Name</th>
-                        <th>Location</th>
+                        <th style="width: 200px; min-width: 130px;">Location</th>
                         <th>Max Occupancy</th>
                         <th>Status</th>
                         <th>Reservations</th>
@@ -68,7 +68,7 @@
                                 @endif
                             </td>
                             <td>{{ $venue->name }}</td>
-                            <td>{{ $venue->location }}</td>
+                            <td class="text-truncate" style="max-width: 200px;" title="{{ $venue->location }}">{{ $venue->location }}</td>
                             <td>{{ $venue->capacity }}</td>
                             <td>
                                 @if($venue->status === 'available')
@@ -88,7 +88,7 @@
                                 @endif
                             </td>
                             <td>{{ $venue->reservations_count }}</td>
-                            <td>
+                            <td style="white-space: nowrap;">
                                 <a href="{{ route('admin.venues.show', $venue) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-eye"></i> View
                                 </a>

@@ -5,7 +5,6 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <h1><i class="bi bi-grid"></i> Edit Area</h1>
         <a href="{{ route('admin.areas.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back
         </a>
