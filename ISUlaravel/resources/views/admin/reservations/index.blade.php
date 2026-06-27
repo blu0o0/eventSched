@@ -5,6 +5,11 @@
 @section('content')
 <div class="card">
     <div class="card-header">
+        <div class="row g-3 align-items-center mb-3">
+            <div class="col">
+                <h6 class="mb-0">Total Reservations: <span class="badge bg-secondary" id="total-count">{{ $totalReservations ?? 0 }}</span></h6>
+            </div>
+        </div>
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="input-group">
@@ -48,9 +53,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-3" id="reservations-pagination">
-            {{ $reservations->links() }}
-        </div>
     </div>
 </div>
 @endsection
@@ -86,7 +88,9 @@
         .then(response => response.json())
         .then(data => {
             document.getElementById('reservations-table-body').innerHTML = data.html;
-            document.getElementById('reservations-pagination').innerHTML = data.pagination;
+            if (data.total !== undefined) {
+                document.getElementById('total-count').textContent = data.total;
+            }
         })
         .catch(error => console.error('Error fetching reservations:', error));
     }

@@ -63,7 +63,8 @@ class AdminReservationController extends Controller
                   ->orWhereDate('end_time', $request->date);
         }
 
-        $reservations = $query->latest()->paginate(15);
+        $reservations = $query->latest()->get();
+        $totalReservations = $reservations->count();
 
         // Check and postpone any approved reservations with unavailable venues
         foreach ($reservations as $reservation) {
@@ -77,14 +78,13 @@ class AdminReservationController extends Controller
 
         if ($request->wantsJson() || $request->ajax()) {
             $html = view('admin.reservations.partials.table', compact('reservations'))->render();
-            $pagination = $reservations->links()->toHtml();
             return response()->json([
                 'html' => $html,
-                'pagination' => $pagination,
+                'total' => $totalReservations,
             ]);
         }
 
-        return view('admin.reservations.index', compact('reservations'));
+        return view('admin.reservations.index', compact('reservations', 'totalReservations'));
     }
 
     /**
