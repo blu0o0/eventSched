@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\VenueController;
 use App\Http\Controllers\Api\AreaController;
@@ -45,6 +46,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/reservations/{reservation}', [ReservationController::class, 'update']);
     Route::delete('/reservations/{reservation}', [ReservationController::class, 'destroy']);
     Route::post('/reservations/{reservation}/reschedule', [ReservationController::class, 'reschedule']);
+
+    // Profile management
+    Route::put('/profile/name', [ProfileController::class, 'updateName']);
 
     // Emergency Reports - Create
     Route::post('/emergency', [EmergencyController::class, 'store']);

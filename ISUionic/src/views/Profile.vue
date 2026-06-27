@@ -25,12 +25,13 @@
         </ion-card>
 
         <ion-list>
-          <ion-item>
+          <ion-item button @click="handleEditName" detail>
             <ion-icon :icon="personOutline" slot="start" />
             <ion-label>
               <h3>Name</h3>
               <p>{{ user?.name }}</p>
             </ion-label>
+            <ion-icon :icon="createOutline" slot="end" />
           </ion-item>
 
           <ion-item>
@@ -66,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   IonPage,
@@ -92,14 +93,18 @@ import {
   mailOutline,
   shieldCheckmarkOutline,
   logOutOutline,
+  createOutline,
 } from 'ionicons/icons';
 import { useAuthStore } from '../stores/auth';
 import { useAuth } from '../composables/useAuth';
+import { useToast } from '../composables/useToast';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const { logout } = useAuth();
+const { show: showToast } = useToast();
 const user = computed(() => authStore.user);
+const isUpdatingName = ref(false);
 
 function formatRole(role?: string): string {
   if (!role) return 'General User';
@@ -107,6 +112,49 @@ function formatRole(role?: string): string {
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+async function handleEditName() {
+  const alert = await alertController.create({
+    header: 'Change Name',
+    inputs: [
+      {
+        name: 'name',
+        type: 'text',
+        placeholder: 'Enter your new name',
+        value: user.value?.name || '',
+        attributes: {
+          maxlength: 255,
+        },
+      },
+    ],
+    buttons: [
+      {
+        text: 'Cancel',
+        role: 'cancel',
+      },
+      {
+        text: 'Save',
+        handler: async (data) => {
+          if (!data.name || !data.name.trim()) {
+            return false;
+          }
+          try {
+            isUpdatingName.value = true;
+            await authStore.updateName(data.name.trim());
+            showToast('Name updated successfully!', 'success');
+          } catch (error: any) {
+            const message = error?.response?.data?.message || 'Failed to update name. Please try again.';
+            showToast(message, 'danger');
+          } finally {
+            isUpdatingName.value = false;
+          }
+        },
+      },
+    ],
+  });
+
+  await alert.present();
 }
 
 async function handleLogout() {
@@ -179,4 +227,3 @@ ion-item {
   --padding-start: 1rem;
 }
 </style>
-

@@ -114,6 +114,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateName(name: string) {
+    try {
+      const response = await authApi.updateName(name);
+      user.value = response.user;
+      await storage.setUser(response.user);
+      return response;
+    } catch (error) {
+      console.error('Update name error:', error);
+      throw error;
+    }
+  }
+
   function clearAuth() {
     token.value = null;
     user.value = null;
@@ -131,6 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     checkAuth,
     updateUser,
+    updateName,
     clearAuth,
   };
 });

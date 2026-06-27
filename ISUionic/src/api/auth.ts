@@ -46,4 +46,9 @@ export const authApi = {
     const response = await apiClient.post<{ message: string }>('/forgot-password/reset-password', data);
     return response.data;
   },
+
+  async updateName(name: string): Promise<{ message: string; user: User }> {
+    const response = await apiClient.put<{ message: string; user: User }>('/profile/name', { name });
+    return response.data;
+  },
 };
