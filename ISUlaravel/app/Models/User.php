@@ -120,11 +120,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is SSC Officer
+     * Check if user is SSC Officer (alias for backward compatibility)
      */
     public function isSscOfficer(): bool
     {
         return $this->role === self::ROLE_SSC_OFFICER;
+    }
+
+    /**
+     * Check if user is OSAS (deprecated - use isSscOfficer instead)
+     */
+    public function isOsas(): bool
+    {
+        return $this->isSscOfficer();
     }
 
     /**
