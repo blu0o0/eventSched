@@ -139,6 +139,7 @@ export interface CreateReservationData {
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   capacity: number;
+  force?: boolean;
 }
 
 export interface CreateEmergencyData {
@@ -156,6 +157,7 @@ export interface ConflictingReservation {
   end_time: string; // HH:mm
   capacity: number;
   description: string | null;
+  status: string; // 'pending' | 'approved' | 'rejected' | 'postponed'
 }
 
 export interface RescheduleReservationData {

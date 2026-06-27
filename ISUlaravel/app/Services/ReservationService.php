@@ -54,6 +54,7 @@ class ReservationService
                     'end_time' => $existing->end_time,
                     'capacity' => $existing->capacity,
                     'description' => $existing->description,
+                    'status' => $existing->status,
                 ];
             }
         }
@@ -112,10 +113,23 @@ class ReservationService
     /**
      * Update a reservation
      */
-    public function update(Reservation $reservation, array $data): Reservation
+    public function update(Reservation $reservation, array $data, bool $force = false): Reservation
     {
+        // Check if venue is available (if venue is being changed or already unavailable)
+        $venueId = $data['venue_id'] ?? $reservation->venue_id;
+        $venue = Venue::find($venueId);
+        if (!$venue || !$venue->isAvailable()) {
+            throw new \Exception('The selected venue is currently unavailable. Please select another venue.');
+        }
+
+        // Only allow reservations for Santiago Campus venues
+        if ($venue->location !== 'Santiago Campus') {
+            throw new \Exception('Reservations can only be made for Santiago Campus venues.');
+        }
+
         // Check for overlaps with approved reservations (if date, time, or venue changed)
-        if (isset($data['date']) || isset($data['start_time']) || isset($data['end_time']) || isset($data['venue_id'])) {
+        // Skip conflict check if force=true (only for pending reservations overriding other pending reservations)
+        if (!$force && (isset($data['date']) || isset($data['start_time']) || isset($data['end_time']) || isset($data['venue_id']))) {
             // Build a temp reservation for conflict checking but keep the original ID
             // so getConflictingReservations can exclude this reservation from the check
             $tempReservation = new Reservation();

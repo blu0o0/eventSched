@@ -43,7 +43,6 @@
                 v-for="venue in venues"
                 :key="venue.id"
                 :value="venue.id"
-                :disabled="!venue.is_available && isEdit"
               >
                 {{ venue.name }} - {{ venue.location }}
                 <span v-if="!venue.is_available"> ({{ venue.status === 'damaged' ? 'Damaged' : 'Under Construction' }})</span>
@@ -243,7 +242,7 @@
               expand="block"
               color="primary"
               @click="keepReservationAnyway"
-              :disabled="forceLoading"
+              :disabled="forceLoading || hasApprovedConflicts"
             >
               <ion-spinner v-if="forceLoading" name="crescent"></ion-spinner>
               <span v-else>Keep Reservation Anyway</span>
@@ -335,6 +334,11 @@ const errors = ref<Record<string, string>>({});
 const conflicts = ref<ConflictingReservation[]>([]);
 const showConflictModal = ref(false);
 const forceLoading = ref(false);
+
+// Check if any conflict is with an approved reservation (can't override)
+const hasApprovedConflicts = computed(() => {
+  return conflicts.value.some(conflict => conflict.status === 'approved');
+});
 
 const minDate = new Date().toISOString().split('T')[0];
 
@@ -607,6 +611,14 @@ async function handleSubmit() {
         router.push('/reservations');
       }
     } catch (err: any) {
+      // Check if the error response contains conflicts (409 status)
+      if (err.response?.status === 409 && err.response?.data?.conflicts) {
+        conflicts.value = err.response.data.conflicts;
+        showConflictModal.value = true;
+        return;
+      }
+      
+      // For other errors, show error toast
       const errorMessage = err.response?.data?.message || err.message || 'Failed to update reservation';
       const toast = await toastController.create({
         message: errorMessage,
@@ -676,15 +688,28 @@ async function keepReservationAnyway() {
   };
 
   try {
-    const response = await reservationsApi.create(submitData, true);
-    
-    if (response.data) {
-      showSuccess('Reservation created successfully. It is now pending and will be reviewed by an administrator.');
-      showConflictModal.value = false;
-      router.push('/reservations');
+    if (isEdit.value) {
+      // For edit: update the reservation with force flag
+      const id = parseInt(route.params.id as string);
+      const response = await reservationsApi.update(id, { ...submitData, force: true });
+      
+      if (response) {
+        showSuccess('Reservation updated successfully. It is now pending and will be reviewed by an administrator.');
+        showConflictModal.value = false;
+        router.push('/reservations');
+      }
+    } else {
+      // For create: create with force flag
+      const response = await reservationsApi.create(submitData, true);
+      
+      if (response.data) {
+        showSuccess('Reservation created successfully. It is now pending and will be reviewed by an administrator.');
+        showConflictModal.value = false;
+        router.push('/reservations');
+      }
     }
   } catch (err: any) {
-    const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
+    const errorMessage = err.response?.data?.message || err.message || (isEdit.value ? 'Failed to update reservation' : 'Failed to create reservation');
     const toast = await toastController.create({
       message: errorMessage,
       duration: 5000,

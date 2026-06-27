@@ -13,7 +13,8 @@ use Illuminate\Http\JsonResponse;
 
 class ReservationController extends Controller
 {
-    protected ReservationService $reservationService;
+    protected $reservationService;
+
     public function __construct(ReservationService $reservationService) {
         $this->reservationService = $reservationService;
     }
@@ -176,18 +177,64 @@ class ReservationController extends Controller
         $this->authorize('update', $reservation);
 
         try {
+            \Log::info('Update request data:', $request->validated());
+            \Log::info('Current reservation:', $reservation->toArray());
+            
+            $updateData = $request->validated();
+            $force = $request->boolean('force', false);
+            
+            // Check for overlaps with approved reservations before updating
+            // Always check for conflicts with approved reservations (can't override approved)
+            // Only skip check for pending conflicts if force is true and reservation is pending
+            $tempReservation = $reservation->replicate();
+            $tempReservation->fill($updateData);
+            $allConflicts = $this->reservationService->getConflictingReservations($tempReservation);
+            
+            if (!empty($allConflicts)) {
+                // Filter conflicts to only show approved reservations (pending conflicts can be overridden with force)
+                $approvedConflicts = array_filter($allConflicts, function($conflict) {
+                    return $conflict['status'] === 'approved';
+                });
+                
+                // If there are approved conflicts, always block (can't override approved reservations)
+                if (!empty($approvedConflicts)) {
+                    return response()->json([
+                        'message' => 'This reservation overlaps with existing approved reservation(s).',
+                        'conflicts' => array_values($approvedConflicts),
+                    ], 409);
+                }
+                
+                // If only pending conflicts and not forcing, show conflict modal
+                if (!$force) {
+                    return response()->json([
+                        'message' => 'This reservation overlaps with existing reservation(s).',
+                        'conflicts' => $allConflicts,
+                    ], 409);
+                }
+                
+                // If forcing and only pending conflicts, allow the update (pending can override pending)
+            }
+            
             $reservation = $this->reservationService->update(
                 $reservation,
-                $request->validated()
+                $updateData,
+                $force
             );
+
+            \Log::info('Updated reservation:', $reservation->toArray());
 
             return response()->json([
                 'message' => 'Reservation updated successfully',
                 'data' => new ReservationResource($reservation),
             ]);
         } catch (\Exception $e) {
+            \Log::error('Update reservation error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
-                'message' => 'Failed to update reservation',
+                'message' => 'Failed to update reservation: ' . $e->getMessage(),
                 'error' => $e->getMessage(),
             ], 422);
         }
@@ -348,19 +395,11 @@ class ReservationController extends Controller
             $conflicts = $this->reservationService->getConflictingReservations($tempReservation);
             
             if (!empty($conflicts)) {
-                $conflictMessages = [];
-                foreach ($conflicts as $conflict) {
-                    $conflictMessages[] = sprintf(
-                        '"%s" by %s (%s - %s)',
-                        $conflict['title'],
-                        $conflict['user_name'],
-                        \Carbon\Carbon::parse($conflict['start_time'])->format('g:i A'),
-                        \Carbon\Carbon::parse($conflict['end_time'])->format('g:i A')
-                    );
-                }
+                // Return conflicts in the same format as create() so the frontend can show the conflict modal
                 return response()->json([
-                    'message' => 'This reservation overlaps with existing approved reservation(s): ' . implode(', ', $conflictMessages),
-                ], 422);
+                    'message' => 'This reservation overlaps with existing approved reservation(s).',
+                    'conflicts' => $conflicts,
+                ], 409);
             }
 
             // Change status back to pending for admin approval

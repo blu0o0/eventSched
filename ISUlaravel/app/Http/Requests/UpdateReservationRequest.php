@@ -29,7 +29,7 @@ class UpdateReservationRequest extends FormRequest
             'area_name' => 'nullable|string|max:255',
             'date' => 'sometimes|required|date',
             'start_time' => 'sometimes|required|date_format:H:i',
-            'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
+            'end_time' => 'sometimes|required|date_format:H:i',
             'capacity' => 'sometimes|required|integer|min:1',
         ];
     }
