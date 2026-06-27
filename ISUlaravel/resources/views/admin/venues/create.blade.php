@@ -95,9 +95,51 @@
     </div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY')) }}"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key', env('GOOGLE_MAPS_API_KEY')) }}&libraries=places"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Google Places Autocomplete for location field
+    const locationInput = document.getElementById('location');
+    if (locationInput) {
+        const autocomplete = new google.maps.places.Autocomplete(locationInput, {
+            types: ['establishment', 'geocode'],
+            componentRestrictions: { country: 'PH' }
+        });
+        autocomplete.setFields(['formatted_address', 'geometry', 'name']);
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (place.geometry && place.geometry.location) {
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
+                const coordinates = lat + ', ' + lng;
+                
+                // Update map coordinates
+                const coordinateInput = document.getElementById('map_coordinates');
+                if (coordinateInput) {
+                    coordinateInput.value = coordinates;
+                }
+                
+                // Pan map to the selected location
+                map.panTo(place.geometry.location);
+                map.setZoom(18);
+                
+                // Update or create marker at the selected location
+                const position = place.geometry.location;
+                if (marker) {
+                    marker.setPosition(position);
+                } else {
+                    marker = new google.maps.Marker({
+                        position: position,
+                        map: map,
+                        draggable: true,
+                        title: 'Venue Location'
+                    });
+                    attachMarkerDragListener(marker);
+                }
+            }
+        });
+    }
+
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photoPreview');
     const photoPreviewImg = document.getElementById('photoPreviewImg');
