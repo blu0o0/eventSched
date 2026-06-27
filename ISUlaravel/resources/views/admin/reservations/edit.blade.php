@@ -19,7 +19,7 @@
             @method('PUT')
             
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-12 mb-3">
                     <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
                     <input type="text" id="title" name="title" class="form-control @error('title') is-invalid @enderror" 
                            value="{{ old('title', $reservation->title) }}" required>
@@ -69,7 +69,7 @@
                 </div>
 
                 <!-- Custom Area Input (shown when "Others:" is selected) -->
-                <div class="col-md-6 mb-3" id="custom-area-container" style="display: {{ old('area_id', $reservation->area_id) === null && $reservation->area_name && !$reservation->area ? 'block' : 'none' }};">
+                <div class="col-12 mb-3" id="custom-area-container" style="display: {{ old('area_id', $reservation->area_id) === null && $reservation->area_name && !$reservation->area ? 'block' : 'none' }};">
                     <label for="area_name" class="form-label">Enter Custom Area Name</label>
                     <input type="text" id="area_name" name="area_name" class="form-control @error('area_name') is-invalid @enderror" 
                            value="{{ old('area_name', $reservation->area_name) }}" 
@@ -79,7 +79,7 @@
                     @enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="date" class="form-label">Start Date <span class="text-danger">*</span></label>
                     <input type="date" id="date" name="date" class="form-control @error('date') is-invalid @enderror" 
                            value="{{ old('date', $reservation->date->format('Y-m-d')) }}" required>
@@ -88,7 +88,7 @@
                     @enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="end_date" class="form-label">End Date <span class="text-muted">(Optional)</span></label>
                     <input type="date" id="end_date" name="end_date" class="form-control @error('end_date') is-invalid @enderror" 
                            value="{{ old('end_date', $reservation->end_date ? $reservation->end_date->format('Y-m-d') : '') }}">
@@ -98,7 +98,7 @@
                     <div class="form-text">Leave empty for single-day events</div>
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="start_time" class="form-label">Start Time <span class="text-danger">*</span></label>
                     <input type="time" id="start_time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" 
                            value="{{ old('start_time', $reservation->start_time) }}" required>
@@ -107,7 +107,7 @@
                     @enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                     <label for="end_time" class="form-label">End Time <span class="text-danger">*</span></label>
                     <input type="time" id="end_time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" 
                            value="{{ old('end_time', $reservation->end_time) }}" required>
@@ -116,7 +116,7 @@
                     @enderror
                 </div>
 
-                <div class="col-md-6 mb-3">
+                <div class="col-12 mb-3">
                     <label for="capacity" class="form-label">Expected Capacity <span class="text-danger">*</span></label>
                     <input type="number" id="capacity" name="capacity" class="form-control @error('capacity') is-invalid @enderror" 
                            value="{{ old('capacity', $reservation->capacity) }}" min="1" required>
