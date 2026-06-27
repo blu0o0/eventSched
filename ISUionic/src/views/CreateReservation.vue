@@ -98,16 +98,15 @@
               <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
               Event Date <span class="required">*</span>
             </ion-label>
-            <ion-note v-if="errors.date" color="danger" style="margin-bottom: 0.5rem; display: block;">
-              {{ errors.date }}
-            </ion-note>
             <input
               type="date"
               v-model="form.date"
               class="native-datetime-input"
-              @input="clearError('date')"
               :min="minDateStr"
             />
+            <div v-if="errors.date" style="color: var(--ion-color-danger); font-size: 0.85rem; margin-top: 0.5rem;">
+              {{ errors.date }}
+            </div>
             <ion-note slot="helper" color="medium">
               Reservations must be made at least 7 days in advance
             </ion-note>
@@ -159,7 +158,7 @@
               Please fill in all required fields: 
               <span v-if="!validators.required(form.title)">Title, </span>
               <span v-if="form.venue_id <= 0">Venue, </span>
-              <span v-if="!validators.required(form.date)">Date, </span>
+              <span v-if="!validators.required(form.date) || errors.date">Date, </span>
               <span v-if="!validators.required(form.start_time)">Start Time, </span>
               <span v-if="!validators.required(form.end_time)">End Time, </span>
               <span v-if="!validators.required(form.capacity) || !validators.positiveNumber(form.capacity)">Max Occupancy</span>
@@ -260,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import {
@@ -366,6 +365,17 @@ function clearError(field: string) {
     delete errors.value[field];
   }
 }
+
+// Watch for date changes and validate in real-time
+watch(() => form.value.date, (newDate) => {
+  if (newDate && !validators.dateNotTooSoon(newDate)) {
+    errors.value.date = 'Date must be at least 7 days in advance';
+  } else if (newDate && !validators.dateNotPast(newDate)) {
+    errors.value.date = 'Date cannot be in the past';
+  } else {
+    clearError('date');
+  }
+});
 
 function onVenueChange() {
   clearError('venue_id');
