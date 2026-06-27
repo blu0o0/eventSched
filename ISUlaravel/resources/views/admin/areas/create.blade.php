@@ -46,15 +46,23 @@
                 </select>
             </div>
             <div class="mb-3">
-                <label for="photo" class="form-label">Area Photo</label>
+                <label>Area Photo</label>
+                <div class="card mb-3">
+                    <div id="photoPreview" class="card-body" style="display: none; padding: 0;">
+                        <img id="photoPreviewImg" src="" alt="Photo Preview" class="card-img-top" style="max-height: 400px; object-fit: cover;">
+                    </div>
+                    <div id="photoPlaceholder" class="card-body bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-image" style="font-size: 4rem;"></i>
+                            <p class="mt-2">No photo selected</p>
+                        </div>
+                    </div>
+                </div>
                 <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
                 <small class="form-text text-muted">Upload a photo of the area (Max: 5MB, Formats: JPEG, PNG, JPG, GIF, WEBP)</small>
                 @error('photo')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                <div id="photoPreview" class="mt-3" style="display: none;">
-                    <img id="photoPreviewImg" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
-                </div>
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-save"></i> Create Area
@@ -68,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photoPreview');
     const photoPreviewImg = document.getElementById('photoPreviewImg');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
 
     photoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -76,10 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
             reader.onload = function(e) {
                 photoPreviewImg.src = e.target.result;
                 photoPreview.style.display = 'block';
+                photoPlaceholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
         } else {
             photoPreview.style.display = 'none';
+            photoPlaceholder.style.display = 'flex';
         }
     });
 });

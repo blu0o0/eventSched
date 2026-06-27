@@ -49,31 +49,28 @@
                 @enderror
             </div>
             <div class="mb-3">
-                <label for="photo" class="form-label">Area Photo</label>
-                
-                @if($area->photo_url)
-                    <div class="mb-3">
-                        <p class="mb-2"><strong>Current Photo:</strong></p>
-                        <img src="{{ $area->photo_url }}" alt="{{ $area->name }}" class="img-thumbnail" style="max-width: 300px; max-height: 300px; display: block;">
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" name="remove_photo" value="1" id="removePhoto">
-                            <label class="form-check-label" for="removePhoto">
-                                Remove current photo
-                            </label>
-                        </div>
+                <label>Area Photo</label>
+                <div class="card mb-3" style="max-width: 300px;">
+                    @if($area->photo_url)
+                        <img src="{{ $area->photo_url }}" alt="{{ $area->name }}" class="card-img-top" id="currentPhoto" style="aspect-ratio: 1/1; object-fit: cover;">
+                    @endif
+                    <div id="photoPreview" class="card-body" style="display: none; padding: 0;">
+                        <img id="photoPreviewImg" src="" alt="New Photo Preview" class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;">
                     </div>
-                    <p class="text-muted mb-2">Or upload a new photo to replace:</p>
-                @endif
-                
+                    <div id="photoPlaceholder" class="card-body bg-light d-flex align-items-center justify-content-center" style="height: {{ $area->photo_url ? '0' : '300px' }}; padding: {{ $area->photo_url ? '0' : 'inherit' }};">
+                        @if(!$area->photo_url)
+                            <div class="text-center text-muted">
+                                <i class="bi bi-image" style="font-size: 4rem;"></i>
+                                <p class="mt-2">No photo selected</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
                 <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
                 <small class="form-text text-muted">Upload a photo of the area (Max: 5MB, Formats: JPEG, PNG, JPG, GIF, WEBP)</small>
                 @error('photo')
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
-                <div id="photoPreview" class="mt-3" style="display: none;">
-                    <p class="mb-2"><strong>New Photo Preview:</strong></p>
-                    <img id="photoPreviewImg" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
-                </div>
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-save"></i> Update Area
@@ -87,35 +84,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const photoInput = document.getElementById('photo');
     const photoPreview = document.getElementById('photoPreview');
     const photoPreviewImg = document.getElementById('photoPreviewImg');
-    const removePhotoCheckbox = document.getElementById('removePhoto');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+    const currentPhoto = document.getElementById('currentPhoto');
 
     photoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
+                // Hide current photo, show preview
+                if (currentPhoto) currentPhoto.style.display = 'none';
                 photoPreviewImg.src = e.target.result;
                 photoPreview.style.display = 'block';
+                photoPlaceholder.style.display = 'none';
             };
             reader.readAsDataURL(file);
-            // Uncheck remove photo if uploading new one
-            if (removePhotoCheckbox) {
-                removePhotoCheckbox.checked = false;
-            }
         } else {
-            photoPreview.style.display = 'none';
+            // If no file selected, show current photo or placeholder
+            if (currentPhoto && currentPhoto.src) {
+                currentPhoto.style.display = 'block';
+                photoPreview.style.display = 'none';
+            } else {
+                photoPreview.style.display = 'none';
+                photoPlaceholder.style.display = 'flex';
+            }
         }
     });
-
-    // If remove photo is checked, disable file input
-    if (removePhotoCheckbox) {
-        removePhotoCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                photoInput.value = '';
-                photoPreview.style.display = 'none';
-            }
-        });
-    }
 });
 </script>
 @endsection

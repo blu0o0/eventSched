@@ -41,7 +41,8 @@ class Area extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->photo) {
-            return Storage::url($this->photo);
+            // Use asset() helper for public URL
+            return asset('storage/' . $this->photo);
         }
         return null;
     }
