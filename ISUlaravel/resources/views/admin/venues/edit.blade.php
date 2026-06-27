@@ -25,13 +25,6 @@
                 @enderror
             </div>
             <div class="mb-3">
-                <label for="location" class="form-label">Location *</label>
-                <input type="text" class="form-control @error('location') is-invalid @enderror" id="location" name="location" value="{{ old('location', $venue->location) }}" required>
-                @error('location')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-            <div class="mb-3">
                 <label for="capacity" class="form-label">Max Occupancy *</label>
                 <input type="number" class="form-control @error('capacity') is-invalid @enderror" id="capacity" name="capacity" value="{{ old('capacity', $venue->capacity) }}" min="1" required>
                 @error('capacity')
@@ -45,19 +38,30 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
-            <div class="mb-3">
-                <label for="map_coordinates" class="form-label">Map Coordinates</label>
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control @error('map_coordinates') is-invalid @enderror" id="map_coordinates" name="map_coordinates" value="{{ old('map_coordinates', $venue->map_coordinates) }}" placeholder="e.g., 16.72249174514112, 121.53739618722382" readonly>
-                    <button type="button" class="btn btn-outline-secondary" id="clearCoordinates">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </button>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="location" class="form-label">Location *</label>
+                    <input type="text" class="form-control @error('location') is-invalid @enderror" id="location" name="location" value="{{ old('location', $venue->location) }}" required>
+                    @error('location')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
-                <small class="form-text text-muted">Click on the map below to select coordinates</small>
-                @error('map_coordinates')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <div id="coordinatePickerMap" style="height: 400px; width: 100%; margin-top: 10px; border: 1px solid #dee2e6; border-radius: 0.375rem;"></div>
+                <div class="col-md-6 mb-3">
+                    <label for="map_coordinates" class="form-label">Map Coordinates</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control @error('map_coordinates') is-invalid @enderror" id="map_coordinates" name="map_coordinates" value="{{ old('map_coordinates', $venue->map_coordinates) }}" placeholder="e.g., 16.72249174514112, 121.53739618722382" readonly>
+                        <button type="button" class="btn btn-outline-secondary" id="clearCoordinates">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                    <small class="form-text text-muted">Click on the map below to select coordinates</small>
+                    @error('map_coordinates')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            </div>
+            <div class="mb-3">
+                <div id="coordinatePickerMap" style="height: 400px; width: 100%; border: 1px solid #dee2e6; border-radius: 0.375rem;"></div>
             </div>
             <div class="mb-3">
                 <label for="photo" class="form-label">Venue Photo</label>
