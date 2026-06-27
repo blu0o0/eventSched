@@ -63,31 +63,12 @@
                 <div id="coordinatePickerMap" style="height: 400px; width: 100%; border: 1px solid #dee2e6; border-radius: 0.375rem;"></div>
             </div>
             <div class="mb-3">
-                <label for="photo" class="form-label">Venue Photo</label>
-                
-                @if($venue->photo_url)
-                    <div class="mb-3">
-                        <p class="mb-2"><strong>Current Photo:</strong></p>
-                        <img src="{{ $venue->photo_url }}" alt="{{ $venue->name }}" class="img-thumbnail" style="max-width: 300px; max-height: 300px; display: block;">
-                        <div class="form-check mt-2">
-                            <input class="form-check-input" type="checkbox" name="remove_photo" value="1" id="removePhoto">
-                            <label class="form-check-label" for="removePhoto">
-                                Remove current photo
-                            </label>
-                        </div>
-                    </div>
-                    <p class="text-muted mb-2">Or upload a new photo to replace:</p>
-                @endif
-                
-                <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                <small class="form-text text-muted">Upload a photo of the venue (Max: 5MB, Formats: JPEG, PNG, JPG, GIF, WEBP)</small>
-                @error('photo')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <div id="photoPreview" class="mt-3" style="display: none;">
-                    <p class="mb-2"><strong>New Photo Preview:</strong></p>
-                    <img id="photoPreviewImg" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
+                <label>Location Preview</label>
+                <div id="staticMapPreviewDiv" style="display: none; margin-top: 10px;">
+                    <img id="staticMapPreview" src="" alt="Location Preview" class="img-thumbnail" style="max-width: 100%; height: 300px; object-fit: cover;">
+                    <input type="hidden" name="photo" id="static_map_url" value="{{ $venue->photo ?? '' }}">
                 </div>
+                <small class="form-text text-muted">Click on the map to generate a satellite preview of the location</small>
             </div>
             <div class="mb-3">
                 <label for="status" class="form-label">Status *</label>
@@ -125,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
             types: ['establishment', 'geocode'],
             componentRestrictions: { country: 'PH' }
         });
-        autocomplete.setFields(['formatted_address', 'geometry', 'name']);
+        autocomplete.setFields(['formatted_address', 'geometry', 'name', 'photos']);
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
             if (place.geometry && place.geometry.location) {
@@ -156,39 +137,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     attachMarkerDragListener(marker);
                 }
-            }
-        });
-    }
 
-    const photoInput = document.getElementById('photo');
-    const photoPreview = document.getElementById('photoPreview');
-    const photoPreviewImg = document.getElementById('photoPreviewImg');
-    const removePhotoCheckbox = document.getElementById('removePhoto');
-
-    photoInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                photoPreviewImg.src = e.target.result;
-                photoPreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-            // Uncheck remove photo if uploading new one
-            if (removePhotoCheckbox) {
-                removePhotoCheckbox.checked = false;
-            }
-        } else {
-            photoPreview.style.display = 'none';
-        }
-    });
-
-    // If remove photo is checked, disable file input
-    if (removePhotoCheckbox) {
-        removePhotoCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                photoInput.value = '';
-                photoPreview.style.display = 'none';
+                // Fetch and display place photo
+                if (place.photos && place.photos.length > 0) {
+                    const photoUrl = place.photos[0].getUrl({ maxWidth: 800, maxHeight: 600 });
+                    const staticMapInput = document.getElementById('static_map_url');
+                    if (staticMapInput) {
+                        staticMapInput.value = photoUrl;
+                    }
+                    const previewImg = document.getElementById('staticMapPreview');
+                    const previewDiv = document.getElementById('staticMapPreviewDiv');
+                    if (previewImg && previewDiv) {
+                        previewImg.src = photoUrl;
+                        previewDiv.style.display = 'block';
+                    }
+                }
             }
         });
     }
@@ -298,6 +261,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         map.setCenter(defaultCenter);
     });
+
+    // Update static map when marker is placed or moved (fallback if no place photo)
+    map.addListener('click', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        const coordinates = lat + ', ' + lng;
+        coordinateInput.value = coordinates;
+        
+        // Update or create marker
+        if (marker) {
+            marker.setPosition(event.latLng);
+        } else {
+            marker = new google.maps.Marker({
+                position: event.latLng,
+                map: map,
+                draggable: true,
+                title: 'Venue Location'
+            });
+            attachMarkerDragListener(marker);
+        }
+    });
+
+    if (marker) {
+        const pos = marker.getPosition();
+        coordinateInput.value = pos.lat() + ', ' + pos.lng();
+    }
 });
 </script>
 @endsection

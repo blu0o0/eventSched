@@ -71,7 +71,7 @@
                 <tbody>
                     @forelse($venues as $venue)
                         <tr>
-                            <td>
+                            <td style="width: 100px;">
                                 @if($venue->photo_url)
                                     <img src="{{ $venue->photo_url }}" alt="{{ $venue->name }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
                                 @else

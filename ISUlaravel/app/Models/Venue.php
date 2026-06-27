@@ -70,7 +70,12 @@ class Venue extends Model
     public function getPhotoUrlAttribute()
     {
         if ($this->photo) {
-            return Storage::url($this->photo);
+            // Check if it's an external URL (from Google Places)
+            if (filter_var($this->photo, FILTER_VALIDATE_URL)) {
+                return $this->photo;
+            }
+            // Otherwise it's a local file - use asset() helper for public URL
+            return asset('storage/' . $this->photo);
         }
         return null;
     }

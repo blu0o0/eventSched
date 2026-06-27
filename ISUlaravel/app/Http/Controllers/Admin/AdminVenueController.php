@@ -74,9 +74,16 @@ class AdminVenueController extends Controller
         $this->ensureAdmin();
         $data = $request->validated();
 
-        // Handle photo upload
-        if ($request->hasFile('photo')) {
-            $data['photo'] = $request->file('photo')->store('venues', 'public');
+        // Handle photo URL - download and store locally
+        if ($request->filled('photo') && filter_var($request->photo, FILTER_VALIDATE_URL)) {
+            try {
+                $photoPath = $this->downloadAndStoreImage($request->photo);
+                $data['photo'] = $photoPath;
+            } catch (\Exception $e) {
+                $data['photo'] = null;
+            }
+        } else {
+            $data['photo'] = null;
         }
 
         Venue::create($data);
@@ -113,20 +120,19 @@ class AdminVenueController extends Controller
         $this->ensureAdmin();
         $data = $request->validated();
 
-        // Handle photo upload/replacement
-        if ($request->hasFile('photo')) {
-            // Delete old photo if exists
+        // Handle photo URL - download and store locally
+        if ($request->filled('photo') && filter_var($request->photo, FILTER_VALIDATE_URL)) {
+            // Delete old photo if it's a local file
             if ($venue->photo && Storage::disk('public')->exists($venue->photo)) {
                 Storage::disk('public')->delete($venue->photo);
             }
-            // Store new photo
-            $data['photo'] = $request->file('photo')->store('venues', 'public');
-        } elseif ($request->has('remove_photo') && $request->remove_photo == '1') {
-            // Remove photo if requested
-            if ($venue->photo && Storage::disk('public')->exists($venue->photo)) {
-                Storage::disk('public')->delete($venue->photo);
+            try {
+                $photoPath = $this->downloadAndStoreImage($request->photo);
+                $data['photo'] = $photoPath;
+            } catch (\Exception $e) {
+                // Keep existing photo if download fails
+                unset($data['photo']);
             }
-            $data['photo'] = null;
         } else {
             // Keep existing photo
             unset($data['photo']);
@@ -184,6 +190,46 @@ class AdminVenueController extends Controller
 
         return redirect()->route('admin.venues.index')
             ->with('success', 'Venue deleted successfully.');
+    }
+
+    /**
+     * Download image from URL and store locally
+     */
+    private function downloadAndStoreImage($url)
+    {
+        // Ensure venues directory exists
+        if (!Storage::disk('public')->exists('venues')) {
+            Storage::disk('public')->makeDirectory('venues');
+        }
+
+        \Log::info('Attempting to download image from: ' . $url);
+
+        // Try to download with curl if file_get_contents is disabled
+        $contents = @file_get_contents($url);
+        if ($contents === false) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+            $contents = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            \Log::info('CURL HTTP Code: ' . $httpCode);
+            
+            if ($contents === false || empty($contents)) {
+                throw new \Exception('Failed to download image from URL');
+            }
+        }
+
+        $filename = 'venues/' . uniqid() . '.jpg';
+        Storage::disk('public')->put($filename, $contents);
+        
+        \Log::info('Image stored at: ' . $filename);
+        \Log::info('Full path: ' . Storage::disk('public')->path($filename));
+        
+        return $filename;
     }
 
     /**

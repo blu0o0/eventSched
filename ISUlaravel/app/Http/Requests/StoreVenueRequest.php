@@ -29,7 +29,7 @@ class StoreVenueRequest extends FormRequest
             'capacity' => 'required|integer|min:1',
             'description' => 'nullable|string',
             'map_coordinates' => 'nullable|string|max:255',
-            'photo' => 'nullable|image|max:20480', // 20MB max, accepts all image types
+            'photo' => 'nullable|url', // Accepts photo URL from Google Places
             'status' => 'required|in:available,damaged,under_construction',
             'unavailable_until' => 'nullable|date|after_or_equal:today|required_if:status,damaged,under_construction',
         ];

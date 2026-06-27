@@ -63,15 +63,12 @@
                 <div id="coordinatePickerMap" style="height: 400px; width: 100%; border: 1px solid #dee2e6; border-radius: 0.375rem;"></div>
             </div>
             <div class="mb-3">
-                <label for="photo" class="form-label">Venue Photo</label>
-                <input type="file" class="form-control @error('photo') is-invalid @enderror" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp">
-                <small class="form-text text-muted">Upload a photo of the venue (Max: 5MB, Formats: JPEG, PNG, JPG, GIF, WEBP)</small>
-                @error('photo')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-                <div id="photoPreview" class="mt-3" style="display: none;">
-                    <img id="photoPreviewImg" src="" alt="Photo Preview" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
+                <label>Location Preview</label>
+                <div id="staticMapPreviewDiv" style="display: none; margin-top: 10px;">
+                    <img id="staticMapPreview" src="" alt="Location Preview" class="img-thumbnail" style="max-width: 100%; height: 300px; object-fit: cover;">
+                    <input type="hidden" name="photo" id="static_map_url" value="">
                 </div>
+                <small class="form-text text-muted">Click on the map to generate a satellite preview of the location</small>
             </div>
             <div class="mb-3">
                 <label for="status" class="form-label">Status *</label>
@@ -109,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
             types: ['establishment', 'geocode'],
             componentRestrictions: { country: 'PH' }
         });
-        autocomplete.setFields(['formatted_address', 'geometry', 'name']);
+        autocomplete.setFields(['formatted_address', 'geometry', 'name', 'photos']);
         autocomplete.addListener('place_changed', function() {
             const place = autocomplete.getPlace();
             if (place.geometry && place.geometry.location) {
@@ -140,27 +137,24 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     attachMarkerDragListener(marker);
                 }
+
+                // Fetch and display place photo
+                if (place.photos && place.photos.length > 0) {
+                    const photoUrl = place.photos[0].getUrl({ maxWidth: 800, maxHeight: 600 });
+                    const staticMapInput = document.getElementById('static_map_url');
+                    if (staticMapInput) {
+                        staticMapInput.value = photoUrl;
+                    }
+                    const previewImg = document.getElementById('staticMapPreview');
+                    const previewDiv = document.getElementById('staticMapPreviewDiv');
+                    if (previewImg && previewDiv) {
+                        previewImg.src = photoUrl;
+                        previewDiv.style.display = 'block';
+                    }
+                }
             }
         });
     }
-
-    const photoInput = document.getElementById('photo');
-    const photoPreview = document.getElementById('photoPreview');
-    const photoPreviewImg = document.getElementById('photoPreviewImg');
-
-    photoInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                photoPreviewImg.src = e.target.result;
-                photoPreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            photoPreview.style.display = 'none';
-        }
-    });
 
     // Handle status change to show/hide unavailable_until field
     const statusSelect = document.getElementById('status');
@@ -264,6 +258,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         map.setCenter(defaultCenter);
     });
+
+    // Update static map when marker is placed or moved (fallback if no place photo)
+    map.addListener('click', function(event) {
+        const lat = event.latLng.lat();
+        const lng = event.latLng.lng();
+        const coordinates = lat + ', ' + lng;
+        coordinateInput.value = coordinates;
+        
+        // Update or create marker
+        if (marker) {
+            marker.setPosition(event.latLng);
+        } else {
+            marker = new google.maps.Marker({
+                position: event.latLng,
+                map: map,
+                draggable: true,
+                title: 'Venue Location'
+            });
+            attachMarkerDragListener(marker);
+        }
+    });
+
+    if (marker) {
+        const pos = marker.getPosition();
+        coordinateInput.value = pos.lat() + ', ' + pos.lng();
+    }
 });
 </script>
 @endsection

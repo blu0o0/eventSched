@@ -16,12 +16,12 @@
 </div>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-5">
         <div class="card mb-3">
             @if($venue->photo_url)
                 <img src="{{ $venue->photo_url }}" class="card-img-top" alt="{{ $venue->name }}" style="max-height: 400px; object-fit: cover;">
             @else
-                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
                     <div class="text-center text-muted">
                         <i class="bi bi-image" style="font-size: 4rem;"></i>
                         <p class="mt-2">No photo available</p>
@@ -29,7 +29,9 @@
                 </div>
             @endif
         </div>
-        <div class="card">
+    </div>
+    <div class="col-md-7">
+        <div class="card mb-3">
             <div class="card-header">
                 <h5>Venue Information</h5>
             </div>
@@ -56,8 +58,6 @@
                 @endif
             </div>
         </div>
-    </div>
-    <div class="col-md-6">
         <div class="card">
             <div class="card-header">
                 <h5>Reservations</h5>
