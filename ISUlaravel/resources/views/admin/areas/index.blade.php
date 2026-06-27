@@ -41,7 +41,7 @@
                             <option value="">All Venues</option>
                             @foreach($venues as $venue)
                                 <option value="{{ $venue->id }}" {{ ($venueId ?? '') == $venue->id ? 'selected' : '' }}>
-                                    {{ $venue->name }} ({{ $venue->location }})
+                                    {{ $venue->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -95,7 +95,7 @@
                             <td>{{ $area->name }}</td>
                             <td>
                                 @if($area->venue)
-                                    {{ $area->venue->name }} <small class="text-muted">({{ $area->venue->location }})</small>
+                                    {{ $area->venue->name }}
                                 @else
                                     <span class="text-muted">No venue assigned</span>
                                 @endif

@@ -37,7 +37,7 @@
                 <p><strong>Name:</strong> {{ $area->name }}</p>
                 <p><strong>Venue:</strong> 
                     @if($area->venue)
-                        {{ $area->venue->name }} <small class="text-muted">({{ $area->venue->location }})</small>
+                        {{ $area->venue->name }}
                     @else
                         <span class="text-muted">No venue assigned</span>
                     @endif

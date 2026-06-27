@@ -29,7 +29,7 @@
                     <option value="">Select a venue</option>
                     @foreach($venues as $venue)
                         <option value="{{ $venue->id }}" {{ old('venue_id') == $venue->id ? 'selected' : '' }}>
-                            {{ $venue->name }} ({{ $venue->location }})
+                            {{ $venue->name }}
                         </option>
                     @endforeach
                 </select>
