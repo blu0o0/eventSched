@@ -51,6 +51,7 @@ export interface Reservation {
   area_name?: string | null;
   area_id?: number | null;
   date: string; // YYYY-MM-DD
+  end_date?: string | null; // YYYY-MM-DD (optional end date for multi-day events)
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   capacity: number;

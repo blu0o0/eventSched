@@ -41,10 +41,16 @@
 
                 <h5>Date & Time</h5>
                 <p>
+                    <strong>Start:</strong>
                     @if($reservation->date)
                         {{ $reservation->date instanceof \Carbon\Carbon ? $reservation->date->format('F d, Y') : \Carbon\Carbon::parse($reservation->date)->format('F d, Y') }}
                     @else
                         N/A
+                    @endif
+                    @if($reservation->end_date)
+                        <br>
+                        <strong>End:</strong>
+                        {{ $reservation->end_date instanceof \Carbon\Carbon ? $reservation->end_date->format('F d, Y') : \Carbon\Carbon::parse($reservation->end_date)->format('F d, Y') }}
                     @endif
                     <br>
                     @if($reservation->start_time && $reservation->end_time)

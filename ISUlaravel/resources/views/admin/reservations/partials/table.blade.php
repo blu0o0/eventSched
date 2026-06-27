@@ -11,7 +11,12 @@
                 N/A
             @endif
         </td>
-        <td>{{ $reservation->date->format('M d, Y') }}</td>
+        <td>
+            {{ $reservation->date->format('M d, Y') }}
+            @if($reservation->end_date)
+                - {{ $reservation->end_date instanceof \Carbon\Carbon ? $reservation->end_date->format('M d, Y') : \Carbon\Carbon::parse($reservation->end_date)->format('M d, Y') }}
+            @endif
+        </td>
         <td>{{ \Carbon\Carbon::parse($reservation->start_time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($reservation->end_time)->format('g:i A') }}</td>
         <td>{{ $reservation->user->name }}</td>
         <td>

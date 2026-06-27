@@ -45,7 +45,8 @@
               <h3>Reservation Details</h3>
               <div class="info-item">
                 <ion-icon :icon="calendarOutline" />
-                <span>{{ formatDate(reservation.date) }}</span>
+                <span><strong>Start:</strong> {{ formatDate(reservation.date) }}</span>
+                <span v-if="reservation.end_date"> - <strong>End:</strong> {{ formatDate(reservation.end_date) }}</span>
               </div>
               <div class="info-item">
                 <ion-icon :icon="timeOutline" />
