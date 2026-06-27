@@ -51,43 +51,96 @@ class User extends Authenticatable
     }
 
     /**
+     * New role constants
+     */
+    const ROLE_ADMINISTRATOR = 'ADMINISTRATOR';
+    const ROLE_SBO_BSIT_WMAD = 'SBO BSIT WMAD';
+    const ROLE_SBO_BSIT_NETSEC = 'SBO BSIT NETSEC';
+    const ROLE_SBO_BSA = 'SBO BSA';
+    const ROLE_SBL_BSLEA = 'SBL BSLEA';
+    const ROLE_SSC_OFFICER = 'SSC OFFICER';
+    const ROLE_FACULTY_STAFF = 'FACULTY/STAFF';
+    const ROLE_STUDENT = 'STUDENT';
+
+    /**
+     * Available roles for select inputs
+     */
+    public static function getRoles(): array
+    {
+        return [
+            self::ROLE_ADMINISTRATOR => 'Administrator',
+            self::ROLE_SBO_BSIT_WMAD => 'SBO BSIT WMAD',
+            self::ROLE_SBO_BSIT_NETSEC => 'SBO BSIT NETSEC',
+            self::ROLE_SBO_BSA => 'SBO BSA',
+            self::ROLE_SBL_BSLEA => 'SBL BSLEA',
+            self::ROLE_SSC_OFFICER => 'SSC Officer',
+            self::ROLE_FACULTY_STAFF => 'Faculty/Staff',
+            self::ROLE_STUDENT => 'Student',
+        ];
+    }
+
+    /**
      * Check if user is administrator
      */
     public function isAdministrator(): bool
     {
-        return $this->role === 'administrator';
+        return $this->role === self::ROLE_ADMINISTRATOR;
     }
 
     /**
-     * Check if user is main proponent
+     * Check if user is SBO BSIT WMAD
      */
-    public function isMainProponent(): bool
+    public function isSboBsitWmad(): bool
     {
-        return $this->role === 'main_proponent';
+        return $this->role === self::ROLE_SBO_BSIT_WMAD;
     }
 
     /**
-     * Check if user is general user
+     * Check if user is SBO BSIT NETSEC
      */
-    public function isGeneralUser(): bool
+    public function isSboBsitNetsec(): bool
     {
-        return $this->role === 'general_user';
+        return $this->role === self::ROLE_SBO_BSIT_NETSEC;
     }
 
     /**
-     * Check if user is OSAS (Office of Student Affairs and Services)
+     * Check if user is SBO BSA
      */
-    public function isOsas(): bool
+    public function isSboBsa(): bool
     {
-        return $this->role === 'osas';
+        return $this->role === self::ROLE_SBO_BSA;
     }
 
     /**
-     * Check if user is admin or OSAS (for shared privileges)
+     * Check if user is SBL BSLEA
      */
-    public function isAdminOrOsas(): bool
+    public function isSblBslea(): bool
     {
-        return $this->isAdministrator() || $this->isOsas();
+        return $this->role === self::ROLE_SBL_BSLEA;
+    }
+
+    /**
+     * Check if user is SSC Officer
+     */
+    public function isSscOfficer(): bool
+    {
+        return $this->role === self::ROLE_SSC_OFFICER;
+    }
+
+    /**
+     * Check if user is Faculty/Staff
+     */
+    public function isFacultyStaff(): bool
+    {
+        return $this->role === self::ROLE_FACULTY_STAFF;
+    }
+
+    /**
+     * Check if user is Student
+     */
+    public function isStudent(): bool
+    {
+        return $this->role === self::ROLE_STUDENT;
     }
 
     /**

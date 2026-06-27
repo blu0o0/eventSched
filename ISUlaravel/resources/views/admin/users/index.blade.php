@@ -21,10 +21,14 @@
             <div class="col-md-3">
                 <select name="role" class="form-select">
                     <option value="">All Roles</option>
-                    <option value="administrator" {{ request('role') === 'administrator' ? 'selected' : '' }}>Administrator</option>
-                    <option value="osas" {{ request('role') === 'osas' ? 'selected' : '' }}>OSAS</option>
-                    <option value="main_proponent" {{ request('role') === 'main_proponent' ? 'selected' : '' }}>Main Proponent</option>
-                    <option value="general_user" {{ request('role') === 'general_user' ? 'selected' : '' }}>General User</option>
+                    <option value="ADMINISTRATOR" {{ request('role') === 'ADMINISTRATOR' ? 'selected' : '' }}>Administrator</option>
+                    <option value="SBO BSIT WMAD" {{ request('role') === 'SBO BSIT WMAD' ? 'selected' : '' }}>SBO BSIT WMAD</option>
+                    <option value="SBO BSIT NETSEC" {{ request('role') === 'SBO BSIT NETSEC' ? 'selected' : '' }}>SBO BSIT NETSEC</option>
+                    <option value="SBO BSA" {{ request('role') === 'SBO BSA' ? 'selected' : '' }}>SBO BSA</option>
+                    <option value="SBL BSLEA" {{ request('role') === 'SBL BSLEA' ? 'selected' : '' }}>SBL BSLEA</option>
+                    <option value="SSC OFFICER" {{ request('role') === 'SSC OFFICER' ? 'selected' : '' }}>SSC Officer</option>
+                    <option value="FACULTY/STAFF" {{ request('role') === 'FACULTY/STAFF' ? 'selected' : '' }}>Faculty/Staff</option>
+                    <option value="STUDENT" {{ request('role') === 'STUDENT' ? 'selected' : '' }}>Student</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -51,14 +55,22 @@
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                @if($user->role === 'administrator')
+                                @if($user->role === 'ADMINISTRATOR')
                                     <span class="badge bg-danger">Administrator</span>
-                                @elseif($user->role === 'osas')
-                                    <span class="badge bg-info">OSAS</span>
-                                @elseif($user->role === 'main_proponent')
-                                    <span class="badge bg-primary">Main Proponent</span>
+                                @elseif($user->role === 'SBO BSIT WMAD')
+                                    <span class="badge bg-primary">SBO BSIT WMAD</span>
+                                @elseif($user->role === 'SBO BSIT NETSEC')
+                                    <span class="badge bg-primary">SBO BSIT NETSEC</span>
+                                @elseif($user->role === 'SBO BSA')
+                                    <span class="badge bg-primary">SBO BSA</span>
+                                @elseif($user->role === 'SBL BSLEA')
+                                    <span class="badge bg-primary">SBL BSLEA</span>
+                                @elseif($user->role === 'SSC OFFICER')
+                                    <span class="badge bg-info">SSC Officer</span>
+                                @elseif($user->role === 'FACULTY/STAFF')
+                                    <span class="badge bg-secondary">Faculty/Staff</span>
                                 @else
-                                    <span class="badge bg-secondary">General User</span>
+                                    <span class="badge bg-secondary">Student</span>
                                 @endif
                             </td>
                             <td>{{ $user->created_at->format('M d, Y') }}</td>

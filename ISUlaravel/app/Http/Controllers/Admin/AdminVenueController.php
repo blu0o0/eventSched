@@ -183,12 +183,12 @@ class AdminVenueController extends Controller
     }
 
     /**
-     * Check if user is administrator or OSAS (for map view)
+     * Check if user is administrator or SSC Officer (for map view)
      */
-    protected function ensureAdminOrOsas()
+    protected function ensureAdminOrSscOfficer()
     {
         $user = auth()->user();
-        if (!$user->isAdministrator() && !$user->isOsas()) {
+        if (!$user->isAdministrator() && !$user->isSscOfficer()) {
             abort(403, 'Unauthorized access');
         }
     }
@@ -198,7 +198,7 @@ class AdminVenueController extends Controller
      */
     public function map(Request $request)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         $venues = Venue::where('location', 'Santiago Campus')->get();
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
 

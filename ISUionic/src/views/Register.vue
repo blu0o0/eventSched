@@ -135,8 +135,14 @@
                   interface="popover"
                   class="custom-select"
                 >
-                  <ion-select-option value="general_user">General User</ion-select-option>
-                  <ion-select-option value="main_proponent">Main Proponent</ion-select-option>
+                <ion-select-option value="ADMINISTRATOR">Administrator</ion-select-option>
+                  <ion-select-option value="SBO BSIT WMAD">SBO BSIT WMAD</ion-select-option>
+                  <ion-select-option value="SBO BSIT NETSEC">SBO BSIT NETSEC</ion-select-option>
+                  <ion-select-option value="SBO BSA">SBO BSA</ion-select-option>
+                  <ion-select-option value="SBL BSLEA">SBL BSLEA</ion-select-option>
+                  <ion-select-option value="SSC OFFICER">SSC Officer</ion-select-option>
+                  <ion-select-option value="FACULTY/STAFF">Faculty/Staff</ion-select-option>
+                  <ion-select-option value="STUDENT">Student</ion-select-option>
                 </ion-select>
               </div>
 
@@ -204,7 +210,7 @@ const form = ref({
   otp: '',
   password: '',
   password_confirmation: '',
-  role: 'general_user' as 'main_proponent' | 'general_user',
+  role: 'STUDENT' as 'ADMINISTRATOR' | 'SBO BSIT WMAD' | 'SBO BSIT NETSEC' | 'SBO BSA' | 'SBL BSLEA' | 'SSC OFFICER' | 'FACULTY/STAFF' | 'STUDENT',
 });
 
 const errors = ref<Record<string, string>>({});

@@ -18,31 +18,23 @@ class AdminUserSeeder extends Seeder
             'name' => 'Admin',
             'email' => 'admin@isu.edu.ph',
             'password' => Hash::make('password'),
-            'role' => 'administrator',
+            'role' => 'ADMINISTRATOR',
         ]);
 
-        // Create OSAS
+        // Create SSC Officer
         User::create([
-            'name' => 'OSAS',
-            'email' => 'osas@isu.edu.ph',
+            'name' => 'SSC Officer',
+            'email' => 'ssc@isu.edu.ph',
             'password' => Hash::make('password'),
-            'role' => 'osas',
+            'role' => 'SSC OFFICER',
         ]);
 
-        // Create Main Proponent
+        // Create Student
         User::create([
-            'name' => 'Main Proponent',
-            'email' => 'proponent@isu.edu.ph',
+            'name' => 'Student',
+            'email' => 'student@isu.edu.ph',
             'password' => Hash::make('password'),
-            'role' => 'main_proponent',
-        ]);
-
-        // Create General User
-        User::create([
-            'name' => 'General User',
-            'email' => 'user@isu.edu.ph',
-            'password' => Hash::make('password'),
-            'role' => 'general_user',
+            'role' => 'STUDENT',
         ]);
     }
 }

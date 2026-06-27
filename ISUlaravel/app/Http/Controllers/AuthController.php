@@ -16,7 +16,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
-            'role' => 'nullable|in:main_proponent,general_user',
+            'role' => 'nullable|in:ADMINISTRATOR,SBO BSIT WMAD,SBO BSIT NETSEC,SBO BSA,SBL BSLEA,SSC OFFICER,FACULTY/STAFF,STUDENT',
             'email_verified' => 'required|boolean|accepted',
         ], [
             'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
@@ -27,7 +27,7 @@ class AuthController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
-            'role' => $data['role'] ?? 'general_user',
+            'role' => $data['role'] ?? 'STUDENT',
             'email_verified' => true, // Already verified via OTP
         ]);
 

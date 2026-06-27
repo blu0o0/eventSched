@@ -25,12 +25,12 @@ class AdminReservationController extends Controller
     }
 
     /**
-     * Check if user is administrator or OSAS (for reservation approval/rejection)
+     * Check if user is administrator or SSC Officer (for reservation approval/rejection)
      */
-    protected function ensureAdminOrOsas()
+    protected function ensureAdminOrSscOfficer()
     {
         $user = auth()->user();
-        if (!$user->isAdministrator() && !$user->isOsas()) {
+        if (!$user->isAdministrator() && !$user->isSscOfficer()) {
             abort(403, 'Unauthorized access');
         }
     }
@@ -40,7 +40,7 @@ class AdminReservationController extends Controller
      */
     public function index(Request $request)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         $query = Reservation::with(['venue', 'user', 'area'])
             ->whereHas('venue', function ($q) {
                 $q->where('location', 'Santiago Campus');
@@ -92,7 +92,7 @@ class AdminReservationController extends Controller
      */
     public function show(Request $request, Reservation $reservation)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         $reservation->load(['venue', 'user', 'approver', 'area']);
 
         // Check if venue is unavailable and automatically postpone if needed
@@ -147,7 +147,7 @@ class AdminReservationController extends Controller
      */
     public function approve(Request $request, Reservation $reservation)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         try {
             $this->reservationService->approve($reservation, $request->user()->id);
 
@@ -164,7 +164,7 @@ class AdminReservationController extends Controller
      */
     public function reject(Request $request, Reservation $reservation)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         $request->validate([
             'rejection_reason' => 'nullable|string|max:500',
         ]);
@@ -254,7 +254,7 @@ class AdminReservationController extends Controller
      */
     public function bulkAction(Request $request)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
 
         $request->validate([
             'ids' => 'required|array',

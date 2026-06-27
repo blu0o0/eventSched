@@ -57,10 +57,14 @@
                 <label for="role" class="form-label">Role *</label>
                 <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
                     <option value="">Select Role</option>
-                    <option value="administrator" {{ old('role', $user->role) === 'administrator' ? 'selected' : '' }}>Administrator</option>
-                    <option value="osas" {{ old('role', $user->role) === 'osas' ? 'selected' : '' }}>OSAS</option>
-                    <option value="main_proponent" {{ old('role', $user->role) === 'main_proponent' ? 'selected' : '' }}>Main Proponent</option>
-                    <option value="general_user" {{ old('role', $user->role) === 'general_user' ? 'selected' : '' }}>General User</option>
+                    <option value="ADMINISTRATOR" {{ old('role', $user->role) === 'ADMINISTRATOR' ? 'selected' : '' }}>Administrator</option>
+                    <option value="SBO BSIT WMAD" {{ old('role', $user->role) === 'SBO BSIT WMAD' ? 'selected' : '' }}>SBO BSIT WMAD</option>
+                    <option value="SBO BSIT NETSEC" {{ old('role', $user->role) === 'SBO BSIT NETSEC' ? 'selected' : '' }}>SBO BSIT NETSEC</option>
+                    <option value="SBO BSA" {{ old('role', $user->role) === 'SBO BSA' ? 'selected' : '' }}>SBO BSA</option>
+                    <option value="SBL BSLEA" {{ old('role', $user->role) === 'SBL BSLEA' ? 'selected' : '' }}>SBL BSLEA</option>
+                    <option value="SSC OFFICER" {{ old('role', $user->role) === 'SSC OFFICER' ? 'selected' : '' }}>SSC Officer</option>
+                    <option value="FACULTY/STAFF" {{ old('role', $user->role) === 'FACULTY/STAFF' ? 'selected' : '' }}>Faculty/Staff</option>
+                    <option value="STUDENT" {{ old('role', $user->role) === 'STUDENT' ? 'selected' : '' }}>Student</option>
                 </select>
                 @error('role')
                     <div class="invalid-feedback">{{ $message }}</div>

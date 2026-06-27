@@ -64,7 +64,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => ['required', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
-            'role' => 'required|in:administrator,osas,main_proponent,general_user',
+            'role' => 'required|in:ADMINISTRATOR,SBO BSIT WMAD,SBO BSIT NETSEC,SBO BSA,SBL BSLEA,SSC OFFICER,FACULTY/STAFF,STUDENT',
         ], [
             'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
         ]);
@@ -96,7 +96,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'password' => ['nullable', 'string', 'regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/', 'confirmed'],
-            'role' => 'required|in:administrator,osas,main_proponent,general_user',
+            'role' => 'required|in:ADMINISTRATOR,SBO BSIT WMAD,SBO BSIT NETSEC,SBO BSA,SBL BSLEA,SSC OFFICER,FACULTY/STAFF,STUDENT',
         ], [
             'password.regex' => 'Password must contain: 8+ characters, at least one letter (a-z, A-Z), at least one number (0-9), and at least one symbol (@$!%*?&.,)',
         ]);

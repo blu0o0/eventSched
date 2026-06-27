@@ -19,12 +19,12 @@ class AdminCalendarController extends Controller
     }
 
     /**
-     * Check if user is administrator or OSAS (for calendar access)
+     * Check if user is administrator or SSC Officer (for calendar access)
      */
-    protected function ensureAdminOrOsas()
+    protected function ensureAdminOrSscOfficer()
     {
         $user = auth()->user();
-        if (!$user->isAdministrator() && !$user->isOsas()) {
+        if (!$user->isAdministrator() && !$user->isSscOfficer()) {
             abort(403, 'Unauthorized access');
         }
     }
@@ -34,7 +34,7 @@ class AdminCalendarController extends Controller
      */
     public function index()
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         return view('admin.calendar.index');
     }
 
@@ -43,7 +43,7 @@ class AdminCalendarController extends Controller
      */
     public function events(Request $request)
     {
-        $this->ensureAdminOrOsas();
+        $this->ensureAdminOrSscOfficer();
         $query = Reservation::with(['venue', 'user'])
             ->whereHas('venue', function ($q) {
                 $q->where('location', 'Santiago Campus');

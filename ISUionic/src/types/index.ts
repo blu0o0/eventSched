@@ -4,7 +4,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  role: 'administrator' | 'osas' | 'main_proponent' | 'general_user';
+  role: 'ADMINISTRATOR' | 'SBO BSIT WMAD' | 'SBO BSIT NETSEC' | 'SBO BSA' | 'SBL BSLEA' | 'SSC OFFICER' | 'FACULTY/STAFF' | 'STUDENT';
   created_at?: string;
   updated_at?: string;
 }
@@ -110,7 +110,7 @@ export interface RegisterData {
   email: string;
   password: string;
   password_confirmation: string;
-  role?: 'main_proponent' | 'general_user';
+  role?: 'ADMINISTRATOR' | 'SBO BSIT WMAD' | 'SBO BSIT NETSEC' | 'SBO BSA' | 'SBL BSLEA' | 'SSC OFFICER' | 'FACULTY/STAFF' | 'STUDENT';
 }
 
 export interface OtpSendResponse {

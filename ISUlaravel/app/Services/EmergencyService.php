@@ -45,7 +45,7 @@ class EmergencyService
      */
     protected function notifyAdministrators(EmergencyReport $report): void
     {
-        $administrators = User::where('role', 'administrator')->get();
+        $administrators = User::where('role', User::ROLE_ADMINISTRATOR)->get();
 
         foreach ($administrators as $admin) {
             // Send database notification

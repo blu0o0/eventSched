@@ -24,7 +24,7 @@ export function useAuth() {
     email: string;
     password: string;
     password_confirmation: string;
-    role?: 'main_proponent' | 'general_user';
+    role?: 'ADMINISTRATOR' | 'SBO BSIT WMAD' | 'SBO BSIT NETSEC' | 'SBO BSA' | 'SBL BSLEA' | 'SSC OFFICER' | 'FACULTY/STAFF' | 'STUDENT';
     email_verified: boolean;
   }) => {
     try {
