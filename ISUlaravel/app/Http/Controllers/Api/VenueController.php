@@ -43,8 +43,8 @@ class VenueController extends Controller
     {
         $date = $request->query('date', now()->format('Y-m-d'));
         
-        // Get all Santiago Campus venues
-        $venues = Venue::where('location', 'Santiago Campus')->get();
+        // Get all venues with areas
+        $venues = Venue::with('areas')->get();
         
         // Get reservations for the selected date
         $reservations = Reservation::where('date', $date)
@@ -88,10 +88,59 @@ class VenueController extends Controller
             ];
         }
         
+        // Get all areas with coordinates
+        $areas = \App\Models\Area::whereNotNull('map_coordinates')
+            ->where('map_coordinates', '!=', '')
+            ->with('venue')
+            ->get()
+            ->map(function ($area) {
+                return [
+                    'id' => $area->id,
+                    'name' => $area->name,
+                    'status' => $area->status,
+                    'map_coordinates' => $area->map_coordinates,
+                    'photo_url' => $area->photo_url,
+                    'venue' => $area->venue ? [
+                        'id' => $area->venue->id,
+                        'name' => $area->venue->name,
+                    ] : null,
+                ];
+            })->values()->toArray();
+        
+        // Get all reservations for the selected date with relationships
+        $reservationsData = Reservation::where('date', $date)
+            ->whereIn('status', ['approved', 'pending'])
+            ->with(['user', 'venue', 'area'])
+            ->get()
+            ->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'title' => $reservation->title,
+                    'date' => $reservation->date,
+                    'start_time' => $reservation->start_time,
+                    'end_time' => $reservation->end_time,
+                    'status' => $reservation->status,
+                    'user' => $reservation->user ? [
+                        'name' => $reservation->user->name,
+                    ] : null,
+                    'venue' => $reservation->venue ? [
+                        'id' => $reservation->venue->id,
+                        'name' => $reservation->venue->name,
+                    ] : null,
+                    'area' => $reservation->area ? [
+                        'id' => $reservation->area->id,
+                        'name' => $reservation->area->name,
+                        'map_coordinates' => $reservation->area->map_coordinates,
+                    ] : null,
+                ];
+            })->values()->toArray();
+        
         return response()->json([
             'venues' => VenueResource::collection($venues),
             'venue_availability' => $venueAvailability,
             'selected_date' => $date,
+            'areas' => $areas,
+            'reservations' => $reservationsData,
         ]);
     }
 }

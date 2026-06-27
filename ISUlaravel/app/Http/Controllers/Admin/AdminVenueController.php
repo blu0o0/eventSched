@@ -249,7 +249,7 @@ class AdminVenueController extends Controller
     public function map(Request $request)
     {
         $this->ensureAdminOrSscOfficer();
-        $venues = Venue::where('location', 'Santiago Campus')->get();
+        $venues = Venue::with('areas')->get();
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
 
         // Get venue availability for selected date
@@ -294,6 +294,18 @@ class AdminVenueController extends Controller
 
         $selectedVenueId = $request->get('venue_id', null);
         
-        return view('admin.venues.map', compact('venues', 'selectedDate', 'venueAvailability', 'selectedVenueId'));
+        // Get all areas with coordinates
+        $areas = \App\Models\Area::whereNotNull('map_coordinates')
+            ->where('map_coordinates', '!=', '')
+            ->with('venue')
+            ->get();
+        
+        // Get all reservations for the selected date
+        $reservations = \App\Models\Reservation::where('date', $selectedDate)
+            ->whereIn('status', ['approved', 'pending'])
+            ->with(['user', 'venue', 'area'])
+            ->get();
+        
+        return view('admin.venues.map', compact('venues', 'selectedDate', 'venueAvailability', 'selectedVenueId', 'areas', 'reservations'));
     }
 }

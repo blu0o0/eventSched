@@ -160,7 +160,77 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
     bounds.extend(latLng);
   });
 
-    // Process each venue
+  // Draw areas on map
+  if (venues.length > 0 && (venues[0] as any).areas) {
+    venues.forEach((venue) => {
+      const venueWithAreas = venue as any;
+      if (!venueWithAreas.areas) return;
+      
+      venueWithAreas.areas.forEach((area: any) => {
+        if (!area.map_coordinates) return;
+        
+        const coords = area.map_coordinates.split(',');
+        if (coords.length !== 2) return;
+        
+        const position = {
+          lat: parseFloat(coords[0].trim()),
+          lng: parseFloat(coords[1].trim())
+        };
+        
+        if (isNaN(position.lat) || isNaN(position.lng)) return;
+        
+        bounds.extend(position);
+        
+        // Create area marker (square shape)
+        const areaMarkerIcon = {
+          path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+          scale: 8,
+          fillColor: '#9c27b0',
+          fillOpacity: 0.9,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+          rotation: 45,
+          anchor: new window.google.maps.Point(0, 0)
+        };
+        
+        const areaMarker = new window.google.maps.Marker({
+          position: position,
+          map: map.value,
+          icon: areaMarkerIcon,
+          title: area.name + ' (' + (area.venue ? area.venue.name : 'No Venue') + ')',
+          zIndex: 1000
+        });
+        
+        // Area popup content
+        let areaPopupContent = `
+          <div class="map-popup">
+            <h6 class="popup-title">${area.name}</h6>
+            <p class="popup-info"><strong>Venue:</strong> ${area.venue ? area.venue.name : 'No venue assigned'}</p>
+            <p class="popup-info"><strong>Status:</strong> ${area.status.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</p>
+        `;
+        
+        if (area.photo_url) {
+          areaPopupContent += `
+            <div class="popup-photo">
+              <img src="${area.photo_url}" alt="${area.name}" class="popup-image" />
+            </div>
+          `;
+        }
+        
+        areaPopupContent += `</div>`;
+        
+        const areaInfoWindow = new window.google.maps.InfoWindow({
+          content: areaPopupContent
+        });
+        
+        areaMarker.addListener('click', function() {
+          areaInfoWindow.open(map.value, areaMarker);
+        });
+      });
+    });
+  }
+  
+  // Process each venue
     venues.forEach((venue) => {
       const availability = venueAvailability[venue.id];
       const isAvailable = availability.is_available;

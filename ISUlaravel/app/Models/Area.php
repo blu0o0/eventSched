@@ -15,6 +15,7 @@ class Area extends Model
         'venue_id',
         'photo',
         'status',
+        'map_coordinates',
     ];
 
     protected $attributes = [

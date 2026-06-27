@@ -131,6 +131,124 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     venues = @json($venues);
+    areas = @json($areas);
+    reservations = @json($reservations);
+    
+    // Draw areas on map
+    areas.forEach(function(area) {
+        if (!area.map_coordinates) return;
+        
+        var coords = area.map_coordinates.split(',');
+        if (coords.length !== 2) return;
+        
+        var position = {
+            lat: parseFloat(coords[0].trim()),
+            lng: parseFloat(coords[1].trim())
+        };
+        
+        if (isNaN(position.lat) || isNaN(position.lng)) return;
+        
+        bounds.extend(position);
+        
+        // Create area marker (square shape)
+        var areaMarkerIcon = {
+            path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+            scale: 8,
+            fillColor: '#9c27b0',
+            fillOpacity: 0.9,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+            rotation: 45,
+            anchor: new google.maps.Point(0, 0)
+        };
+        
+        var areaMarker = new google.maps.Marker({
+            position: position,
+            map: map,
+            icon: areaMarkerIcon,
+            title: area.name + ' (' + (area.venue ? area.venue.name : 'No Venue') + ')',
+            zIndex: 1000
+        });
+        
+        // Area popup content
+        var areaPopupContent = '<div class="map-popup">' +
+            '<h6 class="popup-title">' + area.name + '</h6>' +
+            '<p class="popup-info"><strong>Venue:</strong> ' + (area.venue ? area.venue.name : 'No venue assigned') + '</p>' +
+            '<p class="popup-info"><strong>Status:</strong> ' + area.status.replace('_', ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); }) + '</p>';
+            
+        if (area.photo_url) {
+            areaPopupContent += '<div class="popup-photo">' +
+                '<img src="' + area.photo_url + '" alt="' + area.name + '" class="popup-image" />' +
+                '</div>';
+        }
+        
+        areaPopupContent += '</div>';
+        
+        var areaInfoWindow = new google.maps.InfoWindow({
+            content: areaPopupContent
+        });
+        
+        areaMarker.addListener('click', function() {
+            areaInfoWindow.open(map, areaMarker);
+        });
+    });
+    
+    // Draw reservation markers on map
+    reservations.forEach(function(reservation) {
+        if (!reservation.area || !reservation.area.map_coordinates) return;
+        
+        var coords = reservation.area.map_coordinates.split(',');
+        if (coords.length !== 2) return;
+        
+        var position = {
+            lat: parseFloat(coords[0].trim()),
+            lng: parseFloat(coords[1].trim())
+        };
+        
+        if (isNaN(position.lat) || isNaN(position.lng)) return;
+        
+        bounds.extend(position);
+        
+        // Create reservation marker (diamond shape)
+        var resMarkerIcon = {
+            path: google.maps.SymbolPath.DIAMOND,
+            scale: 10,
+            fillColor: '#ff9800',
+            fillOpacity: 0.9,
+            strokeColor: '#ffffff',
+            strokeWeight: 2,
+            anchor: new google.maps.Point(0, 0)
+        };
+        
+        var resMarker = new google.maps.Marker({
+            position: position,
+            map: map,
+            icon: resMarkerIcon,
+            title: reservation.title,
+            zIndex: 2000
+        });
+        
+        // Reservation popup content
+        var resPopupContent = '<div class="map-popup">' +
+            '<h6 class="popup-title">' + reservation.title + '</h6>' +
+            '<p class="popup-info"><strong>Area:</strong> ' + (reservation.area ? reservation.area.name : 'N/A') + '</p>' +
+            '<p class="popup-info"><strong>Venue:</strong> ' + (reservation.venue ? reservation.venue.name : 'N/A') + '</p>' +
+            '<p class="popup-info"><strong>Date:</strong> ' + reservation.date + '</p>' +
+            '<p class="popup-info"><strong>Time:</strong> ' + reservation.start_time + ' - ' + reservation.end_time + '</p>' +
+            '<p class="popup-info"><strong>Status:</strong> <span class="badge bg-' + 
+            (reservation.status === 'approved' ? 'success' : 'warning') + '">' + 
+            reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1) + '</span></p>' +
+            '<p class="popup-info"><strong>User:</strong> ' + (reservation.user ? reservation.user.name : 'N/A') + '</p>' +
+            '</div>';
+        
+        var resInfoWindow = new google.maps.InfoWindow({
+            content: resPopupContent
+        });
+        
+        resMarker.addListener('click', function() {
+            resInfoWindow.open(map, resMarker);
+        });
+    });
     
     venues.forEach(function(venue) {
         var availability = venueAvailability[venue.id];
