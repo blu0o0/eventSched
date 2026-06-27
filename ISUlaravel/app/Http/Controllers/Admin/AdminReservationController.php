@@ -250,6 +250,56 @@ class AdminReservationController extends Controller
     }
 
     /**
+     * Bulk action on multiple reservations
+     */
+    public function bulkAction(Request $request)
+    {
+        $this->ensureAdminOrOsas();
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:reservations,id',
+            'action' => 'required|in:reject,delete,reject_delete',
+        ]);
+
+        $ids = $request->ids;
+        $action = $request->action;
+        $count = count($ids);
+
+        if ($action === 'reject' || $action === 'reject_delete') {
+            // Reject all selected pending/postponed reservations
+            $rejectedCount = Reservation::whereIn('id', $ids)
+                ->whereIn('status', ['pending', 'postponed'])
+                ->update([
+                    'status' => 'rejected',
+                    'rejection_reason' => 'Bulk rejected by administrator',
+                    'approved_by' => $request->user()->id,
+                ]);
+
+            if ($action === 'reject_delete') {
+                // Delete all rejected reservations (including those just rejected and already rejected ones)
+                Reservation::whereIn('id', $ids)
+                    ->where('status', 'rejected')
+                    ->delete();
+            }
+        }
+
+        if ($action === 'delete') {
+            // Delete all selected reservations regardless of status
+            Reservation::whereIn('id', $ids)->delete();
+        }
+
+        $message = "Bulk action '{$action}' completed on {$count} reservation(s).";
+        
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return redirect()->route('admin.reservations.index')
+            ->with('success', $message);
+    }
+
+    /**
       * Check and postpone a reservation if venue is unavailable
       */
     protected function checkAndPostponeReservation(Reservation $reservation): void

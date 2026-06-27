@@ -62,6 +62,9 @@
                 </form>
             @endif
         </td>
+        <td class="reservation-checkbox-col" style="display: none;">
+            <input type="checkbox" class="reservation-checkbox" value="{{ $reservation->id }}" data-status="{{ $reservation->status }}" style="display: none;">
+        </td>
     </tr>
 
     <!-- Reject Modal -->
@@ -90,6 +93,6 @@
     </div>
 @empty
     <tr>
-        <td colspan="7" class="text-center">No reservations found</td>
+        <td colspan="9" class="text-center">No reservations found</td>
     </tr>
 @endforelse
