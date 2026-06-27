@@ -103,6 +103,7 @@
               v-model="form.date"
               class="native-datetime-input"
               :min="minDateStr"
+              @change="validateDate()"
             />
             <div v-if="errors.date" style="color: var(--ion-color-danger); font-size: 0.85rem; margin-top: 0.5rem;">
               {{ errors.date }}
@@ -122,6 +123,7 @@
               v-model="form.end_date"
               class="native-datetime-input"
               :min="getEndDateMin()"
+              @change="validateEndDate()"
             />
             <div v-if="errors.end_date" style="color: var(--ion-color-danger); font-size: 0.85rem; margin-top: 0.5rem;">
               {{ errors.end_date }}
@@ -386,6 +388,18 @@ function clearError(field: string) {
   }
 }
 
+function validateDate() {
+  if (form.value.date) {
+    if (!validators.dateNotPast(form.value.date)) {
+      errors.value.date = 'Date cannot be in the past';
+    } else if (!validators.dateNotTooSoon(form.value.date)) {
+      errors.value.date = 'Date must be at least 7 days in advance';
+    } else {
+      clearError('date');
+    }
+  }
+}
+
 function validateEndDate() {
   if (form.value.end_date && form.value.date) {
     if (form.value.end_date <= form.value.date) {
@@ -415,6 +429,30 @@ watch(() => form.value.date, (newDate) => {
     errors.value.date = 'Date cannot be in the past';
   } else {
     clearError('date');
+  }
+  
+  // Also validate end_date if it exists
+  if (newDate && form.value.end_date) {
+    if (form.value.end_date <= newDate) {
+      errors.value.end_date = 'the end date must be 1 day more than the selected start date';
+    } else {
+      clearError('end_date');
+    }
+  }
+});
+
+// Watch for end_date changes and validate in real-time
+watch(() => form.value.end_date, (newEndDate) => {
+  if (newEndDate) {
+    if (form.value.date) {
+      if (newEndDate <= form.value.date) {
+        errors.value.end_date = 'the end date must be 1 day more than the selected start date';
+      } else {
+        clearError('end_date');
+      }
+    }
+  } else {
+    clearError('end_date');
   }
 });
 
