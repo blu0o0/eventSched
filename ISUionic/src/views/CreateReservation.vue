@@ -98,14 +98,19 @@
               <ion-icon :icon="calendarOutline" style="margin-right: 4px;"></ion-icon>
               Event Date <span class="required">*</span>
             </ion-label>
+            <ion-note v-if="errors.date" color="danger" style="margin-bottom: 0.5rem; display: block;">
+              {{ errors.date }}
+            </ion-note>
             <input
               type="date"
               v-model="form.date"
               class="native-datetime-input"
               @input="clearError('date')"
-              :min="minDate"
+              :min="minDateStr"
             />
-            <ion-note slot="error" v-if="errors.date">{{ errors.date }}</ion-note>
+            <ion-note slot="helper" color="medium">
+              Reservations must be made at least 7 days in advance
+            </ion-note>
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.start_time }">
@@ -340,12 +345,14 @@ const hasApprovedConflicts = computed(() => {
   return conflicts.value.some(conflict => conflict.status === 'approved');
 });
 
-const minDate = new Date().toISOString().split('T')[0];
+const minDate = new Date();
+minDate.setDate(minDate.getDate() + 7);
+const minDateStr = minDate.toISOString().split('T')[0];
 
 const isFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
-  const hasDate = validators.required(form.value.date) && validators.dateNotPast(form.value.date);
+  const hasDate = validators.required(form.value.date) && validators.dateNotPast(form.value.date) && validators.dateNotTooSoon(form.value.date);
   const hasStartTime = validators.required(form.value.start_time);
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
@@ -563,6 +570,8 @@ function validateForm(): boolean {
     errors.value.date = 'Date is required';
   } else if (!validators.dateNotPast(form.value.date)) {
     errors.value.date = 'Date cannot be in the past';
+  } else if (!validators.dateNotTooSoon(form.value.date)) {
+    errors.value.date = 'Date must be at least 7 days in advance';
   }
 
   if (!validators.required(form.value.start_time)) {

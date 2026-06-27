@@ -63,6 +63,14 @@ export const validators = {
     return selectedDate >= today;
   },
 
+  dateNotTooSoon: (date: string): boolean => {
+    const selectedDate = new Date(date);
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + 7);
+    minDate.setHours(0, 0, 0, 0);
+    return selectedDate >= minDate;
+  },
+
   positiveNumber: (value: number): boolean => {
     return value > 0;
   },
@@ -88,7 +96,7 @@ export interface ValidationRule {
 
 export function validateField(value: any, rules: ValidationRule[]): string | null {
   for (const rule of rules) {
-    const args = rule.args ? [value, ...rule.args] : [value];
+    const args = rule.args ? [value, ...rule.args] as [any, ...any[]] : [value] as [any];
     if (!rule.validator.apply(null, args)) {
       return rule.message;
     }
