@@ -8,12 +8,6 @@
 @endpush
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <h1><i class="bi bi-calendar3"></i> Calendar View</h1>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-body">
         <div id="calendar"></div>

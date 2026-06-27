@@ -3,15 +3,6 @@
 @section('title', 'Users')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center">
-        <h1><i class="bi bi-people"></i> Users</h1>
-        <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Add User
-        </a>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-header">
         <form method="GET" class="row g-3">

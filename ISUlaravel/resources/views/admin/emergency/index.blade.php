@@ -4,17 +4,6 @@
 @section('title', 'Emergency Reports')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <h1 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Emergency Reports</h1>
-            <a href="{{ route('admin.emergency.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> New Emergency
-            </a>
-        </div>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-header">
         <form method="GET" class="row g-3">
