@@ -54,26 +54,16 @@
           <ion-label>Emergency</ion-label>
         </ion-item>
 
-        <div class="nav-section">Account</div>
-        <ion-item 
-          button 
-          class="nav-item"
-          :class="{ 'nav-active': $route.name === 'Profile' }"
-          @click="navigateTo('/profile')"
-        >
-          <ion-icon :icon="personCircleOutline" slot="start" />
-          <ion-label>Profile</ion-label>
-        </ion-item>
       </nav>
 
       <div class="sidebar-footer" v-if="authStore.isAuthenticated">
-        <div class="user-info">
+        <ion-item button class="user-info-item" @click="navigateTo('/profile')">
           <div class="user-avatar">{{ (authStore.user?.name || 'U')[0] }}</div>
           <div class="user-details">
             <p class="user-name">{{ authStore.user?.name || 'User' }}</p>
             <p class="user-role">{{ authStore.user?.role || 'User' }}</p>
           </div>
-        </div>
+        </ion-item>
         <ion-item button class="logout-item" @click="handleLogout">
           <ion-icon :icon="logOutOutline" slot="start" />
           <ion-label>Logout</ion-label>
@@ -236,15 +226,26 @@ async function handleLogin() {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.user-info-item {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --background: rgba(255, 255, 255, 0.05);
+  --border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info-item:hover {
+  --background: rgba(255, 255, 255, 0.1);
+}
+
 .user-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 16px;
+  width: 100%;
+  padding-left: 8px;
 }
 
 .user-avatar {
@@ -268,8 +269,10 @@ async function handleLogin() {
 }
 
 .user-name {
+  padding-left: 20px;
   color: #ffffff;
-  font-size: 14px;
+  text-transform: uppercase;
+  font-size: 15px;
   font-weight: 600;
   margin: 0;
   white-space: nowrap;
@@ -279,11 +282,12 @@ async function handleLogin() {
 }
 
 .user-role {
+  padding-left: 20px;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
+  font-size: 10px;
   margin: 4px 0 0 0;
   font-weight: 500;
-  text-transform: capitalize;
+  text-transform: lowercase;
 }
 
 .logout-item {
