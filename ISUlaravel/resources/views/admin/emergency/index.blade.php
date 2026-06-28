@@ -7,18 +7,14 @@
 <div class="card">
     <div class="card-header">
         <form method="GET" class="row g-3">
-            <div class="col-md-4">
-                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}">
-            </div>
-            <div class="col-md-3">
-                <select name="status" class="form-select">
+            <div class="col-md-6">
+                <select name="status" class="form-select" id="status-filter">
                     <option value="">All Status</option>
                     <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
                     <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Filter</button>
                 <a href="{{ route('admin.emergency.index') }}" class="btn btn-secondary">Reset</a>
             </div>
         </form>
@@ -86,3 +82,17 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('status-filter').addEventListener('change', function() {
+        // Only submit if a specific status is selected, not "All Status"
+        if (this.value !== '') {
+            this.form.submit();
+        } else {
+            // If "All Status" is selected, redirect to base URL (like reset button)
+            window.location.href = '{{ route('admin.emergency.index') }}';
+        }
+    });
+</script>
+@endpush
