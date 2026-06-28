@@ -6,10 +6,7 @@
 <div class="card">
     <div class="card-header">
         <form method="GET" class="row g-3">
-            <div class="col-md-4">
-                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}">
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-6">
                 <select name="role" class="form-select">
                     <option value="">All Roles</option>
                     <option value="ADMINISTRATOR" {{ request('role') === 'ADMINISTRATOR' ? 'selected' : '' }}>Administrator</option>
