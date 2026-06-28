@@ -59,10 +59,35 @@ class VenueController extends Controller
             ->groupBy('venue_id')
             ->pluck('total_count', 'venue_id');
         
+        // Get all reservations per venue (all time, all statuses) with relationships
+        $allReservationsByVenue = Reservation::with(['user', 'area'])
+            ->get()
+            ->groupBy('venue_id')
+            ->map(function ($reservations) {
+                return $reservations->map(function ($reservation) {
+                    return [
+                        'id' => $reservation->id,
+                        'title' => $reservation->title,
+                        'status' => $reservation->status,
+                        'date' => $reservation->date,
+                        'start_time' => $reservation->start_time,
+                        'end_time' => $reservation->end_time,
+                        'user' => $reservation->user ? [
+                            'name' => $reservation->user->name,
+                        ] : null,
+                        'area' => $reservation->area ? [
+                            'id' => $reservation->area->id,
+                            'name' => $reservation->area->name,
+                        ] : null,
+                    ];
+                })->values()->toArray();
+            });
+        
         foreach ($venues as $venue) {
             $venueReservations = $reservations->get($venue->id, collect());
             $reservationCount = $venueReservations->count();
             $totalCount = $totalReservations->get($venue->id, 0);
+            $allVenueReservations = $allReservationsByVenue->get($venue->id, []);
             
             // A venue is only available if:
             // 1. Its status is 'available' (not damaged or under_construction)
@@ -92,6 +117,7 @@ class VenueController extends Controller
                         'end_time' => $reservation->end_time,
                     ];
                 })->values()->toArray(),
+                'all_reservations' => $allVenueReservations,
             ];
         }
         

@@ -296,6 +296,42 @@ document.addEventListener('DOMContentLoaded', function() {
         
         popupContent += '<p class="popup-info"><strong>Location:</strong> ' + venue.location + '</p>';
 
+        // Add reservations table if there are reservations
+        var allReservations = availability.all_reservations || [];
+        if (allReservations.length > 0) {
+            popupContent += '<div class="reservations-table-container">' +
+                '<table class="reservations-table">' +
+                '<thead>' +
+                '<tr>' +
+                '<th>Name</th>' +
+                '<th>Status</th>' +
+                '<th>Date</th>' +
+                '<th>Area</th>' +
+                '</tr>' +
+                '</thead>' +
+                '<tbody>';
+            
+            allReservations.forEach(function(reservation) {
+                var statusClass = reservation.status === 'approved' ? 'status-approved' : 
+                                 reservation.status === 'pending' ? 'status-pending' : 'status-rejected';
+                // Format date to "Jun 3" format
+                var dateObj = new Date(reservation.date);
+                var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                var formattedDate = months[dateObj.getMonth()] + ' ' + dateObj.getDate();
+                
+                popupContent += '<tr>' +
+                    '<td>' + reservation.title + '</td>' +
+                    '<td><span class="status-badge ' + statusClass + '">' + reservation.status + '</span></td>' +
+                    '<td>' + formattedDate + '</td>' +
+                    '<td>' + (reservation.area ? reservation.area.name : 'N/A') + '</td>' +
+                    '</tr>';
+            });
+            
+            popupContent += '</tbody>' +
+                '</table>' +
+                '</div>';
+        }
+
         if (venue.description) {
             popupContent += '<p class="popup-description">' + 
                 (venue.description.length > 100 ? venue.description.substring(0, 100) + '...' : venue.description) + 
@@ -324,9 +360,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (isAdministrator) {
-        popupContent += '<div class="popup-reservations">' +
-            '<a href="/admin/venues/' + venue.id + '" class="btn btn-sm btn-primary" target="_blank" style="text-decoration: none; display: inline-block; padding: 5px 10px;">View Details</a>' +
-            '</div></div>';
+            popupContent += '<div class="popup-reservations">' +
+                '<a href="/admin/venues/' + venue.id + '" class="btn btn-sm btn-primary" target="_blank" style="text-decoration: none; display: inline-block; padding: 5px 10px;">View Details</a>' +
+                '</div></div>';
         } else {
             popupContent += '</div>';
         }
@@ -542,6 +578,68 @@ function selectVenue(venueId) {
 .badge.bg-danger {
     background-color: #ef4444;
     color: white;
+}
+
+/* Reservations Table Styles */
+.reservations-table-container {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.reservations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.reservations-table thead {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+}
+
+.reservations-table th {
+    padding: 8px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.reservations-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.reservations-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+    text-transform: capitalize;
+}
+
+.status-approved {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 
 @media (max-width: 768px) {

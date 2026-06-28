@@ -66,6 +66,16 @@ import { Venue, Reservation } from '../types';
 import { API_BASE_URL, GOOGLE_MAPS_API_KEY } from '../config/env';
 import { formatTime } from '../utils/validators';
 
+// Helper function to format date to "Jun 3" format
+function formatDateShort(dateString: string): string {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[date.getMonth()];
+  const day = date.getDate();
+  return `${month} ${day}`;
+}
+
 // Declare Google Maps types
 declare global {
   interface Window {
@@ -310,6 +320,43 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
     popupContent += `
         <p class="popup-info"><strong>Location:</strong> ${venue.location}</p>
     `;
+
+    // Add reservations table if there are reservations
+    const allReservations = availability.all_reservations || [];
+    if (allReservations.length > 0) {
+      popupContent += `
+        <div class="reservations-table-container">
+          <table class="reservations-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Area</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      allReservations.forEach((reservation: any) => {
+        const statusClass = reservation.status === 'approved' ? 'status-approved' : 
+                           reservation.status === 'pending' ? 'status-pending' : 'status-rejected';
+        popupContent += `
+          <tr>
+            <td>${reservation.title}</td>
+            <td><span class="status-badge ${statusClass}">${reservation.status}</span></td>
+            <td>${formatDateShort(reservation.date)}</td>
+            <td>${reservation.area?.name || 'N/A'}</td>
+          </tr>
+        `;
+      });
+      
+      popupContent += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
 
     if (venue.description) {
       const truncatedDesc = venue.description.length > 100 
@@ -728,5 +775,67 @@ ion-label {
   .legend-card {
     margin: 0 -0.5rem;
   }
+}
+
+/* Reservations Table Styles */
+:deep(.reservations-table-container) {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+:deep(.reservations-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+:deep(.reservations-table thead) {
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+}
+
+:deep(.reservations-table th) {
+  padding: 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+:deep(.reservations-table td) {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+:deep(.reservations-table tbody tr:hover) {
+  background-color: #f8f9fa;
+}
+
+:deep(.status-badge) {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+:deep(.status-approved) {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+:deep(.status-pending) {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+:deep(.status-rejected) {
+  background-color: #f8d7da;
+  color: #721c24;
 }
 </style>
