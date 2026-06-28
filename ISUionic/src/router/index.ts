@@ -142,15 +142,6 @@ router.beforeEach(async (to, from, next) => {
     return;
   }
   
-  // Check if this is a page refresh (from.name is null or from.path === to.path)
-  const isRefresh = !from.name || from.path === to.path;
-  
-  // If authenticated and it's a refresh, always redirect to dashboard
-  if (isRefresh && authStore.isAuthenticated && to.path !== '/home') {
-    next('/home');
-    return;
-  }
-  
   // Check if route requires authentication
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
   

@@ -82,6 +82,14 @@ const venues = ref<Venue[]>([]);
 const venueAvailability = ref<Record<number, any>>({});
 const selectedVenueId = ref<number | null>(null);
 
+// Load last selected venue from localStorage
+onMounted(() => {
+  const savedVenueId = localStorage.getItem('lastSelectedVenueId');
+  if (savedVenueId) {
+    selectedVenueId.value = parseInt(savedVenueId);
+  }
+});
+
 // Campus boundary coordinates (Santiago Campus)
 const campusBoundary = [
   { lat: 16.72287, lng: 121.53544 },
@@ -118,6 +126,17 @@ async function loadMapData() {
       venues.value = data.venues;
       venueAvailability.value = data.venue_availability;
       initializeMap(data.venues, data.venue_availability, data.selected_date);
+      
+      // Auto-select the last saved venue after map initializes
+      if (selectedVenueId.value) {
+        const savedVenue = venues.value.find(v => v.id === selectedVenueId.value);
+        if (savedVenue) {
+          // Wait for map to finish initializing
+          setTimeout(() => {
+            onVenueSelect(savedVenue);
+          }, 500);
+        }
+      }
     }
   } catch (error) {
     console.error('Error loading map data:', error);
@@ -397,6 +416,9 @@ onUnmounted(() => {
 
 function onVenueSelect(venue: Venue): void {
   selectedVenueId.value = venue.id;
+  
+  // Save selected venue to localStorage
+  localStorage.setItem('lastSelectedVenueId', venue.id.toString());
   
   // Parse coordinates and center map on selected venue
   if (venue.map_coordinates) {
