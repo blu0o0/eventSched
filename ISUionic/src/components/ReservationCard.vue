@@ -11,21 +11,13 @@
         </div>
       </div>
       <ion-card-subtitle>
-        <ion-icon :icon="locationOutline" />
-        {{ reservation.venue.name }}
-        <span v-if="reservation.area || reservation.area_name">
-          <span v-if="reservation.area"> - {{ reservation.area.name }}</span>
-          <span v-else> - {{ reservation.area_name }}</span>
-        </span>
+        <ion-icon :icon="calendarOutline" />
+        {{ formatDate(reservation.date) }}
+        <span v-if="reservation.end_date"> - {{ formatDate(reservation.end_date) }}</span>
       </ion-card-subtitle>
     </ion-card-header>
     <ion-card-content>
       <div class="reservation-info">
-        <div class="info-item">
-          <ion-icon :icon="calendarOutline" />
-          <span>{{ formatDate(reservation.date) }}</span>
-          <span v-if="reservation.end_date"> - {{ formatDate(reservation.end_date) }}</span>
-        </div>
         <div class="info-item">
           <ion-icon :icon="timeOutline" />
           <span>{{ formatTime(reservation.start_time) }} - {{ formatTime(reservation.end_time) }}</span>
@@ -44,7 +36,7 @@
 
 <script setup lang="ts">
 import { IonCard, IonCardHeader, IonCardTitle, IonCardSubtitle, IonCardContent, IonIcon } from '@ionic/vue';
-import { calendarOutline, timeOutline, peopleOutline, locationOutline, pencilOutline, gridOutline } from 'ionicons/icons';
+import { calendarOutline, timeOutline, peopleOutline, pencilOutline } from 'ionicons/icons';
 import { Reservation } from '../types';
 import StatusBadge from './StatusBadge.vue';
 import { formatTime } from '../utils/validators';

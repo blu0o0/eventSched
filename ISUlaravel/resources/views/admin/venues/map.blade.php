@@ -87,6 +87,7 @@
 <script>
 var map = null;
 var markers = [];
+var infoWindows = [];
 var venues = [];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -389,11 +390,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         marker.addListener('click', function() {
+            // Close all other info windows
+            infoWindows.forEach(iw => iw.close());
+            // Open this info window
             infoWindow.open(map, marker);
         });
 
         markers.push(marker);
+        infoWindows.push(infoWindow);
         bounds.extend(coordinates);
+    });
+    
+    // Add click listener to map to close info windows
+    map.addListener('click', function() {
+        infoWindows.forEach(iw => iw.close());
     });
 
     map.fitBounds(bounds);

@@ -262,7 +262,32 @@ class AdminVenueController extends Controller
             ->groupBy('venue_id')
             ->pluck('total_count', 'venue_id');
         
+        // Get all reservations per venue (all time, all statuses) with relationships
+        $allReservationsByVenue = \App\Models\Reservation::with(['user', 'area'])
+            ->get()
+            ->groupBy('venue_id')
+            ->map(function ($reservations) {
+                return $reservations->map(function ($reservation) {
+                    return [
+                        'id' => $reservation->id,
+                        'title' => $reservation->title,
+                        'status' => $reservation->status,
+                        'date' => $reservation->date,
+                        'start_time' => $reservation->start_time,
+                        'end_time' => $reservation->end_time,
+                        'user' => $reservation->user ? [
+                            'name' => $reservation->user->name,
+                        ] : null,
+                        'area' => $reservation->area ? [
+                            'id' => $reservation->area->id,
+                            'name' => $reservation->area->name,
+                        ] : null,
+                    ];
+                })->values()->toArray();
+            });
+        
         foreach ($venues as $venue) {
+            $allVenueReservations = $allReservationsByVenue->get($venue->id, []);
             // Get approved and pending reservations for the selected date (matching API logic)
             $reservations = $venue->reservations()
                 ->where('date', $selectedDate)
@@ -298,6 +323,7 @@ class AdminVenueController extends Controller
                 'reservations' => $reservations,
                 'reservation_count' => $reservations->count(),
                 'total_reservations' => $totalCount,
+                'all_reservations' => $allVenueReservations,
             ];
         }
 

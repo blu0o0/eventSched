@@ -29,17 +29,6 @@
             <div class="detail-section">
               <h3>Venue Information</h3>
               <div class="info-item">
-                <ion-icon :icon="locationOutline" />
-                <span>{{ reservation.venue.name }}</span>
-              </div>
-              <div class="info-item" v-if="reservation.area || reservation.area_name">
-                <ion-icon :icon="gridOutline" />
-                <span>
-                  <span v-if="reservation.area">{{ reservation.area.name }}</span>
-                  <span v-else>{{ reservation.area_name }}</span>
-                </span>
-              </div>
-              <div class="info-item">
                 <ion-icon :icon="peopleOutline" />
                 <span>Max Occupancy: {{ reservation.venue.capacity }} people</span>
               </div>
@@ -296,14 +285,12 @@ import {
   toastController,
 } from '@ionic/vue';
 import {
-  locationOutline,
   peopleOutline,
   calendarOutline,
   timeOutline,
   personOutline,
   checkmarkCircleOutline,
   createOutline,
-  gridOutline,
 } from 'ionicons/icons';
 import { reservationsApi } from '../api/reservations';
 import { venuesApi } from '../api/venues';

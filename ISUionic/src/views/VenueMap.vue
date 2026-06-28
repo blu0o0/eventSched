@@ -88,6 +88,7 @@ const selectedDate = ref(new Date().toISOString().split('T')[0]);
 const minDate = new Date().toISOString().split('T')[0];
 const map = ref<any>(null);
 const markers: any[] = [];
+const infoWindows: any[] = [];
 const venues = ref<Venue[]>([]);
 const venueAvailability = ref<Record<number, any>>({});
 const selectedVenueId = ref<number | null>(null);
@@ -410,11 +411,20 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
 
     // Add click listener to marker
     marker.addListener('click', function() {
+      // Close all other info windows
+      infoWindows.forEach(iw => iw.close());
+      // Open this info window
       infoWindow.open(map.value, marker);
     });
 
     markers.push(marker);
+    infoWindows.push(infoWindow);
     bounds.extend(coordinates);
+  });
+  
+  // Add click listener to map to close info windows
+  map.value.addListener('click', function() {
+    infoWindows.forEach(iw => iw.close());
   });
 
   // Fit map to show all markers and campus boundary
