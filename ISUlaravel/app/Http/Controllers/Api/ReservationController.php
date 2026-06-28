@@ -184,6 +184,7 @@ class ReservationController extends Controller
             // Always check for conflicts with approved reservations (can't override approved)
             // Only skip check for pending conflicts if force is true and reservation is pending
             $tempReservation = $reservation->replicate();
+            $tempReservation->id = $reservation->id; // Preserve ID so conflict check excludes this reservation
             $tempReservation->fill($updateData);
             $allConflicts = $this->reservationService->getConflictingReservations($tempReservation);
             
