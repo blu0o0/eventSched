@@ -256,6 +256,12 @@ class AdminVenueController extends Controller
         $venueAvailability = [];
         $selectedDateCarbon = \Carbon\Carbon::parse($selectedDate);
         
+        // Get total reservations per venue (all time, all statuses)
+        $totalReservations = \App\Models\Reservation::select('venue_id')
+            ->selectRaw('count(*) as total_count')
+            ->groupBy('venue_id')
+            ->pluck('total_count', 'venue_id');
+        
         foreach ($venues as $venue) {
             // Get approved and pending reservations for the selected date (matching API logic)
             $reservations = $venue->reservations()
@@ -283,12 +289,15 @@ class AdminVenueController extends Controller
             // 1. Its status is 'available' (not damaged or under_construction)
             // 2. It has no approved/pending reservations for the selected date
             $isAvailable = $venue->isAvailable() && $reservations->isEmpty();
+            
+            $totalCount = $totalReservations->get($venue->id, 0);
 
             $venueAvailability[$venue->id] = [
                 'is_available' => $isAvailable,
                 'is_currently_occupied' => $isCurrentlyOccupied,
                 'reservations' => $reservations,
                 'reservation_count' => $reservations->count(),
+                'total_reservations' => $totalCount,
             ];
         }
 

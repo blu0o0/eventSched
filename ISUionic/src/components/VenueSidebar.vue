@@ -116,7 +116,7 @@ function getAvailabilityText(venueId: number): string {
 
 function getReservationCount(venueId: number): number {
   const availability = props.venueAvailability[venueId];
-  return availability?.reservation_count ?? 0;
+  return availability?.total_reservations ?? 0;
 }
 
 function selectVenue(venue: Venue): void {

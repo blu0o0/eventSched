@@ -46,7 +46,7 @@
                         <h6 class="venue-name" style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">{{ $venue->name }}</h6>
                         <div class="venue-details" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                             <span class="venue-reservations" style="font-size: 12px; color: #4b5563;">
-                                <i class="bi bi-people"></i> {{ $availability['reservation_count'] ?? 0 }} reservation(s)
+                                <i class="bi bi-people"></i> {{ $availability['total_reservations'] ?? 0 }} reservations
                             </span>
                             <span class="venue-status {{ $statusClass }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
                                 {{ $statusText }}

@@ -52,9 +52,17 @@ class VenueController extends Controller
         
         // Calculate venue availability
         $venueAvailability = [];
+        
+        // Get total reservations per venue (all time, all statuses)
+        $totalReservations = Reservation::select('venue_id')
+            ->selectRaw('count(*) as total_count')
+            ->groupBy('venue_id')
+            ->pluck('total_count', 'venue_id');
+        
         foreach ($venues as $venue) {
             $venueReservations = $reservations->get($venue->id, collect());
             $reservationCount = $venueReservations->count();
+            $totalCount = $totalReservations->get($venue->id, 0);
             
             // A venue is only available if:
             // 1. Its status is 'available' (not damaged or under_construction)
@@ -75,6 +83,7 @@ class VenueController extends Controller
                 'is_available' => $isAvailable,
                 'is_currently_occupied' => $isCurrentlyOccupied,
                 'reservation_count' => $reservationCount,
+                'total_reservations' => $totalCount,
                 'reservations' => $venueReservations->map(function ($reservation) {
                     return [
                         'id' => $reservation->id,
