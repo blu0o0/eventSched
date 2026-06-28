@@ -52,15 +52,15 @@
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.area_name }">
-            <ion-label position="stacked">Area <span class="optional">(Optional)</span></ion-label>
+            <ion-label position="stacked">Area <span class="required">*</span></ion-label>
             <ion-select
               v-model="selectedAreaId"
-              :placeholder="form.venue_id ? 'Select an area' : 'Please select a venue first'"
+              placeholder="Select an area"
               interface="popover"
               @ionChange="onAreaChange"
               :disabled="!form.venue_id"
             >
-              <ion-select-option value="none"></ion-select-option>
+              <ion-select-option value="N/A">N/A</ion-select-option>
               <ion-select-option
                 v-for="area in filteredAreas"
                 :key="area.id"
@@ -179,6 +179,7 @@
               Please fill in all required fields: 
               <span v-if="!validators.required(form.title)">Title, </span>
               <span v-if="form.venue_id <= 0">Venue, </span>
+              <span v-if="!selectedAreaId">Area, </span>
               <span v-if="!validators.required(form.date) || errors.date">Date, </span>
               <span v-if="!validators.required(form.start_time)">Start Time, </span>
               <span v-if="!validators.required(form.end_time)">End Time, </span>
@@ -343,12 +344,12 @@ const loading = computed(() => venuesLoading.value || areasLoading.value || rese
 const venues = ref<Venue[]>([]);
 const areas = ref<Area[]>([]);
 const selectedAreaId = ref<number | string | null>(null);
-const form = ref<CreateReservationData & { date: string; area_name: string }>({
+const form = ref<CreateReservationData & { date: string; area_name: string | undefined }>({
   title: '',
   description: '',
   venue_id: 0,
   area_id: null,
-  area_name: '',
+  area_name: undefined,
   date: '',
   end_date: '',
   start_time: '',
@@ -373,13 +374,14 @@ const minDateStr = minDate.toISOString().split('T')[0];
 const isFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
+  const hasArea = selectedAreaId.value !== null && selectedAreaId.value !== undefined;
   const hasDate = validators.required(form.value.date) && validators.dateNotPast(form.value.date) && validators.dateNotTooSoon(form.value.date);
   const hasStartTime = validators.required(form.value.start_time);
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
   const hasCapacity = validators.required(form.value.capacity) && validators.positiveNumber(form.value.capacity);
   
-  return hasTitle && hasVenue && hasDate && timesValid && hasCapacity;
+  return hasTitle && hasVenue && hasArea && hasDate && timesValid && hasCapacity;
 });
 
 function clearError(field: string) {
@@ -460,7 +462,7 @@ function onVenueChange() {
   clearError('venue_id');
   // Reset area selection when venue changes
   selectedAreaId.value = null;
-  form.value.area_name = '';
+  form.value.area_name = undefined;
 }
 
 function onAreaChange() {
@@ -471,12 +473,15 @@ function onAreaChange() {
     // User selected an existing area - get the area name
     const selectedArea = areas.value.find(a => a.id === selectedAreaId.value);
     form.value.area_name = selectedArea?.name || '';
+  } else if (selectedAreaId.value === 'N/A') {
+    // User selected N/A
+    form.value.area_name = 'N/A';
   } else if (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-')) {
     // User selected a custom area name from the dropdown
     form.value.area_name = selectedAreaId.value.replace('custom-', '');
   } else {
-    // User selected "None" or cleared selection - set to undefined to make it truly optional
-    form.value.area_name = undefined as any;
+    // No area selected - leave it as is (will show warning)
+    form.value.area_name = undefined;
   }
 }
 
@@ -654,7 +659,9 @@ function validateForm(): boolean {
     errors.value.venue_id = 'Please select a venue';
   }
 
-  // Area is optional, no validation needed
+  if (!selectedAreaId.value) {
+    errors.value.area_name = 'Please select an area';
+  }
 
   if (!validators.required(form.value.date)) {
     errors.value.date = 'Date is required';
@@ -688,18 +695,29 @@ async function handleSubmit() {
     return;
   }
 
-  const submitData: CreateReservationData = {
+  // Build submit data, only including area fields if they have values
+  const submitData: any = {
     title: form.value.title,
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
-    area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
-    area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
-    end_date: form.value.end_date || undefined,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
     capacity: form.value.capacity,
   };
+
+  // Only include end_date if it has a value
+  if (form.value.end_date) {
+    submitData.end_date = form.value.end_date;
+  }
+
+  // Always include area data
+  if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
+    submitData.area_id = selectedAreaId.value;
+  } else {
+    // For N/A or custom areas, send area_name
+    submitData.area_name = form.value.area_name || 'N/A';
+  }
 
   if (isEdit.value) {
     const id = parseInt(route.params.id as string);
@@ -753,14 +771,15 @@ async function handleSubmit() {
         return;
       }
       
-      // Don't show error toast if it's a successful response with data
-      if (err.response?.data?.data) {
+      // Don't show error toast if it's a successful response with data (reservation was created despite error)
+      if (err.response?.data?.data || err.response?.data?.message === 'Reservation created successfully') {
         showSuccess('Reservation created successfully');
         router.push('/home');
         return;
       }
       
-      // For other errors, show error toast
+      // For other errors, show error toast with detailed message
+      console.error('❌ Reservation creation failed:', err.response?.data || err.message);
       const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
       const toast = await toastController.create({
         message: errorMessage,
@@ -778,18 +797,29 @@ async function handleSubmit() {
 async function keepReservationAnyway() {
   forceLoading.value = true;
   
-  const submitData: CreateReservationData = {
+  // Build submit data, only including area fields if they have values
+  const submitData: any = {
     title: form.value.title,
     description: form.value.description || undefined,
     venue_id: form.value.venue_id,
-    area_id: selectedAreaId.value && typeof selectedAreaId.value === 'number' ? selectedAreaId.value : undefined,
-    area_name: (selectedAreaId.value === 'others' || (typeof selectedAreaId.value === 'string' && selectedAreaId.value.startsWith('custom-'))) ? form.value.area_name || undefined : undefined,
     date: form.value.date,
-    end_date: form.value.end_date || undefined,
     start_time: form.value.start_time,
     end_time: form.value.end_time,
     capacity: form.value.capacity,
   };
+
+  // Only include end_date if it has a value
+  if (form.value.end_date) {
+    submitData.end_date = form.value.end_date;
+  }
+
+  // Always include area data
+  if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
+    submitData.area_id = selectedAreaId.value;
+  } else {
+    // For N/A or custom areas, send area_name
+    submitData.area_name = form.value.area_name || 'N/A';
+  }
 
   try {
     if (isEdit.value) {
