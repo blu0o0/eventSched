@@ -294,10 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '</div>';
         }
         
-        popupContent += '<p class="popup-status"><strong>Status:</strong> ' + statusBadge + '</p>' +
-            '<p class="popup-info"><strong>Location:</strong> ' + venue.location + '</p>' +
-            '<p class="popup-info"><strong>Max Occupancy:</strong> ' + venue.capacity + ' people</p>' +
-            '<p class="popup-date"><strong>Date:</strong> ' + selectedDate + '</p>';
+        popupContent += '<p class="popup-info"><strong>Location:</strong> ' + venue.location + '</p>';
 
         if (venue.description) {
             popupContent += '<p class="popup-description">' + 

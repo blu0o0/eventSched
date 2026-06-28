@@ -308,10 +308,7 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
     }
     
     popupContent += `
-        <p class="popup-status"><strong>Status:</strong> ${statusBadge}</p>
         <p class="popup-info"><strong>Location:</strong> ${venue.location}</p>
-        <p class="popup-info"><strong>Max Occupancy:</strong> ${venue.capacity} people</p>
-        <p class="popup-date"><strong>Date:</strong> ${selectedDateStr}</p>
     `;
 
     if (venue.description) {
