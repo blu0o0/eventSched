@@ -27,7 +27,7 @@
 
         <!-- Main Content -->
         <div class="main-content">
-          <!-- Loading State -->
+          <!-- Loading Statge -->
           <LoadingSpinner v-if="loading" message="Loading venue map..." />
 
           <!-- Map Container -->
