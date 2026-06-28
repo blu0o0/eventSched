@@ -44,10 +44,7 @@ class AdminCalendarController extends Controller
     public function events(Request $request)
     {
         $this->ensureAdminOrSscOfficer();
-        $query = Reservation::with(['venue', 'user'])
-            ->whereHas('venue', function ($q) {
-                $q->where('location', 'Santiago Campus');
-            });
+        $query = Reservation::with(['venue', 'user']);
 
         // Filter by date range if provided
         if ($request->has('start')) {

@@ -21,25 +21,20 @@ class AdminDashboardController extends Controller
         if (!auth()->user()->isAdministrator()) {
             abort(403, 'Unauthorized access');
         }
-        // Filter reservations to only Santiago Campus venues
-        $santiagoReservationsQuery = Reservation::whereHas('venue', function ($q) {
-            $q->where('location', 'Santiago Campus');
-        });
+        // Show all reservations (matching the admin venues page and Create Reservation form)
+        $reservationsQuery = Reservation::query();
 
         $stats = [
-            'total_reservations' => $santiagoReservationsQuery->count(),
-            'pending_reservations' => (clone $santiagoReservationsQuery)->where('status', 'pending')->count(),
-            'approved_reservations' => (clone $santiagoReservationsQuery)->where('status', 'approved')->count(),
-            'rejected_reservations' => (clone $santiagoReservationsQuery)->where('status', 'rejected')->count(),
-            'total_venues' => Venue::where('location', 'Santiago Campus')->count(),
+            'total_reservations' => $reservationsQuery->count(),
+            'pending_reservations' => (clone $reservationsQuery)->where('status', 'pending')->count(),
+            'approved_reservations' => (clone $reservationsQuery)->where('status', 'approved')->count(),
+            'rejected_reservations' => (clone $reservationsQuery)->where('status', 'rejected')->count(),
+            'total_venues' => Venue::count(),
             'open_emergencies' => EmergencyReport::where('status', 'open')->count(),
             'total_users' => User::count(),
         ];
 
         $recent_reservations = Reservation::with(['venue', 'user', 'area'])
-            ->whereHas('venue', function ($q) {
-                $q->where('location', 'Santiago Campus');
-            })
             ->latest()
             ->limit(10)
             ->get();

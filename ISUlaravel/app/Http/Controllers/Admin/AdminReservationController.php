@@ -41,10 +41,7 @@ class AdminReservationController extends Controller
     public function index(Request $request)
     {
         $this->ensureAdminOrSscOfficer();
-        $query = Reservation::with(['venue', 'user', 'area'])
-            ->whereHas('venue', function ($q) {
-                $q->where('location', 'Santiago Campus');
-            });
+        $query = Reservation::with(['venue', 'user', 'area']);
 
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
