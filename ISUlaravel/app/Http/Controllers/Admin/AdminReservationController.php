@@ -200,7 +200,7 @@ class AdminReservationController extends Controller
     {
         $this->ensureAdmin();
         $reservation->load(['venue', 'user', 'area']);
-        $venues = \App\Models\Venue::where('location', 'Santiago Campus')->get();
+        $venues = \App\Models\Venue::all();
         $areas = \App\Models\Area::with('venue')->orderBy('name')->get();
 
         return view('admin.reservations.edit', compact('reservation', 'venues', 'areas'));
