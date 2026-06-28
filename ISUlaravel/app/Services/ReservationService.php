@@ -73,10 +73,7 @@ class ReservationService
             throw new \Exception('The selected venue is currently unavailable. Please select another venue.');
         }
 
-        // Only allow reservations for Santiago Campus venues
-        if ($venue->location !== 'Santiago Campus') {
-            throw new \Exception('Reservations can only be made for Santiago Campus venues.');
-        }
+        // Allow reservations for all venues (matching Laravel admin venues page)
 
         // Ensure date is in correct format (Y-m-d) without time component
         if (isset($data['date'])) {
@@ -122,10 +119,7 @@ class ReservationService
             throw new \Exception('The selected venue is currently unavailable. Please select another venue.');
         }
 
-        // Only allow reservations for Santiago Campus venues
-        if ($venue->location !== 'Santiago Campus') {
-            throw new \Exception('Reservations can only be made for Santiago Campus venues.');
-        }
+        // Allow reservations for all venues (matching Laravel admin venues page)
 
         // Check for overlaps with approved reservations (if date, time, or venue changed)
         // Skip conflict check if force=true (only for pending reservations overriding other pending reservations)
