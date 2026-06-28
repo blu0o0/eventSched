@@ -44,7 +44,7 @@
                 :key="venue.id"
                 :value="venue.id"
               >
-                {{ venue.name }} - {{ venue.location }}
+                {{ venue.name }}
                 <span v-if="!venue.is_available"> ({{ venue.status === 'damaged' ? 'Damaged' : 'Under Construction' }})</span>
               </ion-select-option>
             </ion-select>
