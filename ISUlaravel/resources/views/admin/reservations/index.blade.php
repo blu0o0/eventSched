@@ -13,6 +13,9 @@
         <div class="row g-3">
             <div class="col-md-3">
                 <div class="input-group">
+                    <button class="btn btn-outline-secondary" type="button" id="search-btn" title="Search">
+                        <i class="bi bi-search"></i>
+                    </button>
                     <input type="text" name="search" class="form-control" placeholder="Search reservations..." id="search-input" value="{{ request('search') }}">
                     <button class="btn btn-outline-secondary" type="button" id="search-clear" title="Clear search" style="border-color: #cacacaa0; color: #6c757d;">
                         <i class="bi bi-x"></i>
@@ -134,6 +137,10 @@
 
     document.getElementById('status-select').addEventListener('change', fetchReservations);
     document.getElementById('date-filter').addEventListener('change', fetchReservations);
+
+    document.getElementById('search-btn').addEventListener('click', function() {
+        fetchReservations();
+    });
 
     document.getElementById('search-clear').addEventListener('click', function() {
         document.getElementById('search-input').value = '';

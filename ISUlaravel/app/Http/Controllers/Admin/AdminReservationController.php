@@ -56,8 +56,12 @@ class AdminReservationController extends Controller
         }
 
         if ($request->has('date') && $request->date !== '') {
-            $query->whereDate('start_time', $request->date)
-                  ->orWhereDate('end_time', $request->date);
+            // Filter by event date (date field), not start_time/end_time
+            // Include reservations where the event date falls within the selected date
+            $query->where(function ($q) use ($request) {
+                $q->whereDate('date', $request->date)
+                  ->orWhereDate('end_date', $request->date);
+            });
         }
 
         $reservations = $query->latest()->get();

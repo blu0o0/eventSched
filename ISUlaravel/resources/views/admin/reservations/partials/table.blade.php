@@ -31,29 +31,29 @@
             @endif
         </td>
         <td class="action-column">
-            <a href="{{ route('admin.reservations.show', $reservation) }}" class="btn btn-sm btn-info">
-                <i class="bi bi-eye"></i> View
+            <a href="{{ route('admin.reservations.show', $reservation) }}" class="btn btn-sm btn-info" title="View">
+                <i class="bi bi-eye"></i>
             </a>
             @if($reservation->status === 'pending' || $reservation->status === 'postponed')
                 <form action="{{ route('admin.reservations.approve', $reservation) }}" method="POST" class="d-inline">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-success">
-                        <i class="bi bi-check"></i> Approve
+                    <button type="submit" class="btn btn-sm btn-success" title="Approve">
+                        <i class="bi bi-check"></i>
                     </button>
                 </form>
-                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $reservation->id }}">
-                    <i class="bi bi-x"></i> Reject
+                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $reservation->id }}" title="Reject">
+                    <i class="bi bi-x"></i>
                 </button>
             @endif
             @if($reservation->status === 'approved')
-                <a href="{{ route('admin.reservations.edit', $reservation) }}" class="btn btn-sm btn-warning">
-                    <i class="bi bi-pencil"></i> Edit
+                <a href="{{ route('admin.reservations.edit', $reservation) }}" class="btn btn-sm btn-warning" title="Edit">
+                    <i class="bi bi-pencil"></i>
                 </a>
                 <form action="{{ route('admin.reservations.destroy', $reservation) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this approved reservation?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger">
-                        <i class="bi bi-trash"></i> Delete
+                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                        <i class="bi bi-trash"></i>
                     </button>
                 </form>
             @endif
@@ -61,8 +61,8 @@
                 <form action="{{ route('admin.reservations.destroy', $reservation) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this rejected reservation?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-sm btn-danger">
-                        <i class="bi bi-trash"></i> Delete
+                    <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                        <i class="bi bi-trash"></i>
                     </button>
                 </form>
             @endif
