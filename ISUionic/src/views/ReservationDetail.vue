@@ -113,6 +113,49 @@
                 </ion-label>
               </ion-item>
             </div>
+
+            <div v-if="reservation.event_approval_file_url" class="detail-section">
+              <h3>Event Approval Document</h3>
+              <div class="file-preview" @click="openFilePreview">
+                <img 
+                  :src="reservation.event_approval_file_url" 
+                  alt="Event Approval Document"
+                  class="preview-image"
+                />
+              </div>
+            </div>
+
+            <!-- File Preview Modal -->
+            <ion-modal :is-open="isFilePreviewOpen" @didDismiss="closeFilePreview">
+              <div class="file-preview-modal">
+                <div class="modal-header">
+                  <ion-title>Event Approval Document</ion-title>
+                  <ion-buttons slot="end">
+                    <ion-button @click="closeFilePreview">
+                      <ion-icon :icon="closeOutline"></ion-icon>
+                    </ion-button>
+                  </ion-buttons>
+                </div>
+                <div class="modal-content">
+                  <img 
+                    :src="previewImageUrl" 
+                    alt="Event Approval Document"
+                    class="full-image"
+                  />
+                </div>
+                <div class="modal-footer">
+                  <ion-button 
+                    expand="block" 
+                    color="primary" 
+                    :href="previewImageUrl" 
+                    target="_blank"
+                  >
+                    <ion-icon :icon="downloadOutline" slot="start"></ion-icon>
+                    Download
+                  </ion-button>
+                </div>
+              </div>
+            </ion-modal>
           </ion-card-content>
         </ion-card>
 
@@ -291,6 +334,9 @@ import {
   personOutline,
   checkmarkCircleOutline,
   createOutline,
+  documentTextOutline,
+  closeOutline,
+  downloadOutline,
 } from 'ionicons/icons';
 import { reservationsApi } from '../api/reservations';
 import { venuesApi } from '../api/venues';
@@ -331,6 +377,10 @@ const canDelete = computed(() => {
   );
 });
 
+// File preview modal state
+const isFilePreviewOpen = ref(false);
+const previewImageUrl = ref<string>('');
+
 async function loadReservation() {
   const id = parseInt(route.params.id as string);
   const data = await execute(() => reservationsApi.getById(id));
@@ -343,6 +393,18 @@ function goToEdit() {
   if (reservation.value) {
     router.push(`/reservations/${reservation.value.id}/edit`);
   }
+}
+
+function openFilePreview() {
+  if (reservation.value?.event_approval_file_url) {
+    previewImageUrl.value = reservation.value.event_approval_file_url;
+    isFilePreviewOpen.value = true;
+  }
+}
+
+function closeFilePreview() {
+  isFilePreviewOpen.value = false;
+  previewImageUrl.value = '';
 }
 
 async function handleDelete() {
@@ -680,6 +742,66 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   max-height: 300px;
   object-fit: cover;
+}
+
+.file-preview {
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: transform 0.2s;
+}
+
+.file-preview:hover {
+  transform: scale(1.02);
+}
+
+.preview-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  object-fit: cover;
+  border: 2px solid var(--ion-color-light);
+}
+
+.file-preview-modal {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+}
+
+.file-preview-modal .modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--ion-color-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-preview-modal .modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f5f5;
+}
+
+.file-preview-modal .full-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.file-preview-modal .modal-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--ion-color-light);
+  background: white;
 }
 </style>
 

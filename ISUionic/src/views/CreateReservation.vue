@@ -173,6 +173,27 @@
             <ion-note slot="error" v-if="errors.capacity">{{ errors.capacity }}</ion-note>
           </ion-item>
 
+          <ion-item :class="{ 'ion-invalid': errors.event_approval_file }">
+            <ion-label position="stacked">Event Approval File <span class="required">*</span></ion-label>
+            <div class="file-upload-container">
+              <input
+                type="file"
+                id="eventApprovalFile"
+                @change="handleFileUpload"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                class="file-input"
+              />
+              <label for="eventApprovalFile" class="file-label">
+                <ion-icon :icon="documentTextOutline" class="upload-icon"></ion-icon>
+                <span>{{ eventApprovalFileName || 'Choose file to upload' }}</span>
+              </label>
+            </div>
+            <ion-note slot="error" v-if="errors.event_approval_file">{{ errors.event_approval_file }}</ion-note>
+            <ion-note slot="helper" color="medium">
+              Upload event approval document (PDF, DOC, DOCX, JPG, PNG - Max: 5MB)
+            </ion-note>
+          </ion-item>
+
           <div class="form-actions">
             <!-- Debug info (remove in production) -->
             <ion-note v-if="!isFormValid && !loading" color="warning" style="display: block; margin-bottom: 1rem; font-size: 0.8rem;">
@@ -344,7 +365,7 @@ const loading = computed(() => venuesLoading.value || areasLoading.value || rese
 const venues = ref<Venue[]>([]);
 const areas = ref<Area[]>([]);
 const selectedAreaId = ref<number | string | null>(null);
-const form = ref<CreateReservationData & { date: string; area_name: string | undefined }>({
+const form = ref<CreateReservationData & { date: string; area_name: string | undefined; event_approval_file: File | null }>({
   title: '',
   description: '',
   venue_id: 0,
@@ -355,8 +376,10 @@ const form = ref<CreateReservationData & { date: string; area_name: string | und
   start_time: '',
   end_time: '',
   capacity: 1,
+  event_approval_file: null,
 });
 
+const eventApprovalFileName = ref<string>('');
 const errors = ref<Record<string, string>>({});
 const conflicts = ref<ConflictingReservation[]>([]);
 const showConflictModal = ref(false);
@@ -380,13 +403,45 @@ const isFormValid = computed(() => {
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
   const hasCapacity = validators.required(form.value.capacity) && validators.positiveNumber(form.value.capacity);
+  const hasApprovalFile = form.value.event_approval_file !== null;
   
-  return hasTitle && hasVenue && hasArea && hasDate && timesValid && hasCapacity;
+  return hasTitle && hasVenue && hasArea && hasDate && timesValid && hasCapacity && hasApprovalFile;
 });
 
 function clearError(field: string) {
   if (errors.value[field]) {
     delete errors.value[field];
+  }
+}
+
+function handleFileUpload(event: Event) {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+  
+  if (file) {
+    // Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      errors.value.event_approval_file = 'File size must be less than 5MB';
+      target.value = '';
+      form.value.event_approval_file = null;
+      eventApprovalFileName.value = '';
+      return;
+    }
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      errors.value.event_approval_file = 'Invalid file type. Please upload PDF, DOC, DOCX, JPG, or PNG';
+      target.value = '';
+      form.value.event_approval_file = null;
+      eventApprovalFileName.value = '';
+      return;
+    }
+    
+    form.value.event_approval_file = file;
+    eventApprovalFileName.value = file.name;
+    clearError('event_approval_file');
   }
 }
 
@@ -687,6 +742,10 @@ function validateForm(): boolean {
     errors.value.capacity = 'Max Occupancy must be greater than 0';
   }
 
+  if (!form.value.event_approval_file) {
+    errors.value.event_approval_file = 'Event approval file is required';
+  }
+
   return Object.keys(errors.value).length === 0;
 }
 
@@ -695,34 +754,41 @@ async function handleSubmit() {
     return;
   }
 
-  // Build submit data, only including area fields if they have values
-  const submitData: any = {
-    title: form.value.title,
-    description: form.value.description || undefined,
-    venue_id: form.value.venue_id,
-    date: form.value.date,
-    start_time: form.value.start_time,
-    end_time: form.value.end_time,
-    capacity: form.value.capacity,
-  };
-
-  // Only include end_date if it has a value
+  // Create FormData for file upload
+  const formData = new FormData();
+  
+  // Add all form fields
+  formData.append('title', form.value.title);
+  if (form.value.description) {
+    formData.append('description', form.value.description);
+  }
+  formData.append('venue_id', form.value.venue_id.toString());
+  formData.append('date', form.value.date);
+  formData.append('start_time', form.value.start_time);
+  formData.append('end_time', form.value.end_time);
+  formData.append('capacity', form.value.capacity.toString());
+  
   if (form.value.end_date) {
-    submitData.end_date = form.value.end_date;
+    formData.append('end_date', form.value.end_date);
   }
 
   // Always include area data
   if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
-    submitData.area_id = selectedAreaId.value;
+    formData.append('area_id', selectedAreaId.value.toString());
   } else {
     // For N/A or custom areas, send area_name
-    submitData.area_name = form.value.area_name || 'N/A';
+    formData.append('area_name', form.value.area_name || 'N/A');
+  }
+
+  // Add event approval file
+  if (form.value.event_approval_file) {
+    formData.append('event_approval_file', form.value.event_approval_file);
   }
 
   if (isEdit.value) {
     const id = parseInt(route.params.id as string);
     try {
-      const response = await reservationsApi.update(id, submitData);
+      const response = await reservationsApi.update(id, formData);
       
       if (response) {
         showSuccess('Reservation updated successfully');
@@ -750,7 +816,7 @@ async function handleSubmit() {
     }
   } else {
     try {
-      const response = await reservationsApi.create(submitData, false);
+      const response = await reservationsApi.create(formData, false);
       
       // Check if response has conflicts (status 409)
       if (response.conflicts && response.conflicts.length > 0) {

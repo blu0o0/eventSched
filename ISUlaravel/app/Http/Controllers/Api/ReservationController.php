@@ -10,6 +10,7 @@ use App\Models\Reservation;
 use App\Services\ReservationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 
 class ReservationController extends Controller
 {
@@ -79,8 +80,17 @@ class ReservationController extends Controller
         $force = $request->boolean('force', false);
 
         try {
+            $validated = $request->validated();
+            
+            // Handle event approval file upload
+            if ($request->hasFile('event_approval_file')) {
+                $file = $request->file('event_approval_file');
+                $path = $file->store('event-approvals', 'public');
+                $validated['event_approval_file'] = $path;
+            }
+
             $reservation = $this->reservationService->create(
-                $request->validated(),
+                $validated,
                 $request->user()->id,
                 $force
             );
@@ -179,6 +189,18 @@ class ReservationController extends Controller
             
             $updateData = $request->validated();
             $force = $request->boolean('force', false);
+            
+            // Handle event approval file upload
+            if ($request->hasFile('event_approval_file')) {
+                // Delete old file if exists
+                if ($reservation->event_approval_file && Storage::disk('public')->exists($reservation->event_approval_file)) {
+                    Storage::disk('public')->delete($reservation->event_approval_file);
+                }
+                // Upload new file
+                $file = $request->file('event_approval_file');
+                $path = $file->store('event-approvals', 'public');
+                $updateData['event_approval_file'] = $path;
+            }
             
             // Check for overlaps with approved reservations before updating
             // Always check for conflicts with approved reservations (can't override approved)

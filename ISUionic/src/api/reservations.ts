@@ -22,13 +22,21 @@ export const reservationsApi = {
     return response.data.data;
   },
 
-  async create(data: CreateReservationData, force: boolean = false): Promise<CreateReservationResponse> {
-    const response = await apiClient.post<CreateReservationResponse>('/reservations', { ...data, force });
+  async create(data: CreateReservationData | FormData, force: boolean = false): Promise<CreateReservationResponse> {
+    const response = await apiClient.post<CreateReservationResponse>('/reservations', data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 
-  async update(id: number, data: CreateReservationData): Promise<Reservation> {
-    const response = await apiClient.put<{ message: string; data: Reservation }>(`/reservations/${id}`, data);
+  async update(id: number, data: CreateReservationData | FormData): Promise<Reservation> {
+    const response = await apiClient.put<{ message: string; data: Reservation }>(`/reservations/${id}`, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data.data;
   },
 

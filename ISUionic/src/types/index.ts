@@ -65,6 +65,8 @@ export interface Reservation {
   is_postponed?: boolean;
   edited_at: string | null;
   is_edited: boolean;
+  event_approval_file?: string | null;
+  event_approval_file_url?: string | null;
   created_at: string;
   updated_at: string;
 }

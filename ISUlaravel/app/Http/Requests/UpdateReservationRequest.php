@@ -32,6 +32,7 @@ class UpdateReservationRequest extends FormRequest
             'end_time' => 'sometimes|required|date_format:H:i',
             'capacity' => 'sometimes|required|integer|min:1',
             'end_date' => 'nullable|date|after_or_equal:date',
+            'event_approval_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ReservationResource extends JsonResource
 {
@@ -18,38 +19,40 @@ class ReservationResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'venue' => new VenueResource($this->whenLoaded('venue')),
             'venue_id' => $this->venue_id,
-            'area' => $this->whenLoaded('area', function () {
-                return [
-                    'id' => $this->area->id,
-                    'name' => $this->area->name,
-                    'photo_url' => $this->area->photo_url,
-                ];
-            }),
-            'area_name' => $this->area_name ?? ($this->whenLoaded('area') ? $this->area->name : null),
             'area_id' => $this->area_id,
-            'date' => $this->date->format('Y-m-d'),
-            'end_date' => $this->end_date ? $this->end_date->format('Y-m-d') : null,
-            'start_time' => \Carbon\Carbon::parse($this->start_time)->format('H:i'),
-            'end_time' => \Carbon\Carbon::parse($this->end_time)->format('H:i'),
+            'area_name' => $this->area_name,
+            'date' => $this->date,
+            'end_date' => $this->end_date,
+            'start_time' => $this->start_time,
+            'end_time' => $this->end_time,
             'capacity' => $this->capacity,
             'status' => $this->status,
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-            ],
             'user_id' => $this->user_id,
             'approved_by' => $this->approved_by,
-            'approved_at' => $this->approved_at?->format('Y-m-d H:i:s'),
+            'approved_at' => $this->approved_at,
             'rejection_reason' => $this->rejection_reason,
             'postponement_reason' => $this->postponement_reason,
-            'is_postponed' => $this->isPostponed(),
-            'edited_at' => $this->edited_at?->format('Y-m-d H:i:s'),
-            'is_edited' => $this->edited_at !== null,
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
+            'edited_at' => $this->edited_at,
+            'event_approval_file' => $this->event_approval_file,
+            'event_approval_file_url' => $this->event_approval_file ? Storage::url($this->event_approval_file) : null,
+            
+            // Relationships
+            'venue' => new VenueResource($this->whenLoaded('venue')),
+            'user' => $this->whenLoaded('user', function () {
+                return [
+                    'id' => $this->user->id,
+                    'name' => $this->user->name,
+                    'email' => $this->user->email,
+                ];
+            }),
+            'approver' => $this->whenLoaded('approver', function () {
+                return [
+                    'id' => $this->approver->id,
+                    'name' => $this->approver->name,
+                ];
+            }),
+            'area' => $this->whenLoaded('area'),
         ];
     }
 }

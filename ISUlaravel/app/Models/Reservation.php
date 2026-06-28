@@ -28,6 +28,7 @@ class Reservation extends Model
         'rejection_reason',
         'postponement_reason',
         'edited_at',
+        'event_approval_file',
     ];
 
     protected function casts(): array

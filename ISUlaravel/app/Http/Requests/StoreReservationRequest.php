@@ -34,6 +34,7 @@ class StoreReservationRequest extends FormRequest
             'capacity' => 'required|integer|min:1',
             'end_date' => 'nullable|date|after_or_equal:date',
             'force' => 'boolean',
+            'event_approval_file' => 'required|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
         ];
     }
 }

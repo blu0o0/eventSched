@@ -94,6 +94,40 @@
                     <h5>Postponement Reason</h5>
                     <p>{{ $reservation->postponement_reason }}</p>
                 @endif
+
+                @if($reservation->event_approval_file)
+                    <h5>Event Approval Document</h5>
+                    <div class="file-preview-container" data-bs-toggle="modal" data-bs-target="#filePreviewModal" style="cursor: pointer;">
+                        <img src="{{ asset('storage/' . $reservation->event_approval_file) }}" 
+                             alt="Event Approval Document" 
+                             class="file-preview-image">
+                    </div>
+
+                    <!-- File Preview Modal -->
+                    <div class="modal fade" id="filePreviewModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Event Approval Document</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <img src="{{ asset('storage/' . $reservation->event_approval_file) }}" 
+                                         alt="Event Approval Document" 
+                                         class="full-size-image">
+                                </div>
+                                <div class="modal-footer">
+                                    <a href="{{ asset('storage/' . $reservation->event_approval_file) }}" 
+                                       target="_blank" 
+                                       class="btn btn-primary">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -178,4 +212,40 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.file-preview-container {
+    display: inline-block;
+    margin-top: 8px;
+    transition: transform 0.2s;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-preview-container:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.file-preview-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    max-height: 200px;
+    object-fit: cover;
+    border: 2px solid #dee2e6;
+    cursor: pointer;
+}
+
+.full-size-image {
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+</style>
+@endpush
 
