@@ -77,6 +77,18 @@
         <!-- Map Container -->
         <div style="flex: 1; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15); border: 1px solid #dee2e6; position: relative;">
             <div id="venueMap" style="height: 100%; min-height: 500px; width: 100%; background: #f5f5f5; border-radius: 12px;"></div>
+            
+            <!-- Map Controls -->
+            <div style="position: absolute; top: 16px; right: 16px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="getMyLocation()" title="My Location" style="background: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #1f2937; transition: all 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23754c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                    My Location
+                </button>
+                <button onclick="getDirections()" title="Directions" style="background: white; border: none; border-radius: 8px; padding: 10px 14px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: #1f2937; transition: all 0.2s;" onmouseover="this.style.background='#f3f4f6'" onmouseout="this.style.background='white'">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#23754c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                    Directions
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -448,6 +460,142 @@ function selectVenue(venueId) {
                 }
             }
         }
+    }
+}
+
+// User location tracking
+var userMarker = null;
+var directionsRenderer = null;
+var currentDirections = null;
+var selectedVenueCoords = null;
+
+function getMyLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            // Remove existing user marker
+            if (userMarker) {
+                userMarker.setMap(null);
+            }
+            
+            // Add user marker
+            userMarker = new google.maps.Marker({
+                position: pos,
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#4285F4',
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 3
+                },
+                title: 'Your Location'
+            });
+            
+            map.panTo(pos);
+            map.setZoom(17);
+            
+            // Show info window
+            var infoWindow = new google.maps.InfoWindow({
+                content: '<div class="map-popup"><h6 class="popup-title">Your Location</h6><p class="popup-info">Lat: ' + pos.lat.toFixed(6) + ', Lng: ' + pos.lng.toFixed(6) + '</p></div>'
+            });
+            infoWindow.open(map, userMarker);
+            
+        }, function() {
+            alert('Error: The Geolocation service failed. Please enable location services.');
+        });
+    } else {
+        alert('Error: Your browser doesn\'t support geolocation.');
+    }
+}
+
+function getDirections() {
+    var venueId = selectedVenueId || (venues.length > 0 ? venues[0].id : null);
+    if (!venueId) {
+        alert('Please select a venue first.');
+        return;
+    }
+    
+    var venue = venues.find(v => v.id === venueId);
+    if (!venue || !venue.map_coordinates) {
+        alert('Selected venue has no coordinates.');
+        return;
+    }
+    
+    var coords = venue.map_coordinates.split(',');
+    if (coords.length !== 2) {
+        alert('Invalid venue coordinates.');
+        return;
+    }
+    
+    var dest = {
+        lat: parseFloat(coords[0].trim()),
+        lng: parseFloat(coords[1].trim())
+    };
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            var origin = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            // Remove existing directions
+            if (directionsRenderer) {
+                directionsRenderer.setMap(null);
+            }
+            
+            // Create directions service and renderer
+            var directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: false,
+                preserveViewport: false
+            });
+            
+            var request = {
+                origin: origin,
+                destination: dest,
+                travelMode: google.maps.TravelMode.WALKING
+            };
+            
+            directionsService.route(request, function(result, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(result);
+                    currentDirections = result;
+                    
+                    // Show distance and duration
+                    var route = result.routes[0];
+                    if (route && route.legs && route.legs[0]) {
+                        var leg = route.legs[0];
+                        var infoWindow = new google.maps.InfoWindow({
+                            content: '<div class="map-popup"><h6 class="popup-title">Directions to ' + venue.name + '</h6>' +
+                                '<p class="popup-info"><strong>Distance:</strong> ' + leg.distance.text + '</p>' +
+                                '<p class="popup-info"><strong>Walking Time:</strong> ' + leg.duration.text + '</p>' +
+                                '</div>'
+                        });
+                        // Show info window at destination
+                        var destMarker = new google.maps.Marker({
+                            position: dest,
+                            map: map,
+                            visible: false
+                        });
+                        infoWindow.open(map, destMarker);
+                    }
+                } else {
+                    alert('Directions request failed: ' + status + '. Please try a different mode of transportation.');
+                }
+            });
+        }, function() {
+            alert('Error: The Geolocation service failed. Please enable location services.');
+        });
+    } else {
+        alert('Error: Your browser doesn\'t support geolocation.');
     }
 }
 

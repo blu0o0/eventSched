@@ -33,6 +33,17 @@
           <!-- Map Container -->
           <div v-else class="map-wrapper">
             <div id="venueMap" class="map-container"></div>
+            <!-- Map Controls -->
+            <div class="map-controls">
+              <button @click="getMyLocation" title="My Location" class="map-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ion-color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
+                My Location
+              </button>
+              <button @click="getDirections" title="Directions" class="map-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ion-color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Directions
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -465,6 +476,141 @@ function loadGoogleMaps() {
   document.head.appendChild(script);
 }
 
+// User location tracking
+let userMarker: any = null;
+let directionsRenderer: any = null;
+let currentDirections: any = null;
+
+function getMyLocation() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const pos = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      
+      // Remove existing user marker
+      if (userMarker) {
+        userMarker.setMap(null);
+      }
+      
+      // Add user marker
+      userMarker = new window.google.maps.Marker({
+        position: pos,
+        map: map.value,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#4285F4',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 3
+        },
+        title: 'Your Location'
+      });
+      
+      map.value.panTo(pos);
+      map.value.setZoom(17);
+      
+      // Show info window
+      const infoWindow = new window.google.maps.InfoWindow({
+        content: '<div class="map-popup"><h6 class="popup-title">Your Location</h6><p class="popup-info">Lat: ' + pos.lat.toFixed(6) + ', Lng: ' + pos.lng.toFixed(6) + '</p></div>'
+      });
+      infoWindow.open(map.value, userMarker);
+      
+    }, function() {
+      alert('Error: The Geolocation service failed. Please enable location services.');
+    });
+  } else {
+    alert('Error: Your browser doesn\'t support geolocation.');
+  }
+}
+
+function getDirections() {
+  const venueId = selectedVenueId.value || (venues.value.length > 0 ? venues.value[0].id : null);
+  if (!venueId) {
+    alert('Please select a venue first.');
+    return;
+  }
+  
+  const venue = venues.value.find(v => v.id === venueId);
+  if (!venue || !venue.map_coordinates) {
+    alert('Selected venue has no coordinates.');
+    return;
+  }
+  
+  const coords = venue.map_coordinates.split(',');
+  if (coords.length !== 2) {
+    alert('Invalid venue coordinates.');
+    return;
+  }
+  
+  const dest = {
+    lat: parseFloat(coords[0].trim()),
+    lng: parseFloat(coords[1].trim())
+  };
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const origin = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      
+      // Remove existing directions
+      if (directionsRenderer) {
+        directionsRenderer.setMap(null);
+      }
+      
+      // Create directions service and renderer
+      const directionsService = new window.google.maps.DirectionsService();
+      directionsRenderer = new window.google.maps.DirectionsRenderer({
+        map: map.value,
+        suppressMarkers: false,
+        preserveViewport: false
+      });
+      
+      const request = {
+        origin: origin,
+        destination: dest,
+        travelMode: window.google.maps.TravelMode.WALKING
+      };
+      
+      directionsService.route(request, function(result: any, status: string) {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(result);
+          currentDirections = result;
+          
+          // Show distance and duration
+          const route = result.routes[0];
+          if (route && route.legs && route.legs[0]) {
+            const leg = route.legs[0];
+            const infoWindow = new window.google.maps.InfoWindow({
+              content: '<div class="map-popup"><h6 class="popup-title">Directions to ' + venue!.name + '</h6>' +
+                '<p class="popup-info"><strong>Distance:</strong> ' + leg.distance.text + '</p>' +
+                '<p class="popup-info"><strong>Walking Time:</strong> ' + leg.duration.text + '</p>' +
+                '</div>'
+            });
+            // Show info window at destination
+            const destMarker = new window.google.maps.Marker({
+              position: dest,
+              map: map.value,
+              visible: false
+            });
+            infoWindow.open(map.value, destMarker);
+          }
+        } else {
+          alert('Directions request failed: ' + status + '. Please try a different mode of transportation.');
+        }
+      });
+    }, function() {
+      alert('Error: The Geolocation service failed. Please enable location services.');
+    });
+  } else {
+    alert('Error: Your browser doesn\'t support geolocation.');
+  }
+}
+
 onMounted(() => {
   // Add showAreaPhoto function to window for Google Maps popup click handlers
   (window as any).showAreaPhoto = function(areaName: string, photoUrl: string) {
@@ -816,6 +962,41 @@ ion-label {
   .legend-card {
     margin: 0 -0.5rem;
   }
+}
+
+/* Map Controls */
+.map-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.map-btn {
+  background: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  transition: all 0.2s;
+}
+
+.map-btn:hover {
+  background: #f3f4f6;
+}
+
+.map-btn svg {
+  flex-shrink: 0;
 }
 
 /* Reservations Table Styles */
