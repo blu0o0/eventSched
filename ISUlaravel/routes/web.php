@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\AdminVenueController;
 use App\Http\Controllers\Admin\AdminEmergencyController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminAreaController;
+use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Api\CalendarController;
 
 // Public routes
@@ -61,4 +62,9 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
 
     // Users
     Route::resource('users', AdminUserController::class);
+
+    // Reports
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::post('/reports/generate', [AdminReportController::class, 'generate'])->name('reports.generate');
+    Route::get('/reports/print', [AdminReportController::class, 'print'])->name('reports.print');
 });

@@ -268,6 +268,9 @@
             <a class="nav-icon-link {{ request()->routeIs('admin.calendar.*') ? 'active' : '' }}" href="{{ route('admin.calendar.index') }}" title="Calendar">
                 <i class="bi bi-calendar3"></i>
             </a>
+            <a class="nav-icon-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}" href="{{ route('admin.reports.index') }}" title="Generate Reports">
+                <i class="bi bi-bar-chart-fill"></i>
+            </a>
             <a class="nav-icon-link {{ request()->routeIs('admin.venues.map') ? 'active' : '' }}" href="{{ route('admin.venues.map') }}" title="Venue Map">
                 <i class="bi bi-map"></i>
             </a>
