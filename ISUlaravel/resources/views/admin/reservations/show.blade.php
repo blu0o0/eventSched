@@ -23,7 +23,7 @@
                 <p>{{ $reservation->description ?? 'N/A' }}</p>
 
                 <h5>Venue</h5>
-                <p>{{ optional($reservation->venue)->name ?? 'N/A' }} ({{ optional($reservation->venue)->location ?? 'N/A' }})</p>
+                <p>{{ optional($reservation->venue)->name ?? 'N/A' }}</p>
 
                 <h5>Area</h5>
                 <p>
