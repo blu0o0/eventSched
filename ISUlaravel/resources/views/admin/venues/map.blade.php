@@ -36,16 +36,17 @@
                      onclick="selectVenue({{ $venue->id }})"
                      style="background: white; padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
                     <div class="venue-avatar" style="width: 48px; height: 48px; flex-shrink: 0;">
-                        <div class="status-indicator {{ $statusClass }}" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></div>
+                        @if($venue->photo_url)
+                            <img src="{{ $venue->photo_url }}" alt="{{ $venue->name }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);" />
+                        @else
+                            <div class="status-indicator {{ $statusClass }}" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);"></div>
+                        @endif
                     </div>
                     <div class="venue-info" style="flex: 1; min-width: 0;">
                         <h6 class="venue-name" style="font-size: 16px; font-weight: 600; color: #1f2937; margin: 0 0 4px 0;">{{ $venue->name }}</h6>
-                        <p class="venue-location" style="font-size: 13px; color: #6b7280; margin: 0 0 8px 0;">
-                            <i class="bi bi-geo-alt"></i> {{ $venue->location }}
-                        </p>
                         <div class="venue-details" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                            <span class="venue-capacity" style="font-size: 12px; color: #4b5563;">
-                                <i class="bi bi-people"></i> {{ $venue->capacity }} people
+                            <span class="venue-reservations" style="font-size: 12px; color: #4b5563;">
+                                <i class="bi bi-people"></i> {{ $availability['reservation_count'] ?? 0 }} reservation(s)
                             </span>
                             <span class="venue-status {{ $statusClass }}" style="font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
                                 {{ $statusText }}

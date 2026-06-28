@@ -16,7 +16,14 @@
       @click="selectVenue(venue)"
     >
       <ion-avatar slot="start" class="venue-avatar">
+        <img
+          v-if="venue.photo_url"
+          :src="venue.photo_url"
+          :alt="venue.name"
+          class="venue-photo"
+        />
         <div
+          v-else
           class="status-indicator"
           :class="getAvailabilityClass(venue.id)"
         ></div>
@@ -24,14 +31,10 @@
 
       <ion-label>
         <h3 class="venue-name">{{ venue.name }}</h3>
-        <p class="venue-location">
-          <ion-icon :icon="locationOutline" class="location-icon"></ion-icon>
-          {{ venue.location }}
-        </p>
         <div class="venue-details">
-          <span class="venue-capacity">
+          <span class="venue-reservations">
             <ion-icon :icon="peopleOutline" class="detail-icon"></ion-icon>
-            {{ venue.capacity }} people
+            {{ getReservationCount(venue.id) }} reservation(s)
           </span>
           <span
             class="venue-status"
@@ -66,7 +69,7 @@ import {
   IonAvatar,
   IonIcon,
 } from '@ionic/vue';
-import { locationOutline, peopleOutline, chevronForwardOutline } from 'ionicons/icons';
+import { peopleOutline, chevronForwardOutline } from 'ionicons/icons';
 import { Venue } from '../types';
 
 interface Props {
@@ -109,6 +112,11 @@ function getAvailabilityText(venueId: number): string {
   } else {
     return 'Reserved';
   }
+}
+
+function getReservationCount(venueId: number): number {
+  const availability = props.venueAvailability[venueId];
+  return availability?.reservation_count ?? 0;
 }
 
 function selectVenue(venue: Venue): void {
@@ -170,6 +178,15 @@ ion-list-header h2 {
   margin-right: 12px;
 }
 
+.venue-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 .status-indicator {
   width: 100%;
   height: 100%;
@@ -201,20 +218,6 @@ ion-list-header h2 {
   margin: 0 0 4px 0;
 }
 
-.venue-location {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.location-icon {
-  font-size: 14px;
-  color: var(--ion-color-medium);
-}
-
 .venue-details {
   display: flex;
   gap: 12px;
@@ -222,7 +225,7 @@ ion-list-header h2 {
   flex-wrap: wrap;
 }
 
-.venue-capacity {
+.venue-reservations {
   font-size: 12px;
   color: #4b5563;
   display: flex;
@@ -292,15 +295,11 @@ ion-list-header h2 {
     font-size: 14px;
   }
 
-  .venue-location {
-    font-size: 12px;
-  }
-
   .venue-details {
     gap: 8px;
   }
 
-  .venue-capacity,
+  .venue-reservations,
   .venue-status {
     font-size: 11px;
   }
