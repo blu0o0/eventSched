@@ -39,7 +39,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ion-color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>
                 My Location
               </button>
-              <button @click="getDirections" title="Directions" class="map-btn">
+              <button @click="toggleDirections" ref="directionsBtnRef" title="Directions" class="map-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ion-color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                 Directions
               </button>
@@ -103,6 +103,14 @@ const infoWindows: any[] = [];
 const venues = ref<Venue[]>([]);
 const venueAvailability = ref<Record<number, any>>({});
 const selectedVenueId = ref<number | null>(null);
+const directionsBtnRef = ref<any>(null);
+
+// User location tracking
+let userMarker: any = null;
+let directionsRenderer: any = null;
+let currentDirections: any = null;
+let currentTravelMode = 'WALKING';
+let directionsActive = false;
 
 // Load last selected venue from localStorage
 onMounted(() => {
@@ -476,11 +484,6 @@ function loadGoogleMaps() {
   document.head.appendChild(script);
 }
 
-// User location tracking
-let userMarker: any = null;
-let directionsRenderer: any = null;
-let currentDirections: any = null;
-
 function getMyLocation() {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function(position) {
@@ -526,7 +529,23 @@ function getMyLocation() {
   }
 }
 
-function getDirections() {
+function toggleDirections() {
+  if (directionsActive) {
+    // Turn off directions
+    if (directionsRenderer) {
+      directionsRenderer.setMap(null);
+      directionsRenderer = null;
+    }
+    currentDirections = null;
+    directionsActive = false;
+    updateDirectionsButton();
+    return;
+  }
+  getDirections();
+}
+
+function getDirections(mode?: string) {
+  const travelMode = mode || currentTravelMode;
   const venueId = selectedVenueId.value || (venues.value.length > 0 ? venues.value[0].id : null);
   if (!venueId) {
     alert('Please select a venue first.');
@@ -562,6 +581,9 @@ function getDirections() {
         directionsRenderer.setMap(null);
       }
       
+      // Close all info windows
+      infoWindows.forEach(iw => iw.close());
+      
       // Create directions service and renderer
       const directionsService = new window.google.maps.DirectionsService();
       directionsRenderer = new window.google.maps.DirectionsRenderer({
@@ -573,23 +595,45 @@ function getDirections() {
       const request = {
         origin: origin,
         destination: dest,
-        travelMode: window.google.maps.TravelMode.WALKING
+        travelMode: travelMode
       };
       
       directionsService.route(request, function(result: any, status: string) {
         if (status === 'OK') {
           directionsRenderer.setDirections(result);
           currentDirections = result;
+          currentTravelMode = travelMode;
+          directionsActive = true;
+          updateDirectionsButton();
           
           // Show distance and duration
           const route = result.routes[0];
           if (route && route.legs && route.legs[0]) {
             const leg = route.legs[0];
+            const modeNames: Record<string, string> = {
+              'WALKING': 'Walking',
+              'DRIVING': 'Driving',
+              'BICYCLING': 'Bicycling',
+              'TRANSIT': 'Transit'
+            };
+            const durationText = leg.duration_in_traffic ? leg.duration_in_traffic.text + ' (with traffic)' : leg.duration.text;
+            const modeName = modeNames[travelMode] || travelMode;
+            
+            // Create info window content with mode selector
+            let infoContent = '<div class="map-popup"><h6 class="popup-title">Directions to ' + venue!.name + '</h6>';
+            infoContent += '<div class="dir-mode-selector" style="display: flex; gap: 4px; margin-bottom: 10px; flex-wrap: wrap;">';
+            const modes: Record<string, string> = {'WALKING': 'Walk', 'DRIVING': 'Drive', 'BICYCLING': 'Bike', 'TRANSIT': 'Bus'};
+            for (const m in modes) {
+              const active = m === travelMode ? ' style="background: #23754c; color: white; border-color: #23754c;"' : '';
+              infoContent += '<div onclick="event.stopPropagation(); window.getDirections(\'' + m + '\')" ' + active + ' style="cursor: pointer; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid #d1d5db; transition: all 0.2s;">' + modes[m] + '</div>';
+            }
+            infoContent += '</div>';
+            infoContent += '<p class="popup-info"><strong>Distance:</strong> ' + leg.distance.text + '</p>';
+            infoContent += '<p class="popup-info"><strong>' + modeName + ' Time:</strong> ' + durationText + '</p>';
+            infoContent += '</div>';
+            
             const infoWindow = new window.google.maps.InfoWindow({
-              content: '<div class="map-popup"><h6 class="popup-title">Directions to ' + venue!.name + '</h6>' +
-                '<p class="popup-info"><strong>Distance:</strong> ' + leg.distance.text + '</p>' +
-                '<p class="popup-info"><strong>Walking Time:</strong> ' + leg.duration.text + '</p>' +
-                '</div>'
+              content: infoContent
             });
             // Show info window at destination
             const destMarker = new window.google.maps.Marker({
@@ -608,6 +652,19 @@ function getDirections() {
     });
   } else {
     alert('Error: Your browser doesn\'t support geolocation.');
+  }
+}
+
+function updateDirectionsButton() {
+  if (directionsBtnRef.value) {
+    const btn = directionsBtnRef.value.$el || directionsBtnRef.value;
+    if (directionsActive) {
+      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc3545" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg> Hide Directions';
+      btn.style.background = '#fef2f2';
+    } else {
+      btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--ion-color-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg> Directions';
+      btn.style.background = 'white';
+    }
   }
 }
 
@@ -635,6 +692,9 @@ onMounted(() => {
     modal.appendChild(content);
     document.body.appendChild(modal);
   };
+  
+  // Add getDirections to window for Google Maps popup click handlers (mode selector)
+  (window as any).getDirections = getDirections;
   
   loadGoogleMaps();
 });
