@@ -5,7 +5,6 @@
 @section('content')
 <div class="row mb-4">
     <div class="col-12">
-        <h1><i class="bi bi-grid"></i> Create Area</h1>
         <a href="{{ route('admin.areas.index') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back
         </a>
@@ -47,11 +46,11 @@
             </div>
             <div class="mb-3">
                 <label>Area Photo</label>
-                <div class="card mb-3">
+                <div class="card mb-3" style="max-width: 400px;">
                     <div id="photoPreview" class="card-body" style="display: none; padding: 0;">
-                        <img id="photoPreviewImg" src="" alt="Photo Preview" class="card-img-top" style="max-height: 400px; object-fit: cover;">
+                        <img id="photoPreviewImg" src="" alt="Photo Preview" class="card-img-top" style="aspect-ratio: 1/1; object-fit: cover;">
                     </div>
-                    <div id="photoPlaceholder" class="card-body bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <div id="photoPlaceholder" class="card-body bg-light d-flex align-items-center justify-content-center" style="aspect-ratio: 1/1;">
                         <div class="text-center text-muted">
                             <i class="bi bi-image" style="font-size: 4rem;"></i>
                             <p class="mt-2">No photo selected</p>

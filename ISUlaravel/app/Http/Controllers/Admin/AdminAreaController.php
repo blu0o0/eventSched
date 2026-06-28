@@ -112,7 +112,7 @@ class AdminAreaController extends Controller
                 Storage::disk('public')->delete($area->photo);
             }
             $validated['photo'] = $request->file('photo')->store('areas', 'public');
-        } elseif ($request->has('remove_photo') && $request->remove_photo == '1') {
+        } elseif ($request->has('clear_photo') && $request->clear_photo == '1') {
             if ($area->photo && Storage::disk('public')->exists($area->photo)) {
                 Storage::disk('public')->delete($area->photo);
             }
