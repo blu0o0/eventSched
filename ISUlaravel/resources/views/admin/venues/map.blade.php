@@ -105,6 +105,9 @@ var venues = [];
 document.addEventListener('DOMContentLoaded', function() {
     var selectedVenueId = {{ $selectedVenueId ?? 'null' }};
     
+    // Make selectedVenueId globally accessible
+    window.selectedVenueId = selectedVenueId;
+    
     // Initialize Google Map
     map = new google.maps.Map(document.getElementById('venueMap'), {
         center: { lat: 16.72249174514112, lng: 121.53739618722382 },
@@ -438,6 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function selectVenue(venueId) {
+    window.selectedVenueId = venueId;
     var venue = venues.find(v => v.id === venueId);
     if (venue && venue.map_coordinates) {
         var coords = venue.map_coordinates.split(',');
@@ -470,6 +474,7 @@ var currentDirections = null;
 var currentTravelMode = 'WALKING';
 var directionsActive = false;
 var selectedVenueCoords = null;
+var directionsInfoWindow = null;
 
 function getMyLocation() {
     if (navigator.geolocation) {
@@ -479,12 +484,10 @@ function getMyLocation() {
                 lng: position.coords.longitude
             };
             
-            // Remove existing user marker
             if (userMarker) {
                 userMarker.setMap(null);
             }
             
-            // Add user marker
             userMarker = new google.maps.Marker({
                 position: pos,
                 map: map,
@@ -502,7 +505,6 @@ function getMyLocation() {
             map.panTo(pos);
             map.setZoom(17);
             
-            // Show info window
             var infoWindow = new google.maps.InfoWindow({
                 content: '<div class="map-popup"><h6 class="popup-title">Your Location</h6><p class="popup-info">Lat: ' + pos.lat.toFixed(6) + ', Lng: ' + pos.lng.toFixed(6) + '</p></div>'
             });
@@ -518,11 +520,18 @@ function getMyLocation() {
 
 function toggleDirections() {
     if (directionsActive) {
-        // Turn off directions
+        // Turn off directions - close everything
         if (directionsRenderer) {
             directionsRenderer.setMap(null);
             directionsRenderer = null;
         }
+        // Close directions info window
+        if (directionsInfoWindow) {
+            directionsInfoWindow.close();
+            directionsInfoWindow = null;
+        }
+        // Close all other info windows
+        infoWindows.forEach(iw => iw.close());
         currentDirections = null;
         directionsActive = false;
         updateDirectionsButton();
@@ -533,7 +542,7 @@ function toggleDirections() {
 
 function getDirections(mode) {
     var travelMode = mode || currentTravelMode;
-    var venueId = selectedVenueId || (venues.length > 0 ? venues[0].id : null);
+    var venueId = window.selectedVenueId || (venues.length > 0 ? venues[0].id : null);
     if (!venueId) {
         alert('Please select a venue first.');
         return;
@@ -568,8 +577,12 @@ function getDirections(mode) {
                 directionsRenderer.setMap(null);
             }
             
-            // Close all info windows
+            // Close all info windows including directions info window
             infoWindows.forEach(iw => iw.close());
+            if (directionsInfoWindow) {
+                directionsInfoWindow.close();
+                directionsInfoWindow = null;
+            }
             
             // Create directions service and renderer
             var directionsService = new google.maps.DirectionsService();
@@ -590,8 +603,6 @@ function getDirections(mode) {
                     directionsRenderer.setDirections(result);
                     currentDirections = result;
                     currentTravelMode = travelMode;
-                    directionsActive = true;
-                    updateDirectionsButton();
                     
                     // Show distance and duration
                     var route = result.routes[0];
@@ -624,7 +635,13 @@ function getDirections(mode) {
                         infoContent += '<p class="popup-info"><strong>' + modeName + ' Time:</strong> ' + durationText + '</p>';
                         infoContent += '</div>';
                         
-                        var infoWindow = new google.maps.InfoWindow({
+                        // Close previous directions info window before creating new one
+                        if (directionsInfoWindow) {
+                            directionsInfoWindow.close();
+                            directionsInfoWindow = null;
+                        }
+                        
+                        directionsInfoWindow = new google.maps.InfoWindow({
                             content: infoContent
                         });
                         // Show info window at destination
@@ -633,7 +650,11 @@ function getDirections(mode) {
                             map: map,
                             visible: false
                         });
-                        infoWindow.open(map, destMarker);
+                        directionsInfoWindow.open(map, destMarker);
+                        
+                        // Set directions active and update button
+                        directionsActive = true;
+                        updateDirectionsButton();
                     }
                 } else {
                     alert('Directions request failed: ' + status + '. Please try a different mode of transportation.');
