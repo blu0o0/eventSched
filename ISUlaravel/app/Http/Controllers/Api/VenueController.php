@@ -16,10 +16,8 @@ class VenueController extends Controller
      */
     public function index(): JsonResponse
     {
-        // Only return Santiago Campus venues for mobile app users
-        $venues = Venue::where('location', 'Santiago Campus')
-            ->latest()
-            ->get();
+        // Return all venues (admin venues page shows all venues)
+        $venues = Venue::latest()->get();
 
         return response()->json([
             'data' => VenueResource::collection($venues),

@@ -507,12 +507,12 @@ function truncateText(text: string, maxLength: number): string {
 async function loadVenues() {
   const data = await executeVenues(() => venuesApi.getAll());
   if (data) {
-    // Filter to only show Santiago Campus venues and available venues when creating new reservation
-    // When editing, show all venues (including the current one even if unavailable)
+    // Show all venues from the admin venues page
+    // For creating a new reservation, filter to only available venues
     if (isEdit.value) {
-      venues.value = data.filter(v => v.location === 'Santiago Campus');
+      venues.value = data;
     } else {
-      venues.value = data.filter(v => v.is_available && v.location === 'Santiago Campus');
+      venues.value = data.filter(v => v.is_available);
     }
     
     // If venue_id is in query params, set it
