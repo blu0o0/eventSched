@@ -52,7 +52,7 @@
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.area_name }">
-            <ion-label position="stacked">Area</ion-label>
+            <ion-label position="stacked">Area <span class="optional">(Optional)</span></ion-label>
             <ion-select
               v-model="selectedAreaId"
               :placeholder="form.venue_id ? 'Select an area' : 'Please select a venue first'"
@@ -267,7 +267,7 @@
               expand="block"
               color="primary"
               @click="keepReservationAnyway"
-              :disabled="forceLoading || hasApprovedConflicts"
+              :disabled="forceLoading"
             >
               <ion-spinner v-if="forceLoading" name="crescent"></ion-spinner>
               <span v-else>Keep Reservation Anyway</span>
@@ -475,8 +475,8 @@ function onAreaChange() {
     // User selected a custom area name from the dropdown
     form.value.area_name = selectedAreaId.value.replace('custom-', '');
   } else {
-    // User selected "None" or cleared selection
-    form.value.area_name = '';
+    // User selected "None" or cleared selection - set to undefined to make it truly optional
+    form.value.area_name = undefined as any;
   }
 }
 
@@ -742,11 +742,9 @@ async function handleSubmit() {
         return;
       }
       
-      // Success
-      if (response.data) {
-        showSuccess('Reservation created successfully');
-        router.push('/reservations');
-      }
+      // Success - show message and redirect to home
+      showSuccess('Reservation created successfully');
+      router.push('/home');
     } catch (err: any) {
       // Check if the error response contains conflicts
       if (err.response?.status === 409 && err.response?.data?.conflicts) {
@@ -755,10 +753,15 @@ async function handleSubmit() {
         return;
       }
       
-      // For other errors, useApi's toast will handle it
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
+      // Don't show error toast if it's a successful response with data
+      if (err.response?.data?.data) {
+        showSuccess('Reservation created successfully');
+        router.push('/home');
+        return;
+      }
       
-      // Let useApi handle showing the toast
+      // For other errors, show error toast
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create reservation';
       const toast = await toastController.create({
         message: errorMessage,
         duration: 5000,
@@ -806,7 +809,7 @@ async function keepReservationAnyway() {
       if (response.data) {
         showSuccess('Reservation created successfully. It is now pending and will be reviewed by an administrator.');
         showConflictModal.value = false;
-        router.push('/reservations');
+        router.push('/home');
       }
     }
   } catch (err: any) {
@@ -858,6 +861,12 @@ onMounted(async () => {
 
 .required {
   color: var(--ion-color-danger);
+}
+
+.optional {
+  color: var(--ion-color-medium);
+  font-size: 0.85rem;
+  font-weight: normal;
 }
 
 ion-item {
