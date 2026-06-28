@@ -60,7 +60,7 @@
               @ionChange="onAreaChange"
               :disabled="!form.venue_id"
             >
-              <ion-select-option value="none">None</ion-select-option>
+              <ion-select-option value="none"></ion-select-option>
               <ion-select-option
                 v-for="area in filteredAreas"
                 :key="area.id"
