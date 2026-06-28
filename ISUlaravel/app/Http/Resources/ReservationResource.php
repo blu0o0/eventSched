@@ -35,7 +35,7 @@ class ReservationResource extends JsonResource
             'postponement_reason' => $this->postponement_reason,
             'edited_at' => $this->edited_at,
             'event_approval_file' => $this->event_approval_file,
-            'event_approval_file_url' => $this->event_approval_file ? Storage::url($this->event_approval_file) : null,
+            'event_approval_file_url' => $this->event_approval_file ? url('storage/' . $this->event_approval_file) : null,
             
             // Relationships
             'venue' => new VenueResource($this->whenLoaded('venue')),
