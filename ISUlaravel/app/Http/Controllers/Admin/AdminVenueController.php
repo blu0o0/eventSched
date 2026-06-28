@@ -281,6 +281,7 @@ class AdminVenueController extends Controller
                         'area' => $reservation->area ? [
                             'id' => $reservation->area->id,
                             'name' => $reservation->area->name,
+                            'photo_url' => $reservation->area->photo_url,
                         ] : null,
                     ];
                 })->values()->toArray();

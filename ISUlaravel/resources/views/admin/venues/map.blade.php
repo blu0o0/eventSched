@@ -320,11 +320,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 var formattedDate = months[dateObj.getMonth()] + ' ' + dateObj.getDate();
                 
+                var areaName = reservation.area ? reservation.area.name : 'N/A';
+                var areaPhotoUrl = reservation.area ? reservation.area.photo_url : null;
+                var areaCell = areaName;
+                if (areaPhotoUrl) {
+                    areaCell = '<a href="javascript:void(0)" onclick="event.stopPropagation(); showAreaPhoto(\'' + areaName.replace(/'/g, "\\'") + '\', \'' + areaPhotoUrl.replace(/'/g, "\\'") + '\')" style="color: #0d6efd; text-decoration: underline; cursor: pointer;">' + areaName + '</a>';
+                }
+                
                 popupContent += '<tr>' +
-                    '<td>' + reservation.title + '</td>' +
+                    '<td><a href="/admin/reservations/' + reservation.id + '" target="_blank" style="color: #0d6efd; text-decoration: none; font-weight: 500;">' + reservation.title + '</a></td>' +
                     '<td><span class="status-badge ' + statusClass + '">' + reservation.status + '</span></td>' +
                     '<td>' + formattedDate + '</td>' +
-                    '<td>' + (reservation.area ? reservation.area.name : 'N/A') + '</td>' +
+                    '<td>' + areaCell + '</td>' +
                     '</tr>';
             });
             
@@ -442,6 +449,30 @@ function selectVenue(venueId) {
             }
         }
     }
+}
+
+// Show area photo modal
+function showAreaPhoto(areaName, photoUrl) {
+    var modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+    modal.onclick = function() { document.body.removeChild(modal); };
+    
+    var content = document.createElement('div');
+    content.style.cssText = 'max-width: 90%; max-height: 90%; text-align: center;';
+    
+    var img = document.createElement('img');
+    img.src = photoUrl;
+    img.alt = areaName;
+    img.style.cssText = 'max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5);';
+    
+    var title = document.createElement('p');
+    title.textContent = areaName;
+    title.style.cssText = 'color: white; margin-top: 12px; font-size: 16px; font-weight: 600;';
+    
+    content.appendChild(img);
+    content.appendChild(title);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
 }
 </script>
 

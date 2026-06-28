@@ -342,12 +342,19 @@ function initializeMap(venues: Venue[], venueAvailability: any, selectedDateStr:
       allReservations.forEach((reservation: any) => {
         const statusClass = reservation.status === 'approved' ? 'status-approved' : 
                            reservation.status === 'pending' ? 'status-pending' : 'status-rejected';
+        const areaName = reservation.area?.name || 'N/A';
+        const areaPhotoUrl = reservation.area?.photo_url || null;
+        let areaCell = areaName;
+        if (areaPhotoUrl) {
+          areaCell = `<a href="javascript:void(0)" onclick="event.stopPropagation(); window.showAreaPhoto('${areaName.replace(/'/g, "\\'")}', '${areaPhotoUrl.replace(/'/g, "\\'")}')" style="color: #0d6efd; text-decoration: underline; cursor: pointer;">${areaName}</a>`;
+        }
+        
         popupContent += `
           <tr>
-            <td>${reservation.title}</td>
+            <td><a href="/reservations/${reservation.id}" target="_blank" style="color: #0d6efd; text-decoration: none; font-weight: 500;">${reservation.title}</a></td>
             <td><span class="status-badge ${statusClass}">${reservation.status}</span></td>
             <td>${formatDateShort(reservation.date)}</td>
-            <td>${reservation.area?.name || 'N/A'}</td>
+            <td>${areaCell}</td>
           </tr>
         `;
       });
@@ -459,6 +466,30 @@ function loadGoogleMaps() {
 }
 
 onMounted(() => {
+  // Add showAreaPhoto function to window for Google Maps popup click handlers
+  (window as any).showAreaPhoto = function(areaName: string, photoUrl: string) {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+    modal.onclick = function() { document.body.removeChild(modal); };
+    
+    const content = document.createElement('div');
+    content.style.cssText = 'max-width: 90%; max-height: 90%; text-align: center;';
+    
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    img.alt = areaName;
+    img.style.cssText = 'max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5);';
+    
+    const title = document.createElement('p');
+    title.textContent = areaName;
+    title.style.cssText = 'color: white; margin-top: 12px; font-size: 16px; font-weight: 600;';
+    
+    content.appendChild(img);
+    content.appendChild(title);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+  };
+  
   loadGoogleMaps();
 });
 

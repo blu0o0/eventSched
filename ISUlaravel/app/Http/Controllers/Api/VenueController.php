@@ -75,10 +75,11 @@ class VenueController extends Controller
                         'user' => $reservation->user ? [
                             'name' => $reservation->user->name,
                         ] : null,
-                        'area' => $reservation->area ? [
-                            'id' => $reservation->area->id,
-                            'name' => $reservation->area->name,
-                        ] : null,
+                    'area' => $reservation->area ? [
+                        'id' => $reservation->area->id,
+                        'name' => $reservation->area->name,
+                        'photo_url' => $reservation->area->photo_url,
+                    ] : null,
                     ];
                 })->values()->toArray();
             });
@@ -164,6 +165,7 @@ class VenueController extends Controller
                         'id' => $reservation->area->id,
                         'name' => $reservation->area->name,
                         'map_coordinates' => $reservation->area->map_coordinates,
+                        'photo_url' => $reservation->area->photo_url,
                     ] : null,
                 ];
             })->values()->toArray();
