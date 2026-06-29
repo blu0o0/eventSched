@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button></ion-back-button>
+          <ion-back-button default-href="/reservations"></ion-back-button>
         </ion-buttons>
         <ion-title>Reservation Details</ion-title>
         <ion-buttons slot="end" v-if="canEdit">
