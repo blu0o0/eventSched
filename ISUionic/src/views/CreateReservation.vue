@@ -175,10 +175,12 @@
 
           <ion-item :class="{ 'ion-invalid': errors.event_approval_file }">
             <ion-label position="stacked">
-              Event Approval File 
+              Event Approval File
               <span v-if="!isEdit" class="required">*</span>
-              <span v-else class="optional">(Optional - keep existing or upload new)</span>
+              <span v-else class="optional">(optional)</span>
             </ion-label>
+            
+            <!-- File input -->
             <div class="file-upload-container">
               <input
                 type="file"
@@ -192,15 +194,41 @@
                 <span>{{ eventApprovalFileName || 'Choose file to upload' }}</span>
               </label>
             </div>
-            <div v-if="isEdit && existingEventApprovalFile && !form.event_approval_file" class="file-info-note">
-              <ion-note color="medium">
-                <ion-icon :icon="checkmarkCircleOutline" color="success"></ion-icon>
-                Current file will be kept if you don't upload a new one
-              </ion-note>
+
+            <!-- Image preview for newly uploaded file (clickable) -->
+            <div v-if="form.event_approval_file && isImageFile(form.event_approval_file)" class="file-preview">
+              <img 
+                :src="getFilePreviewUrl(form.event_approval_file)" 
+                alt="Preview" 
+                class="preview-image clickable" 
+                @click="openFilePreview(getFilePreviewUrl(form.event_approval_file))"
+              />
+              <ion-button fill="clear" size="small" @click="removeFile" class="remove-file-btn">
+                <ion-icon :icon="closeCircleOutline" slot="icon-only"></ion-icon>
+              </ion-button>
             </div>
+
+            <!-- Existing file preview (for edit mode) - clickable -->
+            <div v-if="isEdit && existingEventApprovalFile && !form.event_approval_file" class="existing-file-preview">
+              <div v-if="isImageFile(existingEventApprovalFile)" class="file-preview">
+                <img 
+                  :src="getExistingFileUrl()" 
+                  alt="Current file" 
+                  class="preview-image clickable" 
+                  @click="openFilePreview(getExistingFileUrl())"
+                />
+                <ion-note color="medium" class="existing-file-label">Current file (click to view)</ion-note>
+              </div>
+              <div v-else class="file-info clickable" @click="openFilePreview(getExistingFileUrl())">
+                <ion-icon :icon="documentTextOutline" color="medium"></ion-icon>
+                <ion-note color="medium">{{ getFileName(existingEventApprovalFile) }}</ion-note>
+                <ion-icon :icon="openOutline" color="primary" style="margin-left: auto;"></ion-icon>
+              </div>
+            </div>
+
             <ion-note slot="error" v-if="errors.event_approval_file">{{ errors.event_approval_file }}</ion-note>
             <ion-note slot="helper" color="medium">
-              Upload event approval document (PDF, DOC, DOCX, JPG, PNG - Max: 5MB)
+              PDF, DOC, DOCX, JPG, or PNG (max 5MB)
             </ion-note>
           </ion-item>
 
@@ -296,6 +324,50 @@
         </ion-content>
       </div>
     </ion-modal>
+
+    <!-- File Preview Modal -->
+    <ion-modal
+      :is-open="showFilePreviewModal"
+      @didDismiss="closeFilePreview"
+      class="file-preview-modal"
+    >
+      <div class="file-preview-wrapper">
+        <ion-header class="file-preview-header">
+          <ion-toolbar>
+            <ion-buttons slot="start">
+              <ion-button @click="closeFilePreview">
+                <ion-icon :icon="closeCircleOutline" slot="icon-only"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+            <ion-title>File Preview</ion-title>
+          </ion-toolbar>
+        </ion-header>
+        <ion-content class="ion-padding">
+          <div class="file-preview-content" v-if="previewFileUrl">
+            <img 
+              v-if="isImageFile(previewFileUrl)" 
+              :src="previewFileUrl" 
+              alt="File preview" 
+              class="full-preview-image"
+            />
+            <div v-else class="non-image-preview">
+              <ion-icon :icon="documentTextOutline" size="large" color="medium"></ion-icon>
+              <p>Document preview not available</p>
+              <ion-button 
+                expand="block" 
+                color="primary" 
+                :href="previewFileUrl" 
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ion-icon :icon="openOutline" slot="start"></ion-icon>
+                Open File
+              </ion-button>
+            </div>
+          </div>
+        </ion-content>
+      </div>
+    </ion-modal>
   </ion-page>
 </template>
 
@@ -338,6 +410,8 @@ import {
   checkmarkCircleOutline,
   createOutline,
   homeOutline,
+  closeCircleOutline,
+  openOutline,
 } from 'ionicons/icons';
 import { venuesApi } from '../api/venues';
 import { areasApi } from '../api/areas';
@@ -393,11 +467,27 @@ const hasApprovedConflicts = computed(() => {
   return conflicts.value.some(conflict => conflict.status === 'approved');
 });
 
-const minDate = new Date();
-minDate.setDate(minDate.getDate() + 6);
-const minDateStr = minDate.toISOString().split('T')[0];
+// Track original form data for change detection (edit mode)
+const originalFormData = ref<any>(null);
 
-const isFormValid = computed(() => {
+// Computed property to check if any data has changed (edit mode)
+const hasChanges = computed(() => {
+  if (!isEdit.value || !originalFormData.value) return true;
+  const orig = originalFormData.value;
+  return form.value.title !== orig.title ||
+    form.value.description !== orig.description ||
+    form.value.venue_id !== orig.venue_id ||
+    selectedAreaId.value !== orig.selectedAreaId ||
+    form.value.date !== orig.date ||
+    form.value.end_date !== orig.end_date ||
+    form.value.start_time !== orig.start_time ||
+    form.value.end_time !== orig.end_time ||
+    form.value.capacity !== orig.capacity ||
+    form.value.event_approval_file !== null; // File changed
+});
+
+// Update isFormValid to also check hasChanges in edit mode
+const originalIsFormValid = computed(() => {
   const hasTitle = validators.required(form.value.title);
   const hasVenue = form.value.venue_id > 0;
   const hasArea = selectedAreaId.value !== null && selectedAreaId.value !== undefined;
@@ -415,6 +505,15 @@ const isFormValid = computed(() => {
   
   return hasTitle && hasVenue && hasArea && hasDate && timesValid && hasCapacity && hasApprovalFile;
 });
+
+// Override isFormValid to disable button when no changes in edit mode
+const isFormValid = computed(() => {
+  return isEdit.value ? (originalIsFormValid.value && hasChanges.value) : originalIsFormValid.value;
+});
+
+const minDate = new Date();
+minDate.setDate(minDate.getDate() + 6);
+const minDateStr = minDate.toISOString().split('T')[0];
 
 function clearError(field: string) {
   if (errors.value[field]) {
@@ -450,6 +549,42 @@ function handleFileUpload(event: Event) {
     form.value.event_approval_file = file;
     eventApprovalFileName.value = file.name;
     clearError('event_approval_file');
+  }
+}
+
+function isImageFile(file: File | string): boolean {
+  if (typeof file === 'string') {
+    // Check file extension
+    const ext = file.toLowerCase().split('.').pop();
+    return ['jpg', 'jpeg', 'png', 'gif'].includes(ext || '');
+  }
+  // Check MIME type for File objects
+  return file.type.startsWith('image/');
+}
+
+function getFilePreviewUrl(file: File): string {
+  return URL.createObjectURL(file);
+}
+
+function getExistingFileUrl(): string {
+  if (!existingEventApprovalFile.value) return '';
+  // Files are stored in storage/app/public/event-approvals/
+  // Accessible via http://localhost:8000/storage/ (Laravel backend)
+  // Remove /api suffix and add /storage/ prefix
+  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
+  return `${baseUrl}/storage/${existingEventApprovalFile.value}`;
+}
+
+function getFileName(filePath: string): string {
+  return filePath.split('/').pop() || filePath;
+}
+
+function removeFile() {
+  form.value.event_approval_file = null;
+  eventApprovalFileName.value = '';
+  const fileInput = document.getElementById('eventApprovalFile') as HTMLInputElement;
+  if (fileInput) {
+    fileInput.value = '';
   }
 }
 
@@ -712,8 +847,23 @@ async function loadReservation() {
 
     // Store existing file info
     existingEventApprovalFile.value = data.event_approval_file || null;
-    eventApprovalFileName.value = data.event_approval_file ? 'Current file (click to change)' : '';
+    eventApprovalFileName.value = '';
     fileChanged.value = false;
+    
+    // Store original form data for change detection
+    originalFormData.value = {
+      title: data.title,
+      description: data.description || '',
+      venue_id: data.venue_id,
+      area_id: data.area_id || null,
+      area_name: data.area_name || '',
+      date: normalizeDate(data.date),
+      end_date: data.end_date ? normalizeDate(data.end_date) : '',
+      start_time: normalizeTime(data.start_time),
+      end_time: normalizeTime(data.end_time),
+      capacity: data.capacity,
+      selectedAreaId: selectedAreaId.value,
+    };
 
     // Populate all form fields with existing data
     form.value = {
@@ -1078,6 +1228,20 @@ function goBackHome() {
   router.push('/home');
 }
 
+// File preview modal
+const showFilePreviewModal = ref(false);
+const previewFileUrl = ref('');
+
+function openFilePreview(url: string) {
+  previewFileUrl.value = url;
+  showFilePreviewModal.value = true;
+}
+
+function closeFilePreview() {
+  showFilePreviewModal.value = false;
+  previewFileUrl.value = '';
+}
+
 onMounted(async () => {
   // Check authentication before allowing access to create reservation
   const hasAccess = await requireAuth('You must be logged in to create a reservation.');
@@ -1320,14 +1484,120 @@ ion-item {
   gap: 0.4rem;
   font-size: 0.85rem;
 }
+
+/* File preview styles */
+.file-preview {
+  position: relative;
+  margin-top: 0.75rem;
+  display: inline-block;
+}
+
+.preview-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid var(--ion-color-light-shade, #ccc);
+  object-fit: cover;
+}
+
+.remove-file-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --width: 28px;
+  --height: 28px;
+  --border-radius: 50%;
+  --background: var(--ion-color-danger);
+  --color: white;
+}
+
+.existing-file-preview {
+  margin-top: 0.75rem;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--ion-color-light, #f4f5f8);
+  border-radius: 8px;
+}
+
+.existing-file-label {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.clickable:hover {
+  opacity: 0.8;
+}
+
+/* File Preview Modal */
+.file-preview-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.file-preview-header ion-toolbar {
+  --background: var(--ion-color-primary);
+  --color: white;
+}
+
+.file-preview-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem;
+  min-height: 200px;
+}
+
+.full-preview-image {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.non-image-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.non-image-preview p {
+  color: var(--ion-color-medium);
+  font-size: 1rem;
+}
 </style>
 
 <style>
-/* Global styles for conflict modal - not scoped so CSS custom properties work on ion-modal */
+/* Global styles for modals - not scoped so CSS custom properties work on ion-modal */
 .conflict-modal {
   --width: 90%;
   --height: 80%;
   --max-width: 500px;
+  --border-radius: 16px;
+}
+
+.file-preview-modal {
+  --width: 90%;
+  --height: 90%;
+  --max-width: 800px;
   --border-radius: 16px;
 }
 </style>
