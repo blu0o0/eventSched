@@ -22,17 +22,50 @@ class UpdateReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'sometimes|required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'venue_id' => 'sometimes|required|exists:venues,id',
+            'venue_id' => 'required|exists:venues,id',
             'area_id' => 'nullable|integer|exists:areas,id',
             'area_name' => 'nullable|string|max:255',
-            'date' => 'sometimes|required|date|after_or_equal:today',
-            'start_time' => 'sometimes|required|date_format:H:i',
-            'end_time' => 'sometimes|required|date_format:H:i',
-            'capacity' => 'sometimes|required|integer|min:1',
+            'date' => 'required|date|after_or_equal:today',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'capacity' => 'required|integer|min:1',
             'end_date' => 'nullable|date|after_or_equal:date',
             'event_approval_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+            'existing_event_approval_file' => 'nullable|string',
+            'force' => 'nullable|boolean',
         ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'end_date.after_or_equal' => 'The end date must be after the start date.',
+        ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Convert empty strings to null for ONLY nullable fields
+        // Don't convert required fields (title, venue_id, date, start_time, end_time, capacity)
+        if ($this->has('description') && $this->input('description') === '') {
+            $this->merge(['description' => null]);
+        }
+        if ($this->has('end_date') && $this->input('end_date') === '') {
+            $this->merge(['end_date' => null]);
+        }
+        if ($this->has('area_name') && $this->input('area_name') === '') {
+            $this->merge(['area_name' => null]);
+        }
+        if ($this->has('area_id') && $this->input('area_id') === '') {
+            $this->merge(['area_id' => null]);
+        }
     }
 }

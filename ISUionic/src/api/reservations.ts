@@ -23,19 +23,21 @@ export const reservationsApi = {
   },
 
   async create(data: CreateReservationData | FormData, force: boolean = false): Promise<CreateReservationResponse> {
+    const isFormData = data instanceof FormData;
     const response = await apiClient.post<CreateReservationResponse>('/reservations', data, {
-      headers: {
+      headers: isFormData ? {
         'Content-Type': 'multipart/form-data',
-      },
+      } : {},
     });
     return response.data;
   },
 
   async update(id: number, data: CreateReservationData | FormData): Promise<Reservation> {
+    const isFormData = data instanceof FormData;
     const response = await apiClient.put<{ message: string; data: Reservation }>(`/reservations/${id}`, data, {
-      headers: {
+      headers: isFormData ? {
         'Content-Type': 'multipart/form-data',
-      },
+      } : {},
     });
     return response.data.data;
   },

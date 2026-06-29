@@ -174,7 +174,11 @@
           </ion-item>
 
           <ion-item :class="{ 'ion-invalid': errors.event_approval_file }">
-            <ion-label position="stacked">Event Approval File <span class="required">*</span></ion-label>
+            <ion-label position="stacked">
+              Event Approval File 
+              <span v-if="!isEdit" class="required">*</span>
+              <span v-else class="optional">(Optional - keep existing or upload new)</span>
+            </ion-label>
             <div class="file-upload-container">
               <input
                 type="file"
@@ -188,6 +192,12 @@
                 <span>{{ eventApprovalFileName || 'Choose file to upload' }}</span>
               </label>
             </div>
+            <div v-if="isEdit && existingEventApprovalFile && !form.event_approval_file" class="file-info-note">
+              <ion-note color="medium">
+                <ion-icon :icon="checkmarkCircleOutline" color="success"></ion-icon>
+                Current file will be kept if you don't upload a new one
+              </ion-note>
+            </div>
             <ion-note slot="error" v-if="errors.event_approval_file">{{ errors.event_approval_file }}</ion-note>
             <ion-note slot="helper" color="medium">
               Upload event approval document (PDF, DOC, DOCX, JPG, PNG - Max: 5MB)
@@ -195,18 +205,6 @@
           </ion-item>
 
           <div class="form-actions">
-            <!-- Debug info (remove in production) -->
-            <ion-note v-if="!isFormValid && !loading" color="warning" style="display: block; margin-bottom: 1rem; font-size: 0.8rem;">
-              Please fill in all required fields: 
-              <span v-if="!validators.required(form.title)">Title, </span>
-              <span v-if="form.venue_id <= 0">Venue, </span>
-              <span v-if="!selectedAreaId">Area, </span>
-              <span v-if="!validators.required(form.date) || errors.date">Date, </span>
-              <span v-if="!validators.required(form.start_time)">Start Time, </span>
-              <span v-if="!validators.required(form.end_time)">End Time, </span>
-              <span v-if="!validators.required(form.capacity) || !validators.positiveNumber(form.capacity)">Max Occupancy</span>
-            </ion-note>
-            
             <ion-button
               expand="block"
               type="submit"
@@ -328,6 +326,7 @@ import {
   IonCardSubtitle,
   IonCardContent,
   IonIcon,
+  IonModal,
   toastController,
 } from '@ionic/vue';
 import {
@@ -379,6 +378,10 @@ const form = ref<CreateReservationData & { date: string; area_name: string | und
   event_approval_file: null,
 });
 
+// Track if we're editing and if the file has been changed
+const existingEventApprovalFile = ref<string | null>(null);
+const fileChanged = ref(false);
+
 const eventApprovalFileName = ref<string>('');
 const errors = ref<Record<string, string>>({});
 const conflicts = ref<ConflictingReservation[]>([]);
@@ -403,7 +406,12 @@ const isFormValid = computed(() => {
   const hasEndTime = validators.required(form.value.end_time);
   const timesValid = hasStartTime && hasEndTime && validators.timeAfter(form.value.start_time, form.value.end_time);
   const hasCapacity = validators.required(form.value.capacity) && validators.positiveNumber(form.value.capacity);
-  const hasApprovalFile = form.value.event_approval_file !== null;
+  
+  // For edit mode, file is optional (can keep existing file)
+  // For create mode, file is required
+  const hasApprovalFile = isEdit.value 
+    ? (form.value.event_approval_file !== null || existingEventApprovalFile.value !== null)
+    : form.value.event_approval_file !== null;
   
   return hasTitle && hasVenue && hasArea && hasDate && timesValid && hasCapacity && hasApprovalFile;
 });
@@ -512,6 +520,32 @@ watch(() => form.value.end_date, (newEndDate) => {
     clearError('end_date');
   }
 });
+
+// Watch for areas loading and re-select area if needed (handles race condition)
+watch([areas, selectedAreaId], ([newAreas, currentSelectedId]) => {
+  // If we're in edit mode, have areas loaded, but no area is selected yet
+  if (isEdit.value && newAreas.length > 0 && !currentSelectedId && form.value.area_name) {
+    console.log('🔄 Areas loaded, attempting to re-select area...');
+    
+    // Try to find and select the area
+    const matchingArea = newAreas.find(a => 
+      a.name.toLowerCase() === form.value.area_name!.toLowerCase() && 
+      a.venue_id === form.value.venue_id
+    );
+    
+    if (matchingArea) {
+      selectedAreaId.value = matchingArea.id;
+      console.log('✅ Area re-selected after areas loaded:', matchingArea.name);
+    } else if (form.value.area_id) {
+      // Try by area_id
+      const areaById = newAreas.find(a => a.id === form.value.area_id);
+      if (areaById) {
+        selectedAreaId.value = areaById.id;
+        console.log('✅ Area re-selected by ID after areas loaded:', areaById.name);
+      }
+    }
+  }
+}, { immediate: false });
 
 function onVenueChange() {
   clearError('venue_id');
@@ -662,44 +696,113 @@ async function loadReservation() {
 
     // Ensure times are in H:i format (trim seconds if present)
     const normalizeTime = (time: string) => time ? time.substring(0, 5) : '';
+    
+    // Ensure date is in YYYY-MM-DD format for HTML date input
+    const normalizeDate = (dateStr: string): string => {
+      if (!dateStr) return '';
+      // If it's already in YYYY-MM-DD format, return as is
+      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateStr;
+      }
+      // Otherwise, parse and reformat
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toISOString().split('T')[0];
+    };
 
+    // Store existing file info
+    existingEventApprovalFile.value = data.event_approval_file || null;
+    eventApprovalFileName.value = data.event_approval_file ? 'Current file (click to change)' : '';
+    fileChanged.value = false;
+
+    // Populate all form fields with existing data
     form.value = {
       title: data.title,
       description: data.description || '',
       venue_id: data.venue_id,
       area_id: data.area_id || null,
       area_name: data.area_name || '',
-      date: data.date,
-      end_date: data.end_date || '',
+      date: normalizeDate(data.date),
+      end_date: data.end_date ? normalizeDate(data.end_date) : '',
       start_time: normalizeTime(data.start_time),
       end_time: normalizeTime(data.end_time),
       capacity: data.capacity,
+      event_approval_file: null, // Will be set if user uploads new file
     };
+    
+    // Debug logging
+    console.log('📅 Date loaded:', {
+      raw: data.date,
+      formatted: form.value.date,
+      end_date: form.value.end_date
+    });
 
-    // Pre-select the area if the reservation has one
+    // Pre-select the area - try multiple strategies to ensure proper selection
+    console.log('🔍 Loading reservation area:', {
+      area_id: data.area_id,
+      area_name: data.area_name,
+      venue_id: data.venue_id
+    });
+
     if (data.area_id) {
-      // Existing area linked in the areas table
-      selectedAreaId.value = data.area_id;
+      // Strategy 1: Direct area_id match
+      const areaExists = areas.value.find(a => a.id === data.area_id);
+      if (areaExists) {
+        selectedAreaId.value = data.area_id;
+        console.log('✅ Selected area by ID:', areaExists.name);
+      } else {
+        // Area ID not found in current areas list, try to match by name
+        console.log('⚠️ Area ID not found, trying name match...');
+        if (data.area_name) {
+          const matchingArea = areas.value.find(a => 
+            a.name.toLowerCase() === data.area_name.toLowerCase() && 
+            a.venue_id === data.venue_id
+          );
+          
+          if (matchingArea) {
+            selectedAreaId.value = matchingArea.id;
+            form.value.area_name = matchingArea.name;
+            console.log('✅ Selected area by name match:', matchingArea.name);
+          } else {
+            // No match found, use custom area
+            selectedAreaId.value = 'custom-' + data.area_name;
+            console.log('⚠️ Using custom area:', data.area_name);
+          }
+        } else {
+          selectedAreaId.value = null;
+        }
+      }
     } else if (data.area_name) {
-      // Check if the area_name matches an existing area in the areas table
+      // Strategy 2: Match by area_name
       const matchingArea = areas.value.find(a => 
         a.name.toLowerCase() === data.area_name.toLowerCase() && 
         a.venue_id === data.venue_id
       );
       
       if (matchingArea) {
-        // Area exists in the table, select it by ID
         selectedAreaId.value = matchingArea.id;
         form.value.area_name = matchingArea.name;
+        console.log('✅ Selected area by name:', matchingArea.name);
       } else {
-        // Custom area name (not in the areas table) - select it as custom
+        // Custom area name (not in the areas table)
         selectedAreaId.value = 'custom-' + data.area_name;
-        form.value.area_name = data.area_name;
+        console.log('⚠️ Custom area (not in table):', data.area_name);
       }
     } else {
-      // No area selected
+      // No area data
       selectedAreaId.value = null;
+      console.log('ℹ️ No area selected');
     }
+
+    console.log('✅ Reservation loaded successfully:', {
+      title: data.title,
+      venue_id: data.venue_id,
+      selectedAreaId: selectedAreaId.value,
+      area_name: form.value.area_name,
+      date: data.date,
+      start_time: data.start_time,
+      end_time: data.end_time
+    });
   }
 }
 
@@ -742,7 +845,9 @@ function validateForm(): boolean {
     errors.value.capacity = 'Max Occupancy must be greater than 0';
   }
 
-  if (!form.value.event_approval_file) {
+  // In edit mode, file is optional (can keep existing file)
+  // In create mode, file is required
+  if (!isEdit.value && !form.value.event_approval_file) {
     errors.value.event_approval_file = 'Event approval file is required';
   }
 
@@ -750,49 +855,74 @@ function validateForm(): boolean {
 }
 
 async function handleSubmit() {
+  console.log('🔵 Submit button clicked');
+  
   if (!validateForm()) {
+    console.log('❌ Form validation failed');
+    console.log('Errors:', errors.value);
     return;
   }
 
-  // Create FormData for file upload
-  const formData = new FormData();
+  console.log('✅ Form is valid, submitting...', {
+    isEdit: isEdit.value,
+    form: form.value,
+    selectedAreaId: selectedAreaId.value
+  });
+
+  // Determine if we need to upload a file
+  const hasFile = form.value.event_approval_file !== null;
   
-  // Add all form fields
-  formData.append('title', form.value.title);
-  if (form.value.description) {
-    formData.append('description', form.value.description);
-  }
-  formData.append('venue_id', form.value.venue_id.toString());
-  formData.append('date', form.value.date);
-  formData.append('start_time', form.value.start_time);
-  formData.append('end_time', form.value.end_time);
-  formData.append('capacity', form.value.capacity.toString());
-  
-  if (form.value.end_date) {
-    formData.append('end_date', form.value.end_date);
-  }
+  // Build the data object
+  const data: any = {
+    title: form.value.title,
+    description: form.value.description || '',
+    venue_id: form.value.venue_id,
+    date: form.value.date,
+    start_time: form.value.start_time,
+    end_time: form.value.end_time,
+    capacity: form.value.capacity,
+    end_date: form.value.end_date || '',
+  };
 
   // Always include area data
   if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
-    formData.append('area_id', selectedAreaId.value.toString());
+    data.area_id = selectedAreaId.value;
   } else {
     // For N/A or custom areas, send area_name
-    formData.append('area_name', form.value.area_name || 'N/A');
+    data.area_name = form.value.area_name || 'N/A';
   }
 
-  // Add event approval file
-  if (form.value.event_approval_file) {
-    formData.append('event_approval_file', form.value.event_approval_file);
+  // Add file info if editing and keeping existing file
+  if (isEdit.value && !hasFile && existingEventApprovalFile.value) {
+    data.existing_event_approval_file = existingEventApprovalFile.value;
   }
 
   if (isEdit.value) {
     const id = parseInt(route.params.id as string);
     try {
-      const response = await reservationsApi.update(id, formData);
-      
-      if (response) {
-        showSuccess('Reservation updated successfully');
-        router.push('/reservations');
+      // Use FormData only if uploading a file, otherwise use JSON
+      if (hasFile) {
+        const formData = new FormData();
+        Object.keys(data).forEach(key => {
+          formData.append(key, data[key] as any);
+        });
+        formData.append('event_approval_file', form.value.event_approval_file as File);
+        formData.append('force', 'true');
+        const response = await reservationsApi.update(id, formData);
+        
+        if (response) {
+          showSuccess('Reservation updated successfully');
+          router.push('/reservations');
+        }
+      } else {
+        // Send as JSON with force flag
+        data.force = true;
+        const response = await reservationsApi.update(id, data);
+        
+        if (response) {
+          showSuccess('Reservation updated successfully');
+          router.push('/reservations');
+        }
       }
     } catch (err: any) {
       // Check if the error response contains conflicts (409 status)
@@ -816,7 +946,15 @@ async function handleSubmit() {
     }
   } else {
     try {
-      const response = await reservationsApi.create(formData, false);
+      // Create new FormData for create
+      const createFormData = new FormData();
+      Object.keys(data).forEach(key => {
+        createFormData.append(key, data[key] as any);
+      });
+      if (hasFile) {
+        createFormData.append('event_approval_file', form.value.event_approval_file as File);
+      }
+      const response = await reservationsApi.create(createFormData, false);
       
       // Check if response has conflicts (status 409)
       if (response.conflicts && response.conflicts.length > 0) {
@@ -863,35 +1001,43 @@ async function handleSubmit() {
 async function keepReservationAnyway() {
   forceLoading.value = true;
   
-  // Build submit data, only including area fields if they have values
-  const submitData: any = {
-    title: form.value.title,
-    description: form.value.description || undefined,
-    venue_id: form.value.venue_id,
-    date: form.value.date,
-    start_time: form.value.start_time,
-    end_time: form.value.end_time,
-    capacity: form.value.capacity,
-  };
-
-  // Only include end_date if it has a value
+  // Create FormData for file upload (required for both create and update)
+  const formData = new FormData();
+  
+  // Add all form fields
+  formData.append('title', form.value.title);
+  if (form.value.description) {
+    formData.append('description', form.value.description);
+  }
+  formData.append('venue_id', form.value.venue_id.toString());
+  formData.append('date', form.value.date);
+  formData.append('start_time', form.value.start_time);
+  formData.append('end_time', form.value.end_time);
+  formData.append('capacity', form.value.capacity.toString());
+  
   if (form.value.end_date) {
-    submitData.end_date = form.value.end_date;
+    formData.append('end_date', form.value.end_date);
   }
 
   // Always include area data
   if (selectedAreaId.value && typeof selectedAreaId.value === 'number') {
-    submitData.area_id = selectedAreaId.value;
+    formData.append('area_id', selectedAreaId.value.toString());
   } else {
     // For N/A or custom areas, send area_name
-    submitData.area_name = form.value.area_name || 'N/A';
+    formData.append('area_name', form.value.area_name || 'N/A');
+  }
+
+  // Add event approval file if provided (for edit mode, can keep existing)
+  if (form.value.event_approval_file) {
+    formData.append('event_approval_file', form.value.event_approval_file);
   }
 
   try {
     if (isEdit.value) {
       // For edit: update the reservation with force flag
       const id = parseInt(route.params.id as string);
-      const response = await reservationsApi.update(id, { ...submitData, force: true });
+      formData.append('force', 'true');
+      const response = await reservationsApi.update(id, formData);
       
       if (response) {
         showSuccess('Reservation updated successfully. It is now pending and will be reviewed by an administrator.');
@@ -900,7 +1046,7 @@ async function keepReservationAnyway() {
       }
     } else {
       // For create: create with force flag
-      const response = await reservationsApi.create(submitData, true);
+      const response = await reservationsApi.create(formData, true);
       
       if (response.data) {
         showSuccess('Reservation created successfully. It is now pending and will be reviewed by an administrator.');
@@ -1042,11 +1188,9 @@ ion-item {
   --padding-start: 0;
   --padding-end: 0;
   --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  
 }
 
 .conflict-home-btn ion-icon {
-  
   font-size: 1rem;
 }
 
@@ -1163,6 +1307,18 @@ ion-item {
 
 .go-home-btn {
   --color: var(--ion-color-dark);
+}
+
+.file-info-note {
+  margin-top: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.file-info-note ion-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
 }
 </style>
 

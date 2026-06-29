@@ -179,15 +179,45 @@ class ReservationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateReservationRequest $request, Reservation $reservation): JsonResponse
+    public function update(Request $request, Reservation $reservation): JsonResponse
     {
         $this->authorize('update', $reservation);
 
         try {
-            \Log::info('Update request data:', $request->validated());
-            \Log::info('Current reservation:', $reservation->toArray());
+            // Handle both JSON and FormData
+            $updateData = [];
             
-            $updateData = $request->validated();
+            // If it's a file upload (FormData), use validation
+            if ($request->hasFile('event_approval_file')) {
+                $validator = \Validator::make($request->all(), [
+                    'title' => 'required|string|max:255',
+                    'description' => 'nullable|string',
+                    'venue_id' => 'required|exists:venues,id',
+                    'area_id' => 'nullable|integer|exists:areas,id',
+                    'area_name' => 'nullable|string|max:255',
+                    'date' => 'required|date|after_or_equal:today',
+                    'start_time' => 'required|date_format:H:i',
+                    'end_time' => 'required|date_format:H:i',
+                    'capacity' => 'required|integer|min:1',
+                    'end_date' => 'nullable|date|after_or_equal:date',
+                    'event_approval_file' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:5120',
+                    'existing_event_approval_file' => 'nullable|string',
+                    'force' => 'nullable|boolean',
+                ]);
+                
+                if ($validator->fails()) {
+                    return response()->json([
+                        'message' => 'Validation failed',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+                
+                $updateData = $validator->validated();
+            } else {
+                // JSON request - get all data directly
+                $updateData = $request->all();
+            }
+            
             $force = $request->boolean('force', false);
             
             // Handle event approval file upload
@@ -200,6 +230,9 @@ class ReservationController extends Controller
                 $file = $request->file('event_approval_file');
                 $path = $file->store('event-approvals', 'public');
                 $updateData['event_approval_file'] = $path;
+            } elseif ($request->has('existing_event_approval_file')) {
+                // Keep existing file if no new file is uploaded
+                $updateData['event_approval_file'] = $request->input('existing_event_approval_file');
             }
             
             // Check for overlaps with approved reservations before updating
@@ -241,18 +274,11 @@ class ReservationController extends Controller
                 $force
             );
 
-            \Log::info('Updated reservation:', $reservation->toArray());
-
             return response()->json([
                 'message' => 'Reservation updated successfully',
                 'data' => new ReservationResource($reservation),
             ]);
         } catch (\Exception $e) {
-            \Log::error('Update reservation error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'message' => 'Failed to update reservation: ' . $e->getMessage(),
                 'error' => $e->getMessage(),
