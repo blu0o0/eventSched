@@ -2,12 +2,6 @@
   <ion-page>
     <ion-content :fullscreen="true" class="login-content">
       <div class="login-container">
-        <div class="home-button-container">
-          <ion-button fill="clear" @click="$router.push('/home')" class="home-button">
-            <ion-icon :icon="homeOutline" slot="start"></ion-icon>
-            Home
-          </ion-button>
-        </div>
         <div class="login-card">
           <div class="login-header">
           <div class="logo-container">
@@ -129,7 +123,7 @@ import {
   IonIcon,
   toastController,
 } from '@ionic/vue';
-import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline, homeOutline, warningOutline, lockClosedOutline } from 'ionicons/icons';
+import { shieldCheckmarkOutline, eyeOutline, eyeOffOutline, warningOutline, lockClosedOutline } from 'ionicons/icons';
 import { useAuth } from '../composables/useAuth';
 import { validators } from '../utils/validators';
 import { RECAPTCHA_SITE_KEY } from '../config/env';
@@ -508,33 +502,6 @@ onUnmounted(() => {
 }
 
 
-
-.home-button-container {
-  padding-right: 75vh;
-  max-width: 20px;
-  width: 100%;
-  margin: 0 auto 10px;
-}
-
-.home-button {
-  --color: white;
-  font-size: 10px;
-  font-weight: 600;
-  border-radius: 8px;
-  border: solid 2px rgb(55, 81, 47);
-  --background: linear-gradient(135deg, #2d8659 0%, #1e5d3f 100%);
-  margin: 0;
-  display: inline-block;
-  box-shadow: 0 2px 8px rgba(45, 134, 89, 0.3);
-}
-
-.home-button:hover {
-  --background: #405b42;
-}
-
-.home-button ion-icon {
-  margin-right: 6px;
-}
 
 .links-row {
   margin-top: 1.5rem;
