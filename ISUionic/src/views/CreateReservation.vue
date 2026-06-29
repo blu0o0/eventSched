@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button></ion-back-button>
+          <ion-back-button :default-href="isEdit ? '/reservations' : '/'"></ion-back-button>
         </ion-buttons>
         <ion-title>{{ isEdit ? 'Edit Reservation' : 'Create Reservation' }}</ion-title>
       </ion-toolbar>
@@ -469,6 +469,7 @@ const hasApprovedConflicts = computed(() => {
 
 // Track original form data for change detection (edit mode)
 const originalFormData = ref<any>(null);
+const areaSelectionStable = ref(false);
 
 // Computed property to check if any data has changed (edit mode)
 const hasChanges = computed(() => {
@@ -658,6 +659,8 @@ watch(() => form.value.end_date, (newEndDate) => {
 
 // Watch for areas loading and re-select area if needed (handles race condition)
 watch([areas, selectedAreaId], ([newAreas, currentSelectedId]) => {
+  // Skip if area selection is already stable (hasChanges has been stored)
+  if (areaSelectionStable.value) return;
   // If we're in edit mode, have areas loaded, but no area is selected yet
   if (isEdit.value && newAreas.length > 0 && !currentSelectedId && form.value.area_name) {
     console.log('🔄 Areas loaded, attempting to re-select area...');
@@ -849,21 +852,6 @@ async function loadReservation() {
     existingEventApprovalFile.value = data.event_approval_file || null;
     eventApprovalFileName.value = '';
     fileChanged.value = false;
-    
-    // Store original form data for change detection
-    originalFormData.value = {
-      title: data.title,
-      description: data.description || '',
-      venue_id: data.venue_id,
-      area_id: data.area_id || null,
-      area_name: data.area_name || '',
-      date: normalizeDate(data.date),
-      end_date: data.end_date ? normalizeDate(data.end_date) : '',
-      start_time: normalizeTime(data.start_time),
-      end_time: normalizeTime(data.end_time),
-      capacity: data.capacity,
-      selectedAreaId: selectedAreaId.value,
-    };
 
     // Populate all form fields with existing data
     form.value = {
@@ -943,6 +931,24 @@ async function loadReservation() {
       selectedAreaId.value = null;
       console.log('ℹ️ No area selected');
     }
+
+    // Store original form data for change detection AFTER area is selected
+    const origAreaId = selectedAreaId.value;
+    originalFormData.value = {
+      title: form.value.title,
+      description: form.value.description,
+      venue_id: form.value.venue_id,
+      area_id: form.value.area_id,
+      area_name: form.value.area_name,
+      date: form.value.date,
+      end_date: form.value.end_date,
+      start_time: form.value.start_time,
+      end_time: form.value.end_time,
+      capacity: form.value.capacity,
+      selectedAreaId: origAreaId,
+    };
+    // Mark area as stable so watch doesn't trigger hasChanges
+    areaSelectionStable.value = true;
 
     console.log('✅ Reservation loaded successfully:', {
       title: data.title,

@@ -1,5 +1,5 @@
 <template>
-  <ion-page>
+  <ion-page class="login-page">
     <ion-content :fullscreen="true" class="login-content">
       <div class="login-container">
         <div class="login-card">
@@ -291,6 +291,13 @@ onUnmounted(() => {
   }
 });
 </script>
+
+<style>
+/* Global styles to disable menu on login page */
+.login-page {
+  --ion-menu-visible: none;
+}
+</style>
 
 <style scoped>
 .login-content {
